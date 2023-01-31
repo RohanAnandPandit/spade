@@ -1,6 +1,6 @@
 import React from "react";
-import type { MenuProps } from "antd";
-import { Layout, Menu, theme } from "antd";
+// import type { MenuProps } from "antd";
+import { Layout, theme } from "antd";
 // import { Breadcrumb } from "antd";
 import Navbar from "./components/navbar/Navbar";
 import { routes } from "./components/navbar/routes";
