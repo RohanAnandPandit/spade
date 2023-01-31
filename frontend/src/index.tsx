@@ -1,6 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { Helmet } from 'react-helmet';
 import './index.css';
+import 'antd/dist/reset.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
@@ -9,6 +11,9 @@ const root = ReactDOM.createRoot(
 );
 root.render(
   <React.StrictMode>
+    <Helmet>
+      <title>Semantic Web Schema and Data Visualiser</title>
+    </Helmet>
     <App />
   </React.StrictMode>
 );
