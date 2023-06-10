@@ -6,6 +6,10 @@ from .util import remove_comments, is_url, separator_split
 
 QUERY_PATH = 'backend/queries'
 
+SELECT_STATEMENT = re.compile(
+    r'^\s*select +(distinct +)?(?P<variables>[^\n]+)\s*(from|where)\s*\{?$',
+    re.MULTILINE | re.IGNORECASE | re.DOTALL)
+
 
 class QueryAnalyser:
     def __init__(self, *, query: str, repository: RDFRepository):
@@ -19,7 +23,8 @@ class QueryAnalyser:
         # Mapping from a data variable to its class variable
         self.data_prop_of_var = {}
         # Variables in the select clause
-        self.select_variables = self.get_select_variables()
+        self.select_variables = []
+        self.get_select_variables()
         # Type of data variable
         self.data_var_type = {}
         # Class of variable if it is an object
@@ -28,7 +33,7 @@ class QueryAnalyser:
         self.func_props = set()
         # All inverse functional properties used in query
         self.key_func_props = set()
-        self.scan_conditions()
+        self.scan_conditions(text=self.query)
         # Different type categories for the variables
         self.var_categories = self.get_variable_categories()
 
@@ -42,8 +47,11 @@ class QueryAnalyser:
 
         return prefixes
 
-    def scan_conditions(self):
-        conditions = get_where_clause(self.query)
+    def scan_conditions(self, *, text):
+        conditions = get_where_clause(text)
+        if not conditions:
+            return
+
 
         statement_pattern = re.compile(
             r'^(\n*|;) *(?P<subject>\?\w+) +(?P<properties>[^.]+)\s*\.\s*$',
@@ -90,6 +98,8 @@ class QueryAnalyser:
                 if 'FunctionalProperty' in prop_types:
                     self.func_props.add(prop_uri)
 
+        self.scan_conditions(text=conditions)
+
     def add_triple(self, sub: str, predicate: str, obj: str):
         if sub not in self.triples:
             self.triples[sub] = {}
@@ -118,19 +128,18 @@ class QueryAnalyser:
         :param query:
         :return:
         """
-        select_pattern = re.compile(
-            r'select +(distinct +)?(?P<variables>.+)\n*(from|where)',
-            re.MULTILINE | re.IGNORECASE | re.DOTALL)
+        matches = list(SELECT_STATEMENT.finditer(self.query))
 
-        select_statement = select_pattern.search(self.query)
+        for select_statement in matches:
+            vars_ = select_statement.group('variables')
+            if vars_.strip() == '*':
+                continue
+            names = [token for token in shlex.split(vars_) if
+                     token.startswith('?')]
 
-        if not select_statement:
-            return []
-
-        line = select_statement.group('variables')
-        names = [token for token in shlex.split(line) if token.startswith('?')]
-
-        return names
+            for var in names:
+                if var not in self.select_variables:
+                    self.select_variables.append(var)
 
     def is_data_property(self, *, prop_uri: str):
         types = self.get_types(uri=prop_uri)
@@ -161,6 +170,7 @@ class QueryAnalyser:
             var_name = variable_name(var)
             if var in self.var_class:
                 var_categories['object'].append(var_name)
+                var_categories['key'].append(var_name)
                 continue
 
             if var in self.key_of_var:
@@ -181,6 +191,9 @@ class QueryAnalyser:
         class_vars = set()
 
         for var in self.select_variables:
+            if var in self.var_class:
+                class_vars.add(self.var_class[var])
+                continue
             class_vars.add(self.data_prop_of_var[var])
 
         return len(class_vars)
@@ -375,7 +388,7 @@ def get_where_clause(query: str):
                          re.IGNORECASE | re.MULTILINE | re.DOTALL)
     matches = pattern.findall(query)
     if not matches:
-        return ''
+        return None
 
     return max(pattern.findall(query), key=len)
 
