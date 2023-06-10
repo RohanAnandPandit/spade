@@ -2,6 +2,7 @@ from datetime import datetime
 import compress_pickle
 import os
 import pymongo
+import country_converter as coco
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
 from dotenv import load_dotenv, find_dotenv
@@ -108,19 +109,40 @@ def delete_all_queries(*, repository_id: str, username: str) -> None:
     queries.delete_many({'repository': repository_id, 'user': username})
 
 
+cc = coco.CountryConverter()
+
+
+def geo_json_data(name):
+    geoData = db['geoData']
+    standard_name = cc.convert(name, to="ISO3")
+
+    if standard_name != 'not found':
+        location = geoData.find_one({'properties.ISO_A3': standard_name},
+                                    {'_id': 0})
+    else:
+        location = geoData.find_one({'properties.NAME': name}, {'_id': 0})
+
+        if not location:
+            location = geoData.find_one({'properties.NAME': name.upper()},
+                                        {'_id': 0})
+
+    return location
+
+
 if __name__ == '__main__':
+    cc.convert('Pune', to='name_short')
     # save_query(title='Get countries',
     #            sparql='SELECT ?country ...',
     #            repository_id='mondial',
     #            username='rohan')
-    from backend.util import import_data
-
-    g = import_data(
-        data_url='https://www.dbis.informatik.uni-goettingen.de/Mondial'
-                 '/Mondial-RDF/mondial.n3',
-        schema_url='https://www.dbis.informatik.uni-goettingen.de/Mondial'
-                   '/Mondial-RDF/mondial-meta.n3')
-    repo = LocalRepository(name="mondial", graph=g)
+    # from backend.util import import_data
+    #
+    # g = import_data(
+    #     data_url='https://www.dbis.informatik.uni-goettingen.de/Mondial'
+    #              '/Mondial-RDF/mondial.n3',
+    #     schema_url='https://www.dbis.informatik.uni-goettingen.de/Mondial'
+    #                '/Mondial-RDF/mondial-meta.n3')
+    # repo = LocalRepository(name="mondial", graph=g)
     # add_repository(repository=repo, username='rohan', description="Trial")
     # print(list(get_queries('mondial', 'rohan')))
     import time

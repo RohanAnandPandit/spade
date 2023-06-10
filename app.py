@@ -5,7 +5,8 @@ from flask_cors import CORS
 from dotenv import load_dotenv, find_dotenv
 from backend.analysis import query_analysis, QUERY_PATH
 from backend.db import save_query, get_queries, delete_all_queries, \
-    get_repository, get_repository_info, add_repository, delete_repository
+    get_repository, get_repository_info, add_repository, delete_repository, \
+    geo_json_data
 from backend.util import run_query_file, import_data
 
 load_dotenv(find_dotenv())
@@ -63,18 +64,12 @@ def upload_file():
 def login():
     if request.method == 'POST':
         username = request.args['username']
-        session['username'] = username
-        print('username: ', session)
         return username
 
 
 @app.route('/logout', methods=['POST'])
 def logout():
     if request.method == 'POST':
-        if 'username' in session:
-            username = session['username']
-            session.pop('username', None)
-            return username
         return ''
 
 
@@ -350,6 +345,16 @@ def analysis():
                                     username=username)
         return jsonify(
             query_analysis(query=query, repository=repository))
+
+
+@app.route('/geo', methods=['GET'])
+def geo():
+    if request.method == 'GET':
+        data = None
+        if 'name' in request.args:
+            name = request.args['name']
+            data = geo_json_data(name)
+        return {'data': data}
 
 
 if __name__ == "__main__":
