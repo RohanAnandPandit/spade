@@ -29,7 +29,11 @@ import {
 } from "react-icons/bs";
 import { GoKey } from "react-icons/go";
 import { IoMdGitNetwork, IoMdTime } from "react-icons/io";
-import { MdNumbers, MdOutlineStackedBarChart } from "react-icons/md";
+import {
+  MdNumbers,
+  MdOutlineDataObject,
+  MdOutlineStackedBarChart,
+} from "react-icons/md";
 import {
   Tb123,
   TbChartSankey,
@@ -143,6 +147,7 @@ const categoryIcon = {
   [CategoryType.SCALAR]: <MdNumbers size={25} />,
   [CategoryType.LEXICAL]: <BiText size={20} />,
   [CategoryType.NUMERIC]: <Tb123 size={25} />,
+  [CategoryType.OBJECT]: <MdOutlineDataObject size={20} />,
 };
 
 const Variables = ({ variableCategories }: VariablesProps) => {
@@ -155,10 +160,13 @@ const Variables = ({ variableCategories }: VariablesProps) => {
               <List.Item key={category}>
                 <Space key={`categ-${index}`}>
                   <Tooltip title={category}>{categoryIcon[category]}</Tooltip>
+                  <Divider type="vertical" />
                   <Space>
                     {variableCategories[category].map(
                       (v: string, index: number) => (
-                        <Tag key={index}>{v}</Tag>
+                        <Tag key={index} style={{ fontSize: 14, paddingBottom: 2 }}>
+                          {v}
+                        </Tag>
                       )
                     )}
                   </Space>
