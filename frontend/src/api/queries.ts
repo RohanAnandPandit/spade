@@ -1,5 +1,5 @@
 import axios from "axios";
-import { QueryAnalysis, QueryRecord } from "../types";
+import { QueryAnalysis, QueryRecord, geoJSON } from "../types";
 
 const BACKEND_API = process.env.REACT_APP_BACKEND_API;
 
@@ -86,4 +86,19 @@ export async function getQueryAnalysis(
       numeric: [],
     },
   };
+}
+
+export async function getGeoJSON(name: string): Promise<{ data: geoJSON | null }> {
+  try {
+    const endpoint = `${BACKEND_API}/geo`;
+    const response = await axios.get(endpoint, {
+      params: {
+        name,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.log(error);
+  }
+  return { data: null };
 }

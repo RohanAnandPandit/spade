@@ -16,7 +16,7 @@ const Login = observer(() => {
       open={open}
       onOk={() => {
         login(username);
-        authStore.setUsername(username)
+        authStore.setUsername(username);
         setOpen(false);
       }}
     >

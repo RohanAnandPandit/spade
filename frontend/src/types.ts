@@ -80,6 +80,7 @@ export enum CategoryType {
   GEOGRAPHICAL = "geographical",
   LEXICAL = "lexical",
   NUMERIC = "numeric",
+  OBJECT = 'object'
 }
 
 export type VariableCategories = {
@@ -103,4 +104,10 @@ export enum RelationType {
   ONE_TO_MANY = "One-to-many",
   MANY_TO_ONE = "Many-to-one",
   MANY_TO_MANY = "Many-to-many",
+}
+
+export type geoJSON = {
+  type: string;
+  geometry: any;
+  properties: any;
 }
