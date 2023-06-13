@@ -38,14 +38,17 @@ export const TreeMap = observer(
       );
     }, [results, settings.state.darkMode, variables.key, variables.scalar]);
 
-
     return (
-      <Space direction="vertical">
-        <Statistic
-          title={hoveredNode ? hoveredNode.data.title : titleColumn}
-          value={hoveredNode ? titleSizes[hoveredNode.data.title] : valueColumn}
-        />
-
+      <Space direction="vertical" style={{ justifyContent: "center" }}>
+        <div style={{ justifyContent: "center" }}>
+          <Statistic
+            title={hoveredNode ? hoveredNode.data.title : titleColumn}
+            value={
+              hoveredNode ? titleSizes[hoveredNode.data.title] : valueColumn
+            }
+            style={{ margin: "auto" }}
+          />
+        </div>
         <Treemap
           data={data}
           animation={{
@@ -55,7 +58,7 @@ export const TreeMap = observer(
           onLeafMouseOver={(x) => setHoveredNode(x)}
           onLeafMouseOut={() => setHoveredNode(null)}
           width={width}
-          height={height - 75}
+          height={height - 25}
           mode={mode}
           colorType="literal"
           getLabel={(x) => x.title}
@@ -81,7 +84,7 @@ export function getHierarchicalData(
     const titleIndex = results.header.indexOf(column);
     const title = row[titleIndex];
     const size = parseFloat(row[sizeIndex]);
-    const color = randomColor({ luminosity: darkMode ? "light" : "dark" });
+    const color = randomColor({ luminosity: "light" });
     // Leaf node contains title and size but no children
     dataFromTitle[row[titleIndex]] = {
       [idField]: title,
@@ -158,7 +161,7 @@ export function getHierarchicalData(
   const data = {
     title: label, // Text to show hierarchy of columns
     children,
-    color: shadeColor(children[0].color, -30),
+    color: "transparent",
   };
 
   return { data, titleSizes };
