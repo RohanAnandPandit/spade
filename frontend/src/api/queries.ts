@@ -84,6 +84,7 @@ export async function getQueryAnalysis(
       lexical: [],
       date: [],
       numeric: [],
+      object: [],
     },
   };
 }
@@ -100,5 +101,5 @@ export async function getGeoJSON(region: string): Promise<GeoData> {
   } catch (error) {
     console.log(error);
   }
-  return { region, coordinates: [], name: '', type: '' };
+  return { region, coordinates: [], name: "", type: "" };
 }

@@ -82,6 +82,7 @@ const Charts = observer(({ query, results }: ChartsProps) => {
       lexical: [],
       date: [],
       numeric: [],
+      object: []
     },
   });
 

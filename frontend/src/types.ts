@@ -91,6 +91,7 @@ export type VariableCategories = {
   lexical: string[];
   date: string[];
   numeric: string[];
+  object: string[];
 };
 
 export type QueryAnalysis = {
