@@ -106,8 +106,13 @@ export enum RelationType {
   MANY_TO_MANY = "Many-to-many",
 }
 
-export type geoJSON = {
+
+export type Coordinates = [number, number][] | [number, number][][] ;
+
+export type GeoData = {
+  region: string;
+  name: string;
+  coordinates: any;
   type: string;
-  geometry: any;
-  properties: any;
 }
+

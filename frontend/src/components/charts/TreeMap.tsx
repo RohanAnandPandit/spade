@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Treemap, TreemapPoint } from "react-vis";
 import "react-vis/dist/style.css";
 import { QueryResults, VariableCategories } from "../../types";
@@ -7,6 +7,7 @@ import randomColor from "randomcolor";
 import { Space, Statistic } from "antd";
 import { observer } from "mobx-react-lite";
 import { shadeColor } from "../../utils/queryResults";
+import { useStore } from "../../stores/store";
 
 type ModeOption = "squarify" | "circlePack";
 
@@ -20,16 +21,23 @@ type TreeMapProps = {
 
 export const TreeMap = observer(
   ({ results, width, height, mode = "squarify", variables }: TreeMapProps) => {
-    // const rootStore = useStore();
-    // const settings = rootStore.settingsStore;
+    const rootStore = useStore();
+    const settings = rootStore.settingsStore;
     const [hoveredNode, setHoveredNode] = useState<TreemapPoint | null>();
 
     const titleColumn = variables.key.at(-1)!;
     const valueColumn = variables.scalar[0];
 
     const { data, titleSizes } = useMemo(() => {
-      return getHierarchicalData(results, variables.key, variables.scalar[0]);
-    }, [results, variables.key, variables.scalar]);
+      return getHierarchicalData(
+        results,
+        variables.key,
+        variables.scalar[0],
+        "title",
+        settings.darkMode()
+      );
+    }, [results, settings.state.darkMode, variables.key, variables.scalar]);
+
 
     return (
       <Space direction="vertical">
@@ -61,7 +69,8 @@ export function getHierarchicalData(
   results: QueryResults,
   keyColumns: string[],
   sizeColumn: string,
-  idField: "name" | "title" = "title"
+  idField: "name" | "title",
+  darkMode: boolean
 ): any {
   const sizeIndex = results.header.indexOf(sizeColumn);
   const titleSizes = {};
@@ -72,7 +81,7 @@ export function getHierarchicalData(
     const titleIndex = results.header.indexOf(column);
     const title = row[titleIndex];
     const size = parseFloat(row[sizeIndex]);
-    const color = randomColor({ luminosity: "light" });
+    const color = randomColor({ luminosity: darkMode ? "light" : "dark" });
     // Leaf node contains title and size but no children
     dataFromTitle[row[titleIndex]] = {
       [idField]: title,
