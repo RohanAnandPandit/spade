@@ -107,13 +107,14 @@ const GraphVis = observer(
           avoidOverlap: 0.3,
         },
         barnesHut: {
-          springLength: 200,
+          springLength: 250,
           avoidOverlap: 0.2,
           gravitationalConstant: -2000,
         },
         maxVelocity: 50,
         solver: hierarchical ? "hierarchicalRepulsion" : "forceAtlas2Based", //"barnesHut", //forceAtlas2Based
-        timestep: 0.35,
+        timestep: 0.05,
+        adaptiveTimestep: true,
         stabilization: true,
         hierarchicalRepulsion: {
           avoidOverlap: 1,
