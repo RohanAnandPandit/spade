@@ -1,5 +1,5 @@
 import axios from "axios";
-import { QueryAnalysis, QueryRecord, geoJSON } from "../types";
+import { GeoData, QueryAnalysis, QueryRecord } from "../types";
 
 const BACKEND_API = process.env.REACT_APP_BACKEND_API;
 
@@ -84,21 +84,22 @@ export async function getQueryAnalysis(
       lexical: [],
       date: [],
       numeric: [],
+      object: [],
     },
   };
 }
 
-export async function getGeoJSON(name: string): Promise<{ data: geoJSON | null }> {
+export async function getGeoJSON(region: string): Promise<GeoData> {
   try {
     const endpoint = `${BACKEND_API}/geo`;
     const response = await axios.get(endpoint, {
       params: {
-        name,
+        region,
       },
     });
-    return response.data;
+    return response.data.geoData;
   } catch (error) {
     console.log(error);
   }
-  return { data: null };
+  return { region, coordinates: [], name: "", type: "" };
 }

@@ -112,10 +112,14 @@ def delete_all_queries(*, repository_id: str, username: str) -> None:
 cc = coco.CountryConverter()
 
 
+def region_short_name(region):
+    return cc.convert(region, to="name_short")
+
+
 def geo_json_data(name):
     geoData = db['geoData']
     standard_name = cc.convert(name, to="ISO3")
-
+    location = None
     if standard_name != 'not found':
         location = geoData.find_one({'properties.ISO_A3': standard_name},
                                     {'_id': 0})

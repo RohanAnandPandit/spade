@@ -82,16 +82,21 @@ const Charts = observer(({ query, results }: ChartsProps) => {
       lexical: [],
       date: [],
       numeric: [],
+      object: []
     },
   });
-  const { allRelations, allIncomingLinks, allOutgoingLinks } = useMemo(
-    () => getAllRelations(results, results.header),
-    [results]
-  );
-  const possibleCharts: ChartType[] = useMemo(
-    () => recommendedCharts(queryAnalysis.variables, allRelations, results),
-    [allRelations, queryAnalysis.variables, results]
-  );
+
+  const [possibleCharts, setPossibleCharts] = useState<ChartType[]>([]);
+
+  const { allRelations, allIncomingLinks, allOutgoingLinks } = useMemo(() => {
+    const { allRelations, allIncomingLinks, allOutgoingLinks } =
+      getAllRelations(results, results.header);
+    setPossibleCharts(
+      recommendedCharts(queryAnalysis.variables, allRelations, results)
+    );
+    return { allRelations, allIncomingLinks, allOutgoingLinks };
+  }, [queryAnalysis.variables, results]);
+
   useEffect(() => {
     if (repositoryStore.currentRepository()) {
       getQueryAnalysis(

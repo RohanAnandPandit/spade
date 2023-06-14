@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Treemap, TreemapPoint } from "react-vis";
 import "react-vis/dist/style.css";
 import { QueryResults, VariableCategories } from "../../types";
@@ -7,6 +7,7 @@ import randomColor from "randomcolor";
 import { Space, Statistic } from "antd";
 import { observer } from "mobx-react-lite";
 import { shadeColor } from "../../utils/queryResults";
+import { useStore } from "../../stores/store";
 
 type ModeOption = "squarify" | "circlePack";
 
@@ -20,24 +21,34 @@ type TreeMapProps = {
 
 export const TreeMap = observer(
   ({ results, width, height, mode = "squarify", variables }: TreeMapProps) => {
-    // const rootStore = useStore();
-    // const settings = rootStore.settingsStore;
+    const rootStore = useStore();
+    const settings = rootStore.settingsStore;
     const [hoveredNode, setHoveredNode] = useState<TreemapPoint | null>();
 
     const titleColumn = variables.key.at(-1)!;
     const valueColumn = variables.scalar[0];
 
     const { data, titleSizes } = useMemo(() => {
-      return getHierarchicalData(results, variables.key, variables.scalar[0]);
-    }, [results, variables.key, variables.scalar]);
+      return getHierarchicalData(
+        results,
+        variables.key,
+        variables.scalar[0],
+        "title",
+        settings.darkMode()
+      );
+    }, [results, settings.state.darkMode, variables.key, variables.scalar]);
 
     return (
-      <Space direction="vertical">
-        <Statistic
-          title={hoveredNode ? hoveredNode.data.title : titleColumn}
-          value={hoveredNode ? titleSizes[hoveredNode.data.title] : valueColumn}
-        />
-
+      <Space direction="vertical" style={{ justifyContent: "center" }}>
+        <div style={{ justifyContent: "center" }}>
+          <Statistic
+            title={hoveredNode ? hoveredNode.data.title : titleColumn}
+            value={
+              hoveredNode ? titleSizes[hoveredNode.data.title] : valueColumn
+            }
+            style={{ margin: "auto" }}
+          />
+        </div>
         <Treemap
           data={data}
           animation={{
@@ -47,7 +58,7 @@ export const TreeMap = observer(
           onLeafMouseOver={(x) => setHoveredNode(x)}
           onLeafMouseOut={() => setHoveredNode(null)}
           width={width}
-          height={height - 75}
+          height={height - 25}
           mode={mode}
           colorType="literal"
           getLabel={(x) => x.title}
@@ -61,7 +72,8 @@ export function getHierarchicalData(
   results: QueryResults,
   keyColumns: string[],
   sizeColumn: string,
-  idField: "name" | "title" = "title"
+  idField: "name" | "title",
+  darkMode: boolean
 ): any {
   const sizeIndex = results.header.indexOf(sizeColumn);
   const titleSizes = {};
@@ -149,7 +161,7 @@ export function getHierarchicalData(
   const data = {
     title: label, // Text to show hierarchy of columns
     children,
-    color: shadeColor(children[0].color, -30),
+    color: "transparent",
   };
 
   return { data, titleSizes };

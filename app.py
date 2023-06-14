@@ -1,4 +1,7 @@
 import os
+import urllib
+
+import requests
 from flask import Flask, request, jsonify, flash, send_from_directory, session
 from werkzeug.utils import secure_filename
 from flask_cors import CORS
@@ -6,7 +9,7 @@ from dotenv import load_dotenv, find_dotenv
 from backend.analysis import query_analysis, QUERY_PATH
 from backend.db import save_query, get_queries, delete_all_queries, \
     get_repository, get_repository_info, add_repository, delete_repository, \
-    geo_json_data
+    geo_json_data, region_short_name
 from backend.util import run_query_file, import_data
 
 load_dotenv(find_dotenv())
@@ -347,14 +350,52 @@ def analysis():
             query_analysis(query=query, repository=repository))
 
 
+def get_region_query(region):
+    query = []
+    for name in region.split(','):
+        short_name = region_short_name(name)
+        if short_name != 'not found':
+            query.append(short_name)
+        else:
+            query.append(name)
+
+    return ', '.join(query)
+
+
 @app.route('/geo', methods=['GET'])
 def geo():
+    OK = 200
     if request.method == 'GET':
-        data = None
-        if 'name' in request.args:
-            name = request.args['name']
-            data = geo_json_data(name)
-        return {'data': data}
+        MAP_API = 'https://nominatim.openstreetmap.org/search.php?q={query}' \
+                  '&polygon_geojson=1&format=json'
+        coordinates = None
+        type_ = None
+        if 'region' in request.args:
+            region = request.args['region']
+            query = get_region_query(region)
+            url = MAP_API.format(query=urllib.parse.quote(query, safe=""))
+
+            response = requests.get(url)
+            if response.status_code == OK:
+                polygons = [data
+                            for data in response.json() if
+                            data['type'] in (
+                                'city', 'country', 'continent',
+                                'administrative', 'town')]
+                if polygons:
+                    coordinates = polygons[0]["geojson"]['coordinates']
+                    type_ = polygons[0]["geojson"]['type']
+
+                    return {'geoData': {'region': region, 'type': type_,
+                                        'name': query,
+                                        'coordinates': coordinates}}
+            data = geo_json_data(region)
+            if data:
+                coordinates = data['geometry']['coordinates']
+                type_ = data['geometry']['type']
+
+            return {'geoData': {'region': region, 'type': type_, 'name': query,
+                                'coordinates': coordinates}}
 
 
 if __name__ == "__main__":

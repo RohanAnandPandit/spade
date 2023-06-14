@@ -58,13 +58,14 @@ export function recommendedCharts(
         charts.add(ChartType.HEAT_MAP);
         charts.add(ChartType.CHORD_DIAGRAM);
         charts.add(ChartType.SANKEY);
-
-        charts.add(ChartType.STACKED_BAR);
-        charts.add(ChartType.GROUPED_BAR);
-        charts.add(ChartType.SPIDER);
-        charts.add(ChartType.LINE);
       }
     }
+  }
+  if (key.length === 2 && scalar.length >= 1) {
+    charts.add(ChartType.STACKED_BAR);
+    charts.add(ChartType.GROUPED_BAR);
+    charts.add(ChartType.SPIDER);
+    charts.add(ChartType.LINE);
   } else if (key.length === 1) {
     if (
       lexical.length > 0 &&
