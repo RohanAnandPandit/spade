@@ -1,9 +1,9 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import { LabelSeries, Sunburst } from "react-vis";
 import { QueryResults, VariableCategories } from "../../types";
 import randomColor from "randomcolor";
 import { shadeColor } from "../../utils/queryResults";
-import { Alert, Breadcrumb, Divider, Space } from "antd";
+import { Alert, Breadcrumb, Divider, Space, Spin } from "antd";
 
 type SunburstProps = {
   results: QueryResults;
@@ -59,57 +59,44 @@ function updateData(data: any, keyPath: any) {
   return data;
 }
 
-class SunburstChart extends React.Component<SunburstProps, any> {
-  state: any = {
-    path: null,
-    decoratedData: {},
-    data: {},
-    finalValue: false,
-    clicked: false,
-    titleSizes: {},
-  };
+const SunburstChart = ({ results, variables, width, height }: SunburstProps) => {
+  const [path, setPath] = useState<any>(null);
+  const [data, setData] = useState<any>(null);
+  const [clicked, setClicked] = useState<boolean>(false);
 
-  componentDidMount(): void {
-    const { data, titleSizes } = updateData(
-      getHierarchicalData(
-        this.props.results,
-        this.props.variables.key,
-        this.props.variables.scalar[0]
-      ),
-      false
+  const { titleSizes, decoratedData } = useMemo(() => {
+    const { data, titleSizes } = getHierarchicalData(
+      results,
+      variables.key,
+      variables.scalar[0]
     );
-    this.setState({
-      path: null,
-      decoratedData: data,
-      data,
-      clicked: false,
-      titleSizes,
-    });
-  }
+    const decoratedData = updateData(data, false);
+    setPath(null);
+    setClicked(false);
+    setData(decoratedData);
+    return { decoratedData, titleSizes };
+  }, [results, variables.key, variables.scalar]);
 
-  render() {
-    const { clicked, data, finalValue, path, titleSizes } = this.state;
-    return (
-      <div className="basic-sunburst-example-wrapper">
-        <div>
-          <Space>
-            <Alert type="info" message="Click to lock/unlock selection" />
-            <Divider type="vertical" />
+  const finalValue = useMemo(() => (path ? path[path.length - 1] : ""), [path]);
+  return (
+    <Space direction="vertical">
+      <Space>
+        <Alert type="info" message="Click to lock/unlock selection" />
+        <Divider type="vertical" />
 
-            {path && (
-              <Breadcrumb
-                style={{ fontSize: 20 }}
-                separator=">"
-                items={path.map((title: string) => {
-                  return { title };
-                })}
-              />
-            )}
-          </Space>
-        </div>
+        {path && (
+          <Breadcrumb
+            style={{ fontSize: 20 }}
+            separator=">"
+            items={path.map((title: string) => {
+              return { title };
+            })}
+          />
+        )}
+      </Space>
+      <Spin spinning={!data}>
         <Sunburst
           animation
-          className="basic-sunburst-example"
           hideRootNode
           onValueMouseOver={(node) => {
             if (clicked) {
@@ -120,22 +107,17 @@ class SunburstChart extends React.Component<SunburstProps, any> {
               res[row] = true;
               return res;
             }, {});
-            this.setState({
-              finalValue: path[path.length - 1],
-              path: path.slice(1),
-              data: updateData(this.state.decoratedData, pathAsMap),
-            });
+
+            setPath(path.slice(1));
+            setData(updateData(decoratedData, pathAsMap));
           }}
-          onValueMouseOut={() =>
-            clicked
-              ? () => {}
-              : this.setState({
-                  path: null,
-                  finalValue: false,
-                  data: updateData(this.state.decoratedData, false),
-                })
-          }
-          onValueClick={() => this.setState({ clicked: !clicked })}
+          onValueMouseOut={() => {
+            if (!clicked) {
+              setPath(null);
+              setData(updateData(decoratedData, false));
+            }
+          }}
+          onValueClick={() => setClicked(!clicked)}
           style={{
             stroke: "#ddd",
             strokeOpacity: 0.3,
@@ -145,8 +127,8 @@ class SunburstChart extends React.Component<SunburstProps, any> {
           getSize={(d) => d.value}
           getColor={(d) => d.hex}
           data={data}
-          height={this.props.height - 75}
-          width={this.props.width}
+          height={height - 75}
+          width={width}
         >
           <LabelSeries
             data={[
@@ -162,10 +144,10 @@ class SunburstChart extends React.Component<SunburstProps, any> {
             style={{ fontSize: 20 }}
           />
         </Sunburst>
-      </div>
-    );
-  }
-}
+      </Spin>
+    </Space>
+  );
+};
 export function getHierarchicalData(
   results: QueryResults,
   keyColumns: string[],
