@@ -35,21 +35,15 @@ export const HeatMap = observer(
         sizes[key2] = sizes[key2] ?? {};
         sizes[key2][key1] = row[scalarIdx];
       }
-      const xLabels: string[] =
-        key1Values.size > key2Values.size
-          ? Array.from(key1Values)
-          : Array.from(key2Values);
-      const yLabels: string[] =
-        key1Values.size > key2Values.size
-          ? Array.from(key2Values)
-          : Array.from(key1Values);
+      const xLabels: string[] = Array.from(key1Values);
+      const yLabels: string[] = Array.from(key2Values);
 
-      const series = yLabels.map((yCategory) => {
+      const series = xLabels.map((xCategory) => {
         return {
-          name: yCategory,
-          data: xLabels.map((xCategory) => ({
-            x: xCategory,
-            y: sizes[yCategory][xCategory] ?? 0,
+          name: xCategory,
+          data: yLabels.map((yCategory) => ({
+            x: yCategory,
+            y: sizes[xCategory][yCategory] ?? 0,
           })),
         };
       });
@@ -72,7 +66,6 @@ export const HeatMap = observer(
           options={options}
           series={series}
           type="heatmap"
-          height={height + 100}
         />
         <Alert message="Hover over cells to see the value. Click on menu icon at the top right to download the chart." />
       </Space>
