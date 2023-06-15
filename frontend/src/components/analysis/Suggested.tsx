@@ -1,16 +1,18 @@
 import { Space } from "antd";
-import { QueryResults } from "../../types";
+import { QueryResults, VariableCategories } from "../../types";
 import Cardinalities from "./Cardinalities";
 import { ColumnRelations } from "./ColumnRelations";
 
 type SuggestedProps = {
   results: QueryResults;
+  variables: VariableCategories;
   allRelations: any;
   allOutgoingLinks: any;
   allIncomingLinks: any;
 };
 export const Suggested = ({
   results,
+  variables,
   allRelations,
   allIncomingLinks,
   allOutgoingLinks,
@@ -19,11 +21,12 @@ export const Suggested = ({
     <Space direction="vertical" style={{ width: "100%" }}>
       <ColumnRelations
         results={results}
+        variables={variables}
         allRelations={allRelations}
         allIncomingLinks={allIncomingLinks}
         allOutgoingLinks={allOutgoingLinks}
       />
-      <Cardinalities results={results} />
+      <Cardinalities results={results} variables={variables} />
     </Space>
   );
 };

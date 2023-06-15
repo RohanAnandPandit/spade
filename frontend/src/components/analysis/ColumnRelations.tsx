@@ -5,7 +5,7 @@ import {
   TbRelationOneToOne,
 } from "react-icons/tb";
 import { CgArrowLongLeftC, CgArrowLongRightC } from "react-icons/cg";
-import { QueryResults, RelationType } from "../../types";
+import { QueryResults, RelationType, VariableCategories } from "../../types";
 import {
   Alert,
   Card,
@@ -33,6 +33,7 @@ const relationIcons: { [key: string]: JSX.Element } = {
 };
 type ColumnRelationsProps = {
   results: QueryResults;
+  variables: VariableCategories;
   allRelations: any;
   allIncomingLinks: any;
   allOutgoingLinks: any;
@@ -40,18 +41,19 @@ type ColumnRelationsProps = {
 export const ColumnRelations = observer(
   ({
     results,
+    variables,
     allRelations,
     allIncomingLinks,
     allOutgoingLinks,
   }: ColumnRelationsProps) => {
     return (
       <Card title="Entity Relationships">
-        {results.header.length < 2 ? (
+        {variables.key.length < 2 ? (
           <Alert banner message="There is only one column" />
         ) : (
           <Space>
-            {results.header.map((colA: string, i: number) =>
-              results.header.map((colB: string, j: number) => {
+            {variables.key.map((colA: string, i: number) =>
+              variables.key.map((colB: string, j: number) => {
                 return (
                   i < j && (
                     <Relation

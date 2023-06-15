@@ -433,6 +433,7 @@ const Charts = observer(({ query, results }: ChartsProps) => {
             children: (
               <Suggested
                 results={results}
+                variables={queryAnalysis.variables}
                 allRelations={allRelations}
                 allIncomingLinks={allIncomingLinks}
                 allOutgoingLinks={allOutgoingLinks}
