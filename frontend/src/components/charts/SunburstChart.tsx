@@ -41,7 +41,7 @@ function getKeyPath(node) {
  * if this is false then all nodes are marked as selected
  * @returns {Object} Updated tree structure
  */
-function updateData(data, keyPath) {
+function updateData(data: any, keyPath: any) {
   if (data.children) {
     data.children.map((child) => updateData(child, keyPath));
   }
@@ -116,7 +116,7 @@ class SunburstChart extends React.Component<SunburstProps, any> {
               return;
             }
             const path = getKeyPath(node).reverse();
-            const pathAsMap = path.reduce((res, row) => {
+            const pathAsMap = path.reduce((res: any, row: any) => {
               res[row] = true;
               return res;
             }, {});
@@ -202,6 +202,7 @@ export function getHierarchicalData(
 
     const newDataFromTitle = {}; // Data with previous column as key
     const parentChildren = {};
+    // Get all unique children for each unique parent
     for (let row of results.data) {
       const parentValue = row[parentTitleIndex];
       const childValue = row[childTitleIndex];
@@ -217,9 +218,10 @@ export function getHierarchicalData(
           border: "thin solid black",
         },
       };
-      titleSizes[parentValue] = 0;
+      titleSizes[parentValue] = titleSizes[parentValue] ?? 0;
       const parentData = newDataFromTitle[parentValue];
       let groupColour = "";
+
       for (let childValue of parentChildren[parentValue]) {
         const childData = dataFromTitle[childValue];
 
@@ -229,8 +231,9 @@ export function getHierarchicalData(
         }
 
         parentData.children.push(childData);
-        titleSizes[parentValue] += childData.value; // Increment parent's size using child for circle packing
+        titleSizes[parentValue] += titleSizes[childData.name]; // Increment parent's value using child's value
       }
+      // The parent node will be slightly darker in colour
       parentData.hex = shadeColor(
         groupColour ? groupColour : randomColor({ luminosity: "light" }),
         -20
@@ -240,7 +243,7 @@ export function getHierarchicalData(
     dataFromTitle = newDataFromTitle;
   }
   const children: any[] = Object.values(dataFromTitle);
-  const label = keyColumns[0];
+  const label = keyColumns[0]; // Label for root node will be hidden anyways
   const totalValue = children
     .map((child: any) => child.value)
     .reduce((a, b) => a + b, 0);
@@ -248,9 +251,8 @@ export function getHierarchicalData(
   titleSizes[label] = totalValue;
 
   const data = {
-    name: label, // Text to show hierarchy of columns
+    name: label,
     children,
-    // color: shadeColor(children[0].color, -30),
   };
 
   return { data, titleSizes };
