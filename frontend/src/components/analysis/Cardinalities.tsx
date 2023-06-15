@@ -1,17 +1,18 @@
 import { Card, Skeleton, Space, Statistic } from "antd";
-import { QueryResults } from "../../types";
+import { QueryResults, VariableCategories } from "../../types";
 import { uniqueValues } from "../../utils/queryResults";
 import { useMemo, useState } from "react";
 
 type CardinatlitiesProps = {
   results: QueryResults;
+  variables: VariableCategories;
 };
 
-const Cardinatlities = ({ results }: CardinatlitiesProps) => {
+const Cardinatlities = ({ results, variables }: CardinatlitiesProps) => {
   return (
     <Card title="Cardinality of columns">
       <Space>
-        {results.header.map((column: string) => (
+        {variables.key.map((column: string) => (
           <ColumnCardinality key={column} results={results} column={column} />
         ))}
       </Space>

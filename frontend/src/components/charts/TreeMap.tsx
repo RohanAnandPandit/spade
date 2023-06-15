@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Treemap, TreemapPoint } from "react-vis";
 import "react-vis/dist/style.css";
 import { QueryResults, VariableCategories } from "../../types";
