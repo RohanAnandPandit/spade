@@ -56,6 +56,7 @@ class RemoteRepository(RDFRepository):
             response = requests.get(
                 f'{self.endpoint}?query={urllib.parse.quote(query, safe="")}',
                 headers={'Accept': format})
+            response.encoding = 'utf-8'
             if response.status_code == NOT_ACCEPTABLE:
                 continue
             if response.status_code == OK:

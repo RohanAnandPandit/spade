@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Tabs, TabsProps } from "antd";
-import { ChartType, QueryAnalysis, QueryResults } from "../../types";
+import { ChartType, QueryAnalysis, QueryResults, RepositoryId } from "../../types";
 import BarChart from "../charts/BarChart";
 import { observer } from "mobx-react-lite";
 import { useStore } from "../../stores/store";
@@ -41,7 +41,7 @@ import HierarchyTree from "../charts/HierarchyTree";
 import SunburstChart from "../charts/SunburstChart";
 import HeatMap from "../charts/HeatMap";
 import ChoroplethMap from "../charts/ChoroplethMap";
-import { getAllRelations, recommendedCharts } from "../../utils/charts";
+import { getAllRelations, getRecommendedCharts } from "../../utils/charts";
 import { Suggested } from "../analysis/Suggested";
 import NetworkChart from "../charts/NetworkChart";
 import { IoMdGitNetwork } from "react-icons/io";
@@ -53,12 +53,12 @@ import { RiBarChartGroupedFill } from "react-icons/ri";
 type ChartsProps = {
   query: string;
   results: QueryResults;
+  repository: RepositoryId | null;
 };
 
-const Charts = observer(({ query, results }: ChartsProps) => {
+const Charts = observer(({ query, results, repository }: ChartsProps) => {
   const rootStore = useStore();
   const settings = rootStore.settingsStore;
-  const repositoryStore = rootStore.repositoryStore;
   const username = rootStore.authStore.username!;
 
   const chartWidth = Math.floor(
@@ -82,32 +82,9 @@ const Charts = observer(({ query, results }: ChartsProps) => {
       lexical: [],
       date: [],
       numeric: [],
-      object: []
+      object: [],
     },
   });
-
-  const [possibleCharts, setPossibleCharts] = useState<ChartType[]>([]);
-
-  const { allRelations, allIncomingLinks, allOutgoingLinks } = useMemo(() => {
-    const { allRelations, allIncomingLinks, allOutgoingLinks } =
-      getAllRelations(results, results.header);
-    setPossibleCharts(
-      recommendedCharts(queryAnalysis.variables, allRelations, results)
-    );
-    return { allRelations, allIncomingLinks, allOutgoingLinks };
-  }, [queryAnalysis.variables, results]);
-
-  useEffect(() => {
-    if (repositoryStore.currentRepository()) {
-      getQueryAnalysis(
-        query,
-        repositoryStore.currentRepository()!,
-        username
-      ).then((res) => {
-        setQueryAnalysis(res);
-      });
-    }
-  }, [query, repositoryStore, results, username]);
 
   const chartTabs: TabsProps["items"] = useMemo(() => {
     if (!queryAnalysis) {
@@ -418,6 +395,50 @@ const Charts = observer(({ query, results }: ChartsProps) => {
     ];
   }, [chartHeight, chartWidth, queryAnalysis, results]);
 
+  const [recommendedCharts, setRecommendedCharts] = useState<ChartType[]>([]);
+
+  const possibleCharts = useMemo(() => {
+    return settings.showAllCharts()
+      ? chartTabs
+      : queryAnalysis.pattern
+      ? chartTabs.filter(({ key: chartKey }) => {
+          return (
+            queryAnalysis.visualisations.includes(chartKey as ChartType) &&
+            recommendedCharts.includes(chartKey as ChartType)
+          );
+        })
+      : chartTabs.filter(({ key }) => {
+          return recommendedCharts.includes(key as ChartType);
+        });
+  }, [
+    chartTabs,
+    queryAnalysis.pattern,
+    queryAnalysis.visualisations,
+    recommendedCharts,
+    settings,
+  ]);
+
+  const { allRelations, allIncomingLinks, allOutgoingLinks } = useMemo(() => {
+    const { allRelations, allIncomingLinks, allOutgoingLinks } =
+      getAllRelations(results, results.header);
+    setRecommendedCharts(
+      getRecommendedCharts(queryAnalysis.variables, allRelations, results)
+    );
+    return { allRelations, allIncomingLinks, allOutgoingLinks };
+  }, [queryAnalysis.variables, results]);
+
+  useEffect(() => {
+    if (repository) {
+      getQueryAnalysis(
+        query,
+        repository!,
+        username
+      ).then((res) => {
+        setQueryAnalysis(res);
+      });
+    }
+  }, [query, repository, username]);
+
   return (
     <Fullscreen>
       <Tabs
@@ -440,17 +461,7 @@ const Charts = observer(({ query, results }: ChartsProps) => {
               />
             ),
           },
-          ...(settings.showAllCharts()
-            ? chartTabs
-            : queryAnalysis.pattern
-            ? chartTabs.filter(
-                ({ key }) =>
-                  queryAnalysis.visualisations.includes(key as ChartType) &&
-                  possibleCharts.includes(key as ChartType)
-              )
-            : chartTabs.filter(({ key }) =>
-                possibleCharts.includes(key as ChartType)
-              )),
+          ...possibleCharts,
         ]}
         style={{ padding: 10 }}
       />

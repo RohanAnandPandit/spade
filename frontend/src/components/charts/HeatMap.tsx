@@ -1,7 +1,7 @@
 import { observer } from "mobx-react-lite";
 import { QueryResults, VariableCategories } from "../../types";
 import { useMemo } from "react";
-import { useStore } from "../../stores/store";
+// import { useStore } from "../../stores/store";
 import ReactApexChart from "react-apexcharts";
 import { Alert, Space } from "antd";
 
@@ -14,8 +14,8 @@ type HeatMapProps = {
 
 export const HeatMap = observer(
   ({ results, width, height, variables }: HeatMapProps) => {
-    const rootStore = useStore();
-    const settings = rootStore.settingsStore;
+    // const rootStore = useStore();
+    // const settings = rootStore.settingsStore;
 
     const series: any = useMemo(() => {
       const key1Idx = results.header.indexOf(variables.key[0]);

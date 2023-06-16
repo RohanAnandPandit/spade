@@ -25,6 +25,8 @@ type QueryEditorProps = {
   loading: boolean;
   setLoading: React.Dispatch<React.SetStateAction<boolean>>;
   queryName: string;
+  repository: RepositoryId | null;
+  setRepository: React.Dispatch<React.SetStateAction<string | null>>;
 };
 
 const Editor = ({
@@ -36,22 +38,19 @@ const Editor = ({
   loading,
   setLoading,
   queryName,
+  repository,
+  setRepository,
 }: QueryEditorProps) => {
   const rootStore = useStore();
   const settings = rootStore.settingsStore;
-  const repositoryStore = rootStore.repositoryStore;
   const queriesStore = rootStore.queriesStore;
   const authStore = rootStore.authStore;
   const username = authStore.username!;
-
-  const [repository, setRepository] = useState<RepositoryId | null>(
-    repositoryStore.currentRepository()
-  );
   const [properties, setProperties] = useState<URI[]>([]);
   const [types, setTypes] = useState<URI[]>([]);
 
   useEffect(() => {
-    if (repository !== null) {
+    if (repository) {
       getAllProperties(repository, username).then((res) => {
         setProperties(res);
       });

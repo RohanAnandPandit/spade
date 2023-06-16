@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getPropertyValues } from "../../api/dataset";
 import { Descriptions, Skeleton } from "antd";
-import { removePrefix } from "../../utils/queryResults";
+import { displayText, removePrefix } from "../../utils/queryResults";
 import { PropertyType, RepositoryId, URI } from "../../types";
 import { useStore } from "../../stores/store";
 
@@ -33,8 +33,8 @@ export const PropertyValues = ({
     <Skeleton loading={loading}>
       <Descriptions size="small" bordered>
         {data.map(([prop, value]) => (
-          <Descriptions.Item key={prop} label={removePrefix(prop)}>
-            {removePrefix(value)}
+          <Descriptions.Item key={prop} label={removePrefix(prop)} span={3}>
+            {displayText(value)}
           </Descriptions.Item>
         ))}
       </Descriptions>
