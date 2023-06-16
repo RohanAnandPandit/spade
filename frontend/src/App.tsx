@@ -8,14 +8,24 @@ import { useStore } from "./stores/store";
 import HomePage from "./pages/home/HomePage";
 import ContactPage from "./pages/contact/ContactPage";
 import "../node_modules/bootstrap/dist/css/bootstrap.min.css";
+import Login from "./pages/home/Login";
 
 const { Header } = Layout;
 const { darkAlgorithm, defaultAlgorithm } = theme;
 
 const App = () => {
   const rootStore = useStore();
+  const authStore = rootStore.authStore;
   const settings = rootStore.settingsStore;
 
+  if (!authStore.username) {
+    return (
+      <>
+        <Login />
+      </>
+    )
+  }
+  
   return (
     <ConfigProvider
       theme={{
