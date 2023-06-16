@@ -401,7 +401,7 @@ def query_analysis(query: str, repository):
     if analyser.class_with_data_properties():
         pattern = 'Class with data properties'
         visualisations = ['Calendar', 'Scatter', 'Bubble', 'Bar',
-                          'Choropleth Map', 'Word Cloud']
+                          'Choropleth Map', 'Word Cloud', 'Pie']
     elif analyser.two_classes_linked_by_func_prop():
         pattern = 'Two classes linked by a functional property'
         visualisations = ['Tree Map', 'Hierarchy Tree', 'Circle Packing',
