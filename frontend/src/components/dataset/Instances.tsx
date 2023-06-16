@@ -5,7 +5,6 @@ import {
   Collapse,
   Divider,
   Select,
-  Skeleton,
   Space,
   Spin,
   Tooltip,
@@ -35,7 +34,6 @@ const Instances = ({ repository }) => {
         <Typography.Text style={{ fontSize: 15 }}>Select class</Typography.Text>
         <Select
           placeholder={"Enter class name"}
-          // style={{ width: 200 }}
           value={type}
           showSearch
           filterOption={(input, option) =>
