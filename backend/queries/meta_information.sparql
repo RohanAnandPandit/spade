@@ -2,8 +2,14 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
 SELECT *
 WHERE {{
-  optional {{ <{uri}> rdfs:comment ?comment }}
-  optional {{ <{uri}> rdfs:label ?label }}
-  optional {{ <{uri}> rdfs:range ?range }} # kind of resource expected as the object of this prop
-  optional {{ <{uri}> rdfs:domain ?domain }} # kind of resource expected as the subject of this prop
+  OPTIONAL {{
+    <{uri}> rdfs:comment ?comment .
+    FILTER (langMatches(lang(?comment), "en")) .
+  }}
+  OPTIONAL {{
+    <{uri}> rdfs:label ?label .
+    FILTER (langMatches(lang(?label), "en")) .
+  }}
+  OPTIONAL {{ <{uri}> rdfs:range ?range }} # kind of resource expected as the object of this prop
+  OPTIONAL {{ <{uri}> rdfs:domain ?domain }} # kind of resource expected as the subject of this prop
 }}
