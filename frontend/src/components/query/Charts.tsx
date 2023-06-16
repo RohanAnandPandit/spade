@@ -36,7 +36,6 @@ import SankeyChart from "../charts/SankeyChart";
 import ScatterChart from "../charts/ScatterChart";
 import "./Charts.css";
 import Fullscreen from "./Fullscreen";
-import { numericColumns } from "../../utils/queryResults";
 import ChordDiagram from "../charts/ChordDiagram";
 import { getQueryAnalysis } from "../../api/queries";
 import CalendarChart from "../charts/CalendarChart";
@@ -122,22 +121,11 @@ const Charts = observer(
             </>
           ),
           children: (
-            <Tabs
-              defaultActiveKey="1"
-              items={numericColumns(results).map((index) => {
-                return {
-                  key: `${index}`,
-                  label: results.header[index],
-                  children: (
-                    <PieChart
-                      results={results}
-                      width={chartWidth}
-                      height={chartHeight}
-                      columnIndex={index}
-                    />
-                  ),
-                };
-              })}
+            <PieChart
+              results={results}
+              width={chartWidth}
+              height={chartHeight}
+              variables={queryAnalysis.variables!}
             />
           ),
         },
