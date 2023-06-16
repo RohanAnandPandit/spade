@@ -64,7 +64,7 @@ const LineChart = observer(
           width={width}
           height={height}
           theme={VictoryTheme.material}
-          padding={{ bottom: 40, left: 100, right: 10, top: 10 }}
+          padding={{ bottom: 40, left: 100, right: 50, top: 10 }}
           domainPadding={{ x: 10, y: 10 }}
           containerComponent={
             <VictoryZoomVoronoiContainer
