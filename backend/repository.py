@@ -28,8 +28,7 @@ class LocalRepository(RDFRepository):
                 header = [str(column) for column in result.vars]
                 data = [[str(value) for value in row] for row in result]
             elif result.type == 'BOOL':
-                header = ['boolean']
-                data = [[bool(result)]]
+                return {'header': [], 'data': [], 'boolean': bool(result)}
             else:
                 header = ['Subject', 'Predicate', 'Object']
                 data = [[str(value) for value in row] for row in result]
@@ -37,7 +36,7 @@ class LocalRepository(RDFRepository):
             return {'header': header, 'data': data}
 
         except Exception as e:
-            return {'header': [['ERROR']], 'data': str(e)}
+            return {'header': [], 'data': [], 'error': str(e)}
 
 
 class RemoteRepository(RDFRepository):
