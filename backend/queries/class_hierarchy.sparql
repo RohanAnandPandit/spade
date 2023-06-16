@@ -6,6 +6,7 @@ WHERE {
     SELECT DISTINCT ?subject ?supertype
     WHERE {
         { ?subject a owl:Class . } UNION { ?individual a ?subject . } .
+        OPTIONAL { ?subject owl:equivalentClass ?supertype } .
         OPTIONAL { ?subject rdfs:subClassOf ?supertype } .
         FILTER (!isBlank(?supertype)) .
         FILTER (?subject != owl:Class &&
