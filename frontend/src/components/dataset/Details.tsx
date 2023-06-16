@@ -8,7 +8,7 @@ const Details = ({ repository }) => {
   const [uri, setUri] = useState<URI>("");
   return (
     <Space direction="vertical" style={{ width: "100%" }}>
-      <Space.Compact direction="vertical">
+      <Space.Compact direction="vertical"  style={{ width: "100%" }}>
         <Typography.Text>
           Enter a URI to view its data properties
         </Typography.Text>
