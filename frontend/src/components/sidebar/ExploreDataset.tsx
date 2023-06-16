@@ -5,7 +5,7 @@ import ClassHierarchy from "../dataset/ClassHierarchy";
 import { useState } from "react";
 import { MdOutlineExplore } from "react-icons/md";
 import { useStore } from "../../stores/store";
-import Types from "../dataset/Types";
+import ClassProperties from "../dataset/ClassProperties";
 import ClassLinks from "../dataset/ClassLinks";
 import Instances from "../dataset/Instances";
 import Details from "../dataset/Details";
@@ -40,9 +40,9 @@ const ExploreDataset = ({ repository }: ExploreDatasetProps) => {
       ),
     },
     {
-      key: "metadata",
-      label: `Metadata`,
-      children: <Types repository={repository!} />,
+      key: "properties",
+      label: `Properties`,
+      children: <ClassProperties repository={repository!} />,
     },
     {
       key: "links",

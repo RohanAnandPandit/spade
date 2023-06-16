@@ -12,7 +12,7 @@ type TypesProps = {
   repository: RepositoryId;
 };
 
-const Types = ({ repository }: TypesProps) => {
+const ClassProperties = ({ repository }: TypesProps) => {
   const username = useStore().authStore.username!;
 
   const [allTypes, setAllTypes] = useState<URI[]>([]);
@@ -29,7 +29,7 @@ const Types = ({ repository }: TypesProps) => {
   return (
     <Skeleton active loading={loading}>
       <Space direction="vertical">
-        <Space>
+        <Space.Compact direction="vertical">
           <Typography.Text>Select class</Typography.Text>
           <Select
             placeholder="Select type"
@@ -40,9 +40,13 @@ const Types = ({ repository }: TypesProps) => {
             onChange={(value) => setType(value)}
             style={{ width: 200 }}
           />
-        </Space>
-        <Divider />
-        {type && <Properties repository={repository} type={type} />}
+        </Space.Compact>
+        {type && (
+          <>
+            <Divider />
+            <Properties repository={repository} type={type} />
+          </>
+        )}
       </Space>
     </Skeleton>
   );
@@ -96,4 +100,4 @@ const Properties = ({ repository, type }: PropertiesProps) => {
   );
 };
 
-export default Types;
+export default ClassProperties;
