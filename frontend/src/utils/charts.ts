@@ -30,8 +30,9 @@ export function getRecommendedCharts(
     }
   }
 
-  if (key.length === 1 && scalar.length === 1) {
+  if (key.length === 1 && scalar.length >= 1) {
     charts.add(ChartType.BAR);
+    charts.add(ChartType.PIE);
   }
 
   if (geographical.length === 1 && scalar.length >= 1) {

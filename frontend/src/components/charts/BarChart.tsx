@@ -47,9 +47,11 @@ const BarChart = ({ results, width, height, variables }: BarChartProps) => {
           const valueIndex = results.header.indexOf(column);
 
           const data = results.data.map((row) => {
-            const bar: any = { name: removePrefix(row[barIndex]) };
+            const bar: any = {
+              name: removePrefix(row[barIndex]),
+              [column]: parseFloat(row[valueIndex]),
+            };
 
-            bar[column] = parseFloat(row[valueIndex]);
             return bar;
           });
 
@@ -88,8 +90,8 @@ const Constraints = ({ results, barColumn }) => {
           banner
           message={
             <Typography.Text>
-              Instances for <Tag>{barColumn}</Tag> exceed 100. Use LIMIT 100 in your query
-              for better readability.
+              Instances for <Tag>{barColumn}</Tag> exceed 100. Use LIMIT 100 in
+              your query for better readability.
             </Typography.Text>
           }
         />
@@ -99,8 +101,8 @@ const Constraints = ({ results, barColumn }) => {
           banner
           message={
             <Typography.Text>
-              There are duplicate entries for <Tag>{barColumn}</Tag>. 
-              You could use another column for disambiguation.
+              There are duplicate entries for <Tag>{barColumn}</Tag>. You could
+              use another column for disambiguation.
             </Typography.Text>
           }
         />
