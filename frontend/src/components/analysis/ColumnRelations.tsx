@@ -49,7 +49,7 @@ export const ColumnRelations = observer(
     return (
       <Card title="Entity Relationships">
         {variables.key.length < 2 ? (
-          <Alert banner message="There is only one column" />
+          <Alert message="Entity relationships are between two or more key columns. Currently there is only one." />
         ) : (
           <Space>
             {variables.key.map((colA: string, i: number) =>

@@ -4,7 +4,7 @@ import { observer } from "mobx-react-lite";
 import { BiNetworkChart } from "react-icons/bi";
 import { BsBarChartSteps, BsTable } from "react-icons/bs";
 import { useStore } from "../../stores/store";
-import { QueryResults, Triplet } from "../../types";
+import { QueryResults, RepositoryId, Triplet } from "../../types";
 import { isEmpty, isGraph } from "../../utils/queryResults";
 import Graph from "./Graph";
 import Editor from "./Editor";
@@ -31,9 +31,11 @@ const Query = observer(({ query, setQueryText, name }: QueryProps) => {
   const [graphKey, setGraphKey] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("editor");
-
+  const [repository, setRepository] = useState<RepositoryId | null>(null);
+  
   const width = Math.floor(
-    (window.screen.width - (settings.fullScreen() ? 0 : settings.sidebarWidth())) *
+    (window.screen.width -
+      (settings.fullScreen() ? 0 : settings.sidebarWidth())) *
       (settings.fullScreen() ? 0.95 : 0.85)
   );
   const height = Math.floor(
@@ -65,6 +67,8 @@ const Query = observer(({ query, setQueryText, name }: QueryProps) => {
           height={height}
           loading={loading}
           setLoading={setLoading}
+          repository={repository}
+          setRepository={setRepository}
         />
       ),
     },
@@ -104,7 +108,9 @@ const Query = observer(({ query, setQueryText, name }: QueryProps) => {
         </Space.Compact>
       ),
       disabled: isEmpty(results),
-      children: <Charts query={query} results={results} />,
+      children: (
+        <Charts query={query} results={results} repository={repository} />
+      ),
     },
   ];
 

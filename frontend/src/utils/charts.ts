@@ -8,7 +8,7 @@ import {
 type RelationMap = { [key: string]: { [key: string]: RelationType } };
 type LinkMap = { [key: string]: Set<string> };
 
-export function recommendedCharts(
+export function getRecommendedCharts(
   variables: VariableCategories,
   allRelations: RelationMap,
   results: QueryResults
