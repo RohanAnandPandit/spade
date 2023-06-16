@@ -32,7 +32,7 @@ const Query = observer(({ query, setQueryText, name }: QueryProps) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("editor");
   const [repository, setRepository] = useState<RepositoryId | null>(null);
-  
+
   const width = Math.floor(
     (window.screen.width -
       (settings.fullScreen() ? 0 : settings.sidebarWidth())) *
@@ -109,7 +109,12 @@ const Query = observer(({ query, setQueryText, name }: QueryProps) => {
       ),
       disabled: isEmpty(results),
       children: (
-        <Charts query={query} results={results} repository={repository} />
+        <Charts
+          query={query}
+          results={results}
+          repository={repository}
+          showAllCharts={settings.state.showAllCharts}
+        />
       ),
     },
   ];
