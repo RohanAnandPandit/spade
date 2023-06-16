@@ -16,7 +16,7 @@ const ClassProperties = ({ repository }: TypesProps) => {
   const username = useStore().authStore.username!;
 
   const [allTypes, setAllTypes] = useState<URI[]>([]);
-  const [type, setType] = useState<URI>("");
+  const [type, setType] = useState<URI | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -28,25 +28,19 @@ const ClassProperties = ({ repository }: TypesProps) => {
 
   return (
     <Skeleton active loading={loading}>
-      <Space direction="vertical">
-        <Space.Compact direction="vertical">
+      <Space direction="vertical" style={{ width: "100%" }}>
+        <Space.Compact direction="vertical" style={{ width: "100%" }}>
           <Typography.Text>Select class</Typography.Text>
           <Select
-            placeholder="Select type"
+            placeholder="Enter type name"
             value={type}
             options={allTypes.map((t) => {
               return { value: t, label: removePrefix(t) };
             })}
             onChange={(value) => setType(value)}
-            style={{ width: 200 }}
           />
         </Space.Compact>
-        {type && (
-          <>
-            <Divider />
-            <Properties repository={repository} type={type} />
-          </>
-        )}
+        {type && <Properties repository={repository} type={type} />}
       </Space>
     </Skeleton>
   );
@@ -60,12 +54,12 @@ const Properties = ({ repository, type }: PropertiesProps) => {
   const username = useStore().authStore.username!;
 
   const [allProperties, setAllProperties] = useState<URI[]>([]);
-  const [property, setProperty] = useState<URI>("");
+  const [property, setProperty] = useState<URI | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     setLoading(true);
-    setProperty("");
+    setProperty(null);
     getTypeProperties(repository, type, username).then((res: URI[]) => {
       setAllProperties(res);
       setLoading(false);
@@ -74,25 +68,22 @@ const Properties = ({ repository, type }: PropertiesProps) => {
 
   return (
     <Skeleton loading={loading}>
-      <Space direction="vertical">
-        <Space>
-          <Typography.Text>Select property</Typography.Text>
+      <Space direction="vertical" style={{ width: "100%" }}>
+        <Space.Compact direction="vertical" style={{ width: "100%" }}>
+          <Typography.Text>Select property to view metadata</Typography.Text>
           <Select
-            placeholder="Select property"
+            placeholder="Enter property name"
             value={property}
             options={allProperties.map((prop) => {
               return { value: prop, label: removePrefix(prop) };
             })}
             onChange={(value) => setProperty(value)}
-            style={{ width: 200 }}
           />
-        </Space>
+        </Space.Compact>
         {property && (
           <Skeleton active loading={loading}>
-            <Space direction="vertical">
-              <Text>{property}</Text>
+              <Divider>{property}</Divider>
               <MetaInfo repository={repository} uri={property} />
-            </Space>
           </Skeleton>
         )}
       </Space>
