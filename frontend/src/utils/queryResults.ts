@@ -44,6 +44,10 @@ export function convertToJSON(
   });
 }
 
+export function isNumber(s: string) {
+  return !isNaN(s as any) && !isNaN(parseFloat(s));
+}
+
 export function numericColumns(results: QueryResults): number[] {
   if (isEmpty(results)) {
     return [];
@@ -52,7 +56,7 @@ export function numericColumns(results: QueryResults): number[] {
   const columnIndices: number[] = [];
   const row = results.data[0];
   for (let i = 0; i < row.length; i++) {
-    if (!isNaN(row[i] as any) && !isNaN(parseFloat(row[i]))) {
+    if (isNumber(row[i])) {
       columnIndices.push(i);
     }
     columnIndices.push();
@@ -109,4 +113,15 @@ export function uniqueValues(data: Row[], colIdx: number): string[] {
     values.add(row[colIdx]);
   }
   return Array.from(values);
+}
+
+
+export function displayText(text: string) {
+  if (isNumber(text)) {
+    return parseFloat(text).toLocaleString();
+  }
+  if (isURL(text)) {
+    return removePrefix(text);
+  }
+  return text;
 }
