@@ -46,15 +46,15 @@ const ScatterChart = observer(
             row[yIdx]
           ).toLocaleString()}`;
           if (zIdx !== -1) {
-            label += `${results.header[zIdx]}: ${parseFloat(
-              row[zIdx]
-            ).toLocaleString()}`;
+            label += `
+            ${results.header[zIdx]}: ${parseFloat(row[zIdx]).toLocaleString()}`;
           }
 
           return {
             label,
             x: parseFloat(row[xIdx]),
             y: parseFloat(row[yIdx]),
+            z: parseFloat(row[zIdx]),
             fill: color,
           };
         });
@@ -91,7 +91,6 @@ const ScatterChart = observer(
           />
           <VictoryAxis
             label={results.header[yIdx]}
-            // axisLabelComponent={<VictoryLabel dy={-75} />}
             style={{
               tickLabels: { fontSize: 15, padding: 5 },
             }}
@@ -99,17 +98,14 @@ const ScatterChart = observer(
             fixLabelOverlap
             domainPadding={{ x: [10, -10], y: 5 }}
           />
-          {seriesData.map((data, index) => (
-            <VictoryScatter
-              key={`scatter-${index}`}
-              bubbleProperty="z"
-              maxBubbleSize={20}
-              minBubbleSize={5}
-              labelComponent={<VictoryTooltip style={{ fontSize: 15 }} />}
-              style={{ data: { fill: ({ datum }) => datum.fill } }}
-              data={data}
-            />
-          ))}
+          <VictoryScatter
+            bubbleProperty="z"
+            maxBubbleSize={20}
+            minBubbleSize={5}
+            labelComponent={<VictoryTooltip style={{ fontSize: 15 }} />}
+            style={{ data: { fill: ({ datum }) => datum.fill } }}
+            data={seriesData.flat(1)}
+          />
         </VictoryChart>
       </div>
     );
