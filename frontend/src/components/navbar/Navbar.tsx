@@ -1,6 +1,6 @@
 import { UserOutlined } from "@ant-design/icons";
 import { Link } from "react-router-dom";
-import { Avatar, Menu } from "antd";
+import { Menu } from "antd";
 import { useStore } from "../../stores/store";
 
 const Navbar = () => {
