@@ -1,5 +1,5 @@
 import { QueryResults, VariableCategories } from "../../types";
-import { removePrefix } from "../../utils/queryResults";
+import { groupByColumn, removePrefix } from "../../utils/queryResults";
 import randomColor from "randomcolor";
 import { useStore } from "../../stores/store";
 import { observer } from "mobx-react-lite";
@@ -10,7 +10,7 @@ import {
   VictoryScatter,
   VictoryTheme,
   VictoryTooltip,
-  VictoryZoomContainer,
+  createContainer,
 } from "victory";
 import { useMemo } from "react";
 
@@ -25,38 +25,46 @@ const ScatterChart = observer(
   ({ results, width, height, variables }: ScatterChartProps) => {
     const rootStore = useStore();
     const settings = rootStore.settingsStore;
-    const [col1, col2, col3] = variables.scalar.map((column) =>
-      results.header.indexOf(column)
-    );
-    const data = useMemo(
-      () =>
-        results.data.map((row) => {
-          let label = `${removePrefix(row[0])}
+    const { header, data } = results;
+    const keyIdx = header.indexOf(variables.key[0]);
+    const xIdx = header.indexOf(variables.scalar[0]);
+    const yIdx = header.indexOf(variables.scalar[1]);
+    const zIdx = header.indexOf(variables.scalar[2]);
 
-      ${results.header[col1]}: ${parseFloat(row[col1]).toLocaleString()}
-      ${results.header[col2]}: ${parseFloat(row[col2]).toLocaleString()}`;
-          if (col3) {
-            label += `${results.header[col3]}: ${parseFloat(
-              row[col3]
+    const seriesData = useMemo(() => {
+      const series =
+        keyIdx !== -1 ? Object.values(groupByColumn(data, keyIdx)) : [data];
+
+      return series.map((rows) => {
+        const color = randomColor({
+          luminosity: settings.darkMode() ? "light" : "dark",
+        });
+        return rows.map((row) => {
+          let label = `${keyIdx >= 0 ? removePrefix(row[keyIdx]) : ""}
+                        ${results.header[xIdx]}: ${parseFloat(row[xIdx])}
+                        ${results.header[yIdx]}: ${parseFloat(
+            row[yIdx]
+          ).toLocaleString()}`;
+          if (zIdx !== -1) {
+            label += `${results.header[zIdx]}: ${parseFloat(
+              row[zIdx]
             ).toLocaleString()}`;
           }
 
           return {
             label,
-            x: parseFloat(row[col1]),
-            y: parseFloat(row[col2]),
-            z: col3 ? parseFloat(row[col3]) : 1,
-            fill: randomColor({
-              luminosity: settings.darkMode() ? "light" : "dark",
-            }),
-            amount: 2,
+            x: parseFloat(row[xIdx]),
+            y: parseFloat(row[yIdx]),
+            fill: color,
           };
-        }),
-      [col1, col2, col3, results.data, results.header, settings]
-    );
+        });
+      });
+    }, [keyIdx, data, results.header, xIdx, yIdx, zIdx, settings]);
+
+    const VictoryZoomVoronoiContainer: any = createContainer("zoom", "voronoi");
 
     return (
-      <>
+      <div>
         <VictoryChart
           width={width}
           height={height}
@@ -64,15 +72,16 @@ const ScatterChart = observer(
           padding={{ bottom: 40, left: 100, right: 10, top: 10 }}
           domainPadding={{ x: 10, y: 10 }}
           containerComponent={
-            <VictoryZoomContainer
+            <VictoryZoomVoronoiContainer
               width={width}
               height={height}
               responsive={false}
+              labels={({ datum }: any) => datum.label}
             />
           }
         >
           <VictoryAxis
-            label={results.header[col1]}
+            label={results.header[xIdx]}
             axisLabelComponent={<VictoryLabel dy={20} />}
             style={{
               tickLabels: { fontSize: 15, padding: 5 },
@@ -81,8 +90,8 @@ const ScatterChart = observer(
             domainPadding={{ x: [10, -10], y: 5 }}
           />
           <VictoryAxis
-            label={results.header[col2]}
-            axisLabelComponent={<VictoryLabel dy={-75} />}
+            label={results.header[yIdx]}
+            // axisLabelComponent={<VictoryLabel dy={-75} />}
             style={{
               tickLabels: { fontSize: 15, padding: 5 },
             }}
@@ -90,16 +99,19 @@ const ScatterChart = observer(
             fixLabelOverlap
             domainPadding={{ x: [10, -10], y: 5 }}
           />
-          <VictoryScatter
-            bubbleProperty="z"
-            maxBubbleSize={20}
-            minBubbleSize={5}
-            labelComponent={<VictoryTooltip style={{ fontSize: 15 }} />}
-            style={{ data: { fill: ({ datum }) => datum.fill } }}
-            data={data}
-          />
+          {seriesData.map((data, index) => (
+            <VictoryScatter
+              key={`scatter-${index}`}
+              bubbleProperty="z"
+              maxBubbleSize={20}
+              minBubbleSize={5}
+              labelComponent={<VictoryTooltip style={{ fontSize: 15 }} />}
+              style={{ data: { fill: ({ datum }) => datum.fill } }}
+              data={data}
+            />
+          ))}
         </VictoryChart>
-      </>
+      </div>
     );
   }
 );

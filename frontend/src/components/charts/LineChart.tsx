@@ -31,26 +31,30 @@ const LineChart = observer(
     const yIdx = header.indexOf(variables.scalar[1]);
 
     const linesData = useMemo(() => {
-      const lines = keyIdx !== -1 ? Object.values(groupByColumn(data, keyIdx)) : [data];
+      const lines =
+        keyIdx !== -1
+          ? Object.values(groupByColumn(data, keyIdx))
+          : { data: data };
+      const linesData = Object.keys(lines).map((name) => {
+        return {
+          data: lines[name].map((row) => {
+            const label = `${keyIdx >= 0 ? removePrefix(row[keyIdx]) : ""}
+      ${header[xIdx]}: ${row[xIdx]}  
+      ${header[yIdx]}: ${parseFloat(row[yIdx]).toLocaleString()}`;
 
-      return lines.map((rows) =>
-        rows.map((row) => {
-          const label = `${removePrefix(row[0])}
-
-      ${header[xIdx]}: ${row[xIdx]}
-      ${header[yIdx]}: ${row[yIdx]}`;
-
-          return {
-            label,
-            x: parseFloat(row[xIdx]),
-            y: parseFloat(row[yIdx]),
-            fill: randomColor({
-              luminosity: settings.darkMode() ? "light" : "dark",
-            }),
-          };
-        })
-      );
-    }, [keyIdx, data, header, xIdx, yIdx, settings]);
+            return {
+              label,
+              x: parseFloat(row[xIdx]),
+              y: parseFloat(row[yIdx]),
+            };
+          }),
+          color: randomColor({
+            luminosity: settings.darkMode() ? "light" : "dark",
+          }),
+        };
+      });
+      return linesData;
+    }, [keyIdx, data, header, xIdx, yIdx, settings.state.darkMode]);
 
     const VictoryZoomVoronoiContainer: any = createContainer("zoom", "voronoi");
 
@@ -90,11 +94,11 @@ const LineChart = observer(
             fixLabelOverlap
             domainPadding={{ x: [10, -10], y: 5 }}
           />
-          {linesData.map((data, index) => (
+          {linesData.map(({ data, color }, index) => (
             <VictoryLine
               key={`line-${index}`}
               labelComponent={<VictoryTooltip style={{ fontSize: 15 }} />}
-              style={{ data: { stroke: randomColor() } }}
+              style={{ data: { stroke: color } }}
               data={data}
             />
           ))}
