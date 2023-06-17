@@ -26,7 +26,7 @@ const LineChart = observer(
     const rootStore = useStore();
     const settings = rootStore.settingsStore;
     const { header, data } = results;
-    const keyIdx = header.indexOf(variables.key[0]);
+    const keyIdx = header.indexOf(variables.key[0] || variables.lexical[0]);
     const xIdx = header.indexOf(variables.scalar[0]);
     const yIdx = header.indexOf(variables.scalar[1]);
 
