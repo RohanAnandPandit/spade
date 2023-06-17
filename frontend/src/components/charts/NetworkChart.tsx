@@ -16,8 +16,11 @@ const NetworkChart = ({
   variables,
 }: NetworkChartProps) => {
   const { header, data } = results;
-  const fromIndex = header.indexOf(variables.key[0]);
-  const toIndex = header.indexOf(variables.key[1]);
+  const fromIndex = header.indexOf(variables.key[0] || variables.lexical[0]);
+  const toIndex = header.indexOf(
+    variables.key[1] ||
+      variables.lexical[header[fromIndex] !== variables.lexical[0] ? 0 : 1]
+  );
   const valueIndex = header.indexOf(variables.scalar[0]);
 
   const links: Triplet[] = useMemo(

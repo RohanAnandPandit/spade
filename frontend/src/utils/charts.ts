@@ -18,28 +18,28 @@ export function getRecommendedCharts(
   const { header } = results;
   const charts = new Set<ChartType>();
 
-  if (date.length === 1 && scalar.length >= 1) {
+  if (date.length === 1 && numeric.length >= 1) {
     charts.add(ChartType.CALENDAR);
   }
 
-  if (scalar.length >= 2) {
+  if (numeric.length >= 2) {
     charts.add(ChartType.SCATTER);
 
-    if (scalar.length >= 3) {
+    if (numeric.length >= 3) {
       charts.add(ChartType.BUBBLE);
     }
   }
 
-  if (key.length === 1 && scalar.length >= 1) {
+  if (key.length === 1 && numeric.length >= 1) {
     charts.add(ChartType.BAR);
     charts.add(ChartType.PIE);
   }
 
-  if (geographical.length === 1 && scalar.length >= 1) {
+  if (geographical.length === 1 && numeric.length >= 1) {
     charts.add(ChartType.CHOROPLETH_MAP);
   }
 
-  if ((key.length === 1 || lexical.length === 1) && scalar.length === 1) {
+  if ((key.length === 1 || lexical.length === 1) && numeric.length === 1) {
     charts.add(ChartType.WORD_CLOUD);
   }
 
