@@ -20,8 +20,6 @@ type BarChartProps = {
   height: number;
 };
 
-const BAR_INSTANCES_LIMIT = 100;
-
 const BarChart = ({ results, width, height, variables }: BarChartProps) => {
   const tabHeight = 60;
   const barColumn = useMemo(
@@ -77,6 +75,8 @@ const BarChart = ({ results, width, height, variables }: BarChartProps) => {
   );
 };
 
+const INSTANCES_LIMIT = 100;
+
 const Constraints = ({ results, barColumn }) => {
   const instances = useMemo(() => {
     const barIndex = results.header.indexOf(barColumn);
@@ -85,13 +85,13 @@ const Constraints = ({ results, barColumn }) => {
 
   return (
     <>
-      {instances.length > BAR_INSTANCES_LIMIT && (
+      {instances.length > INSTANCES_LIMIT && (
         <Alert
           banner
           message={
             <Typography.Text>
-              Instances for <Tag>{barColumn}</Tag> exceed 100. Use LIMIT 100 in
-              your query for better readability.
+              Instances for <Tag>{barColumn}</Tag> exceed {INSTANCES_LIMIT}. Use
+              LIMIT {INSTANCES_LIMIT} in your query for better readability.
             </Typography.Text>
           }
         />
