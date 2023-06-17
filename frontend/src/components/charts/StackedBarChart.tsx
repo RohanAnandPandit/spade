@@ -18,6 +18,7 @@ import { useMemo } from "react";
 import randomColor from "randomcolor";
 import { observer } from "mobx-react-lite";
 import { useStore } from "../../stores/store";
+import { Alert } from "antd";
 
 type StackedBarChartProps = {
   results: QueryResults;
@@ -33,9 +34,13 @@ const StackedBarChart = observer(
 
     const tabHeight = 60;
     const { header } = results;
-    const barKey = variables.key[0];
+
+    const stackKey = variables.key[1]
+      ? variables.key[0]
+      : variables.temporal[0];
+    const barKey = variables.key[1] ?? variables.key[0];
+
     const barKeyIdx = header.indexOf(barKey);
-    const stackKey = variables.key[1] || variables.scalar[0];
     const stackKeyIdx = header.indexOf(stackKey);
     const valueKey = variables.numeric[0];
     const valueIdx = header.indexOf(valueKey);
@@ -52,6 +57,15 @@ const StackedBarChart = observer(
       });
       return data;
     }, [header, results.data, barKeyIdx, stackKeyIdx, valueIdx]);
+
+    if (variables.key.length === 0 && variables.lexical.length === 0) {
+      return (
+        <Alert
+          banner
+          message="Cannot display chart because there is no key variable."
+        />
+      );
+    }
 
     return (
       <ResponsiveContainer width="100%" height={height - tabHeight}>
