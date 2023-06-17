@@ -362,6 +362,10 @@ def get_region_query(region):
     return ', '.join(query)
 
 
+def remove_last_comma(text):
+    return ','.join(text.split(',')[:-1])
+
+
 @app.route('/geo', methods=['GET'])
 def geo():
     OK = 200
@@ -373,22 +377,26 @@ def geo():
         if 'region' in request.args:
             region = request.args['region']
             query = get_region_query(region)
-            url = MAP_API.format(query=urllib.parse.quote(query, safe=""))
+            while query:
+                print(query)
+                url = MAP_API.format(query=urllib.parse.quote(query, safe=""))
+                response = requests.get(url)
 
-            response = requests.get(url)
-            if response.status_code == OK:
-                polygons = [data
-                            for data in response.json() if
-                            data['type'] in (
-                                'city', 'country', 'continent',
-                                'administrative', 'town')]
-                if polygons:
-                    coordinates = polygons[0]["geojson"]['coordinates']
-                    type_ = polygons[0]["geojson"]['type']
+                if response.status_code == OK:
+                    polygons = [data
+                                for data in response.json() if
+                                data['type'] in (
+                                    'city', 'country', 'continent',
+                                    'administrative', 'town')]
+                    if polygons:
+                        coordinates = polygons[0]["geojson"]['coordinates']
+                        type_ = polygons[0]["geojson"]['type']
+                        return {'geoData': {'region': region, 'type': type_,
+                                            'name': query,
+                                            'coordinates': coordinates}}
 
-                    return {'geoData': {'region': region, 'type': type_,
-                                        'name': query,
-                                        'coordinates': coordinates}}
+                query = remove_last_comma(query)
+
             data = geo_json_data(region)
             if data:
                 coordinates = data['geometry']['coordinates']
