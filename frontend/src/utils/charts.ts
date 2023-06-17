@@ -15,7 +15,7 @@ export function getRecommendedCharts(
 ) {
   const { scalar, geographical, key, temporal, lexical, date, numeric } =
     variables;
-  const { header, data } = results;
+  const { header } = results;
   const charts = new Set<ChartType>();
 
   if (date.length === 1 && scalar.length >= 1) {
