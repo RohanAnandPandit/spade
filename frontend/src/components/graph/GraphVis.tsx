@@ -82,17 +82,16 @@ const GraphVis = observer(
     }, [graph]);
 
     const graphOptions: Options = {
-      layout: {
-        ...(hierarchical
-          ? {
-              hierarchical: {
-                enabled: hierarchical,
-                sortMethod: "directed",
-                direction: "DU",
-              },
-            }
-          : {}),
-      },
+      layout: hierarchical
+        ? {
+            hierarchical: {
+              enabled: hierarchical,
+              sortMethod: "directed",
+              direction: "DU",
+            },
+          }
+        : {},
+
       edges: {
         color: settings.darkMode() ? "white" : "black",
         font: { size: 10 },

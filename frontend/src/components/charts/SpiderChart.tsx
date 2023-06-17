@@ -32,7 +32,7 @@ const SpiderChart = observer(
     const settings = rootStore.settingsStore;
 
     const { header } = results;
-    const ringKeyIdx = header.indexOf(variables.key[0]);
+    const ringKeyIdx = header.indexOf(variables.key[0] || variables.lexical[0]);
     const spokeKeyIdx = header.indexOf(variables.key[1] || variables.scalar[0]);
     const valueIdx = header.indexOf(variables.numeric[0]);
 
