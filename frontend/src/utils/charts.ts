@@ -15,7 +15,7 @@ export function getRecommendedCharts(
 ) {
   const { scalar, geographical, key, temporal, lexical, date, numeric } =
     variables;
-
+  const { header, data } = results;
   const charts = new Set<ChartType>();
 
   if (date.length === 1 && scalar.length >= 1) {
@@ -62,29 +62,31 @@ export function getRecommendedCharts(
       }
     }
   }
-  if (key.length === 2 && scalar.length >= 1) {
+  if (key.length === 2 && header.length >= 3) {
     charts.add(ChartType.STACKED_BAR);
     charts.add(ChartType.GROUPED_BAR);
     charts.add(ChartType.SPIDER);
-    charts.add(ChartType.LINE);
-  } else if (key.length === 1) {
-    if (
-      lexical.length > 0 &&
-      key[0] !== lexical[0] &&
-      isCompositeKey([key[0], lexical[0]], results)
-    ) {
-      charts.add(ChartType.STACKED_BAR);
-      charts.add(ChartType.GROUPED_BAR);
-      charts.add(ChartType.SPIDER);
-    }
-    if (temporal.length > 0 && isCompositeKey([key[0], temporal[0]], results)) {
-      charts.add(ChartType.STACKED_BAR);
-      charts.add(ChartType.GROUPED_BAR);
-      charts.add(ChartType.SPIDER);
+    if (numeric.includes(key[1])) {
       charts.add(ChartType.LINE);
     }
-    if (numeric.length > 1 && isCompositeKey([key[0], numeric[0]], results)) {
-      charts.add(ChartType.LINE);
+  } else if (key.length === 1 && results.header.length >= 3) {
+    const secondKeyColumn = results.header[results.header.indexOf(key[0]) + 1];
+    const areDependent = isCompositeKey([key[0], secondKeyColumn], results);
+    if (areDependent) {
+      if (lexical.includes(secondKeyColumn)) {
+        charts.add(ChartType.STACKED_BAR);
+        charts.add(ChartType.GROUPED_BAR);
+        charts.add(ChartType.SPIDER);
+      }
+      if (temporal.includes(secondKeyColumn)) {
+        charts.add(ChartType.STACKED_BAR);
+        charts.add(ChartType.GROUPED_BAR);
+        charts.add(ChartType.SPIDER);
+        charts.add(ChartType.LINE);
+      }
+      if (numeric.includes(secondKeyColumn)) {
+        charts.add(ChartType.LINE);
+      }
     }
   }
 
