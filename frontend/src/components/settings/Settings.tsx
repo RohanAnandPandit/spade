@@ -52,7 +52,6 @@ const Settings = () => {
             <Text>Dark Mode</Text>
           </Space>
           <Divider />
-          <Divider />
           <Space>
             <Switch
               checked={settings.showAllCharts()}
@@ -62,10 +61,6 @@ const Settings = () => {
             />
             <Text>Show all charts</Text>
           </Space>
-          <Alert
-            message="The tool currently supports the N-Triples syntax."
-            banner
-          />
         </Space>
       </Drawer>
     </>
