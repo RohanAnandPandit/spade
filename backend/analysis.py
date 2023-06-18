@@ -1,10 +1,12 @@
+import os.path
 import re
 import shlex
+from pathlib import Path
 from typing import Dict
 from backend.repository import RDFRepository
 from .util import remove_comments, is_url, separator_split
 
-QUERY_PATH = 'backend/queries'
+QUERY_PATH = Path(__file__).parent/'queries'
 
 SELECT_STATEMENT = re.compile(
     r'^\s*select +(distinct +)?(?P<variables>[^\n]+)\s*(from|where)\s*\{?$',
@@ -393,7 +395,7 @@ def get_where_clause(query: str):
     return max(pattern.findall(query), key=len)
 
 
-def query_analysis(query: str, repository):
+def query_analysis(query: str, repository: RDFRepository):
     query = remove_comments(query)
     analyser = QueryAnalyser(query=query, repository=repository)
     pattern = None
@@ -410,7 +412,7 @@ def query_analysis(query: str, repository):
         pattern = 'Two classes linked by a key functional property'
         visualisations = ['Line', 'Spider', 'Stacked Bar', 'Grouped Bar']
     elif analyser.three_classes_linked_by_func_props():
-        pattern = 'Three classes linked by a functional property'
+        pattern = 'Three classes linked by functional properties'
         visualisations = ['Sankey', 'Network', 'Chord Diagram', 'Heat Map']
 
     result = {'pattern': pattern, 'variables': analyser.var_categories,
