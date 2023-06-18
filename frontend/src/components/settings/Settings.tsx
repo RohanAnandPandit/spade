@@ -32,11 +32,12 @@ const Settings = () => {
 
   return (
     <>
-      <Tooltip placement="topLeft" title="Settings">
+      <Tooltip placement="bottom" title="Settings">
         <FloatButton
           icon={<IoMdSettings size={25} style={{ paddingRight: 7 }} />}
           onClick={showDrawer}
           style={{ top: 10 }}
+
         />
       </Tooltip>
       <Drawer title="Settings" placement="right" onClose={onClose} open={open}>
