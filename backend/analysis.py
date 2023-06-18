@@ -301,7 +301,8 @@ class QueryAnalyser:
         if self.var_categories['numeric']:
             TA1 = self.var_categories['numeric'][0]
             CA = self.data_prop_of_var[f'?{TA1}']
-            if not (self.obj_prop_of_var[CB] == self.obj_prop_of_var[CB] == CA):
+            if not (self.connected_by_props(CA, CB) and
+                    self.connected_by_props(CA, CC)):
                 return False
 
         for CA in self.var_class:
