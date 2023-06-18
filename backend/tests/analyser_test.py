@@ -46,6 +46,35 @@ class QueryAnalyserTest(unittest.TestCase):
         self.assertEqual(potential_charts,
                          {'Sankey', 'Network', 'Chord Diagram', 'Heat Map'})
 
+    def test_country_gdp(self):
+        query = '''
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+        PREFIX : <http://www.semwebtech.org/mondial/10/meta#>
+        
+        SELECT ?country ?gdpTotal 
+        WHERE {
+          ?c rdf:type :Country ;
+             :name ?country ;
+             :population ?population ;
+             :gdpTotal ?gdpTotal .
+        }
+        ORDER BY DESC(?population)
+        LIMIT 10
+        }'''
+        analysis = query_analysis(query=query, repository=self.repository)
+        variables = analysis['variables']
+        potential_charts = set(analysis['visualisations'])
+
+        self.assertEqual(analysis['pattern'],
+                         "Class with data properties")
+
+        self.assertTrue('gdpTotal' in variables['scalar'])
+        self.assertTrue('country' in variables['lexical'])
+        self.assertTrue('Bar' in potential_charts)
+        self.assertTrue('Word Cloud' in potential_charts)
+        self.assertTrue('Pie' in potential_charts)
+
 
 if __name__ == '__main__':
     unittest.main()
