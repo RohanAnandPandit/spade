@@ -2,12 +2,19 @@ import { UserOutlined } from "@ant-design/icons";
 import { Link } from "react-router-dom";
 import { Menu } from "antd";
 import { useStore } from "../../stores/store";
+import { TbSpade } from "react-icons/tb";
 
 const Navbar = () => {
   const rootStore = useStore();
   const authStore = rootStore.authStore;
 
   const items: any = [
+    {
+      key: "logo",
+      icon: <TbSpade size={20} />,
+      label: "SPADE",
+      children: [],
+    },
     {
       key: "User",
       icon: <UserOutlined />,

@@ -32,11 +32,12 @@ const Settings = () => {
 
   return (
     <>
-      <Tooltip placement="topLeft" title="Settings">
+      <Tooltip placement="bottom" title="Settings">
         <FloatButton
           icon={<IoMdSettings size={25} style={{ paddingRight: 7 }} />}
           onClick={showDrawer}
           style={{ top: 10 }}
+
         />
       </Tooltip>
       <Drawer title="Settings" placement="right" onClose={onClose} open={open}>
@@ -51,7 +52,6 @@ const Settings = () => {
             <Text>Dark Mode</Text>
           </Space>
           <Divider />
-          <Divider />
           <Space>
             <Switch
               checked={settings.showAllCharts()}
@@ -61,10 +61,6 @@ const Settings = () => {
             />
             <Text>Show all charts</Text>
           </Space>
-          <Alert
-            message="The tool currently supports the N-Triples syntax."
-            banner
-          />
         </Space>
       </Drawer>
     </>

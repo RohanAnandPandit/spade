@@ -120,11 +120,11 @@ const DeleteHistory = observer(() => {
       onConfirm={() => repositoryStore.clearQueryHistory()}
       style={{ justifyContent: "center" }}
       placement="top"
-      disabled={repositoryStore.queryHistory.length === 0}
+      disabled={repositoryStore.queryHistory().length === 0}
     >
       <Button
         danger
-        disabled={repositoryStore.queryHistory.length === 0}
+        disabled={repositoryStore.queryHistory().length === 0}
         name="Clear history"
       >
         <MdDelete size={20} />

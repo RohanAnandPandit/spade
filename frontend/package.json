@@ -8,6 +8,7 @@
     "@babel/plugin-transform-react-jsx": "^7.14.9",
     "@codemirror/autocomplete": "^6.4.2",
     "@codemirror/legacy-modes": "^6.3.1",
+    "@nivo/chord": "^0.83.0",
     "@testing-library/dom": ">=7.21.4",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
