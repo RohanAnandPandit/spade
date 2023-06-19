@@ -6,7 +6,7 @@ from typing import Dict
 from backend.repository import RDFRepository
 from .util import remove_comments, is_url, separator_split
 
-QUERY_PATH = Path(__file__).parent/'queries'
+QUERY_PATH = Path(__file__).parent / 'queries'
 
 SELECT_STATEMENT = re.compile(
     r'^\s*select +(distinct +)?(?P<variables>[^\n]+)\s*(from|where)\s*\{?$',
@@ -24,6 +24,7 @@ class QueryAnalyser:
         self.key_of_var = {}
         # Mapping from a data variable to its class variable
         self.data_prop_of_var = {}
+        self.obj_prop_of_var = {}
         # Variables in the select clause
         self.select_variables = []
         self.get_select_variables()
@@ -53,7 +54,6 @@ class QueryAnalyser:
         conditions = get_where_clause(text)
         if not conditions:
             return
-
 
         statement_pattern = re.compile(
             r'^(\n*|;) *(?P<subject>\?\w+) +(?P<properties>[^.]+)\s*\.\s*$',
@@ -96,6 +96,10 @@ class QueryAnalyser:
                     if 'InverseFunctionalProperty' in prop_types:
                         self.key_of_var[obj] = subject
                         self.key_func_props.add(prop_uri)
+                else:
+                    self.var_class[obj] = self.get_prop_range(
+                        prop_uri=prop_uri)
+                    self.obj_prop_of_var[obj] = subject
 
                 if 'FunctionalProperty' in prop_types:
                     self.func_props.add(prop_uri)
@@ -290,13 +294,21 @@ class QueryAnalyser:
 
         TBK = key_vars[0]
         TCK = key_vars[1]
-        TA1 = self.select_variables[2]
-        CA = self.data_prop_of_var[TA1]
+
         CB = self.data_prop_of_var[TBK]
         CC = self.data_prop_of_var[TCK]
 
-        if self.connected_by_props(CA, CB) and self.connected_by_props(CA, CC):
-            return True
+        if self.var_categories['numeric']:
+            TA1 = self.var_categories['numeric'][0]
+            CA = self.data_prop_of_var[f'?{TA1}']
+            if not (self.connected_by_props(CA, CB) and
+                    self.connected_by_props(CA, CC)):
+                return False
+
+        for CA in self.var_class:
+            if self.connected_by_props(CA, CB) and \
+                    self.connected_by_props(CA, CC):
+                return True
 
         return False
 
@@ -422,14 +434,5 @@ def query_analysis(query: str, repository: RDFRepository):
 
 
 if __name__ == '__main__':
-    example_query = '''
-PREFIX rdfs: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-PREFIX : <http://www.semwebtech.org/mondial/10/meta#>
-SELECT ?inflation ?unemployment
-WHERE {
-  ?c rdf:type :Country ;
-    :inflation ?inflation ;
-    :unemployment ?unemployment .
-}
-    '''
+    pass
+

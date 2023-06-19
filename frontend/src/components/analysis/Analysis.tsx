@@ -130,6 +130,7 @@ const Pattern = ({ pattern, visualisations }: PatternProps) => {
             </Space>
           ))}
         </Space>
+        <Alert message="Open the Charts tab to see the recommended charts"/>
       </Space>
     </Card>
   );
