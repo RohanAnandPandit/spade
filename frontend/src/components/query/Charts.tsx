@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Tabs, TabsProps } from "antd";
+import { Spin, Tabs, TabsProps } from "antd";
 import {
   ChartType,
   QueryAnalysis,
@@ -66,7 +66,7 @@ const Charts = observer(
     const rootStore = useStore();
     const settings = rootStore.settingsStore;
     const username = rootStore.authStore.username!;
-
+    const [loading, setLoading] = useState<boolean>(false);
     const chartWidth = Math.floor(
       (window.screen.width -
         (settings.fullScreen() ? 0 : settings.sidebarWidth())) *
@@ -393,6 +393,7 @@ const Charts = observer(
     const [recommendedCharts, setRecommendedCharts] = useState<ChartType[]>([]);
 
     const possibleCharts = useMemo(() => {
+      setLoading(false);
       return showAllCharts
         ? chartTabs
         : queryAnalysis.pattern
@@ -414,10 +415,12 @@ const Charts = observer(
     ]);
 
     const { allRelations, allIncomingLinks, allOutgoingLinks } = useMemo(() => {
+      setLoading(true);
       const { allRelations, allIncomingLinks, allOutgoingLinks } =
         getAllRelations(results, results.header);
-      setRecommendedCharts(
-        getRecommendedCharts(queryAnalysis.variables, allRelations, results)
+
+      getRecommendedCharts(queryAnalysis.variables, allRelations, results).then(
+        (charts) => setRecommendedCharts(charts)
       );
       return { allRelations, allIncomingLinks, allOutgoingLinks };
     }, [queryAnalysis.variables, results]);
@@ -432,30 +435,32 @@ const Charts = observer(
 
     return (
       <Fullscreen>
-        <Tabs
-          defaultActiveKey="1"
-          items={[
-            {
-              key: "Suggested",
-              label: (
-                <>
-                  <BsLightbulb size={15} /> Suggested
-                </>
-              ),
-              children: (
-                <Suggested
-                  results={results}
-                  variables={queryAnalysis.variables}
-                  allRelations={allRelations}
-                  allIncomingLinks={allIncomingLinks}
-                  allOutgoingLinks={allOutgoingLinks}
-                />
-              ),
-            },
-            ...possibleCharts,
-          ]}
-          style={{ padding: 10 }}
-        />
+        <Spin spinning={loading}>
+          <Tabs
+            defaultActiveKey="1"
+            items={[
+              {
+                key: "Suggested",
+                label: (
+                  <>
+                    <BsLightbulb size={15} /> Suggested
+                  </>
+                ),
+                children: (
+                  <Suggested
+                    results={results}
+                    variables={queryAnalysis.variables}
+                    allRelations={allRelations}
+                    allIncomingLinks={allIncomingLinks}
+                    allOutgoingLinks={allOutgoingLinks}
+                  />
+                ),
+              },
+              ...possibleCharts,
+            ]}
+            style={{ padding: 10 }}
+          />
+        </Spin>
       </Fullscreen>
     );
   }
