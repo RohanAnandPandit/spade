@@ -378,7 +378,6 @@ def geo():
             region = request.args['region']
             query = get_region_query(region)
             while query:
-                print(query)
                 url = MAP_API.format(query=urllib.parse.quote(query, safe=""))
                 response = requests.get(url)
 
@@ -404,6 +403,32 @@ def geo():
 
             return {'geoData': {'region': region, 'type': type_, 'name': query,
                                 'coordinates': coordinates}}
+
+
+@app.route('/geo/valid', methods=['GET'])
+def geographical_name():
+    OK = 200
+    if request.method == 'GET':
+        MAP_API = 'https://nominatim.openstreetmap.org/search.php?q={query}' \
+                  '&polygon_geojson=1&format=json'
+
+        if 'text' in request.args:
+            region = request.args['text']
+            query = get_region_query(region)
+
+            url = MAP_API.format(query=urllib.parse.quote(query, safe=""))
+            response = requests.get(url)
+
+            if response.status_code == OK:
+                polygons = [data
+                            for data in response.json() if
+                            data['type'] in (
+                                'city', 'country', 'continent',
+                                'administrative', 'town')]
+                if polygons:
+                    return {'valid': True}
+
+        return {'valid': False}
 
 
 if __name__ == "__main__":

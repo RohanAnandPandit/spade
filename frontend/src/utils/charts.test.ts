@@ -1,7 +1,12 @@
-import { ChartType, QueryResults, RelationType, VariableCategories } from "../types";
+import {
+  ChartType,
+  QueryResults,
+  RelationType,
+  VariableCategories,
+} from "../types";
 import { getRecommendedCharts } from "./charts";
 
-test("recommended charts", () => {
+test("recommended charts", async () => {
   const results: QueryResults = {
     header: ["name", "population"],
     data: [[], []],
@@ -22,7 +27,8 @@ test("recommended charts", () => {
       population: RelationType.ONE_TO_ONE,
     },
   };
-  const charts = getRecommendedCharts(variables, allRelations, results);
+
+  const charts = await getRecommendedCharts(variables, allRelations, results);
   expect(charts.includes(ChartType.BAR)).toBeTruthy();
   expect(charts.includes(ChartType.WORD_CLOUD)).toBeTruthy();
   expect(charts.includes(ChartType.SCATTER)).toBeFalsy();
