@@ -4,6 +4,7 @@ import {
   Card,
   Divider,
   List,
+  Skeleton,
   Space,
   Tag,
   Tooltip,
@@ -71,7 +72,7 @@ export const chartIcons = {
 
 type AnalysisProps = {
   query: string;
-  repository: RepositoryId;
+  repository: RepositoryId | null;
 };
 
 const Analysis = ({ query, repository }: AnalysisProps) => {
@@ -82,29 +83,36 @@ const Analysis = ({ query, repository }: AnalysisProps) => {
 
   useEffect(() => {
     setLoading(true);
-    getQueryAnalysis(query, repository, username).then((res) => {
-      setQueryAnalysis(res);
-      setLoading(false);
-    });
+    if (repository) {
+      getQueryAnalysis(query, repository, username).then((res) => {
+        setQueryAnalysis(res);
+        setLoading(false);
+      });
+    }
   }, [query, repository, username]);
 
   return (
-    <Card title="Analysis" style={{ width: "100%" }} loading={loading}>
+    <Card title="Analysis" style={{ width: "100%" }}>
+      {repository === null && (
+        <Alert message="Select a repository to see variable types and the query pattern" />
+      )}
       {queryAnalysis && (
-        <Space direction="vertical" style={{ width: "100%" }}>
-          <Variables variableCategories={queryAnalysis.variables} />
-          {queryAnalysis.pattern ? (
-            <Pattern
-              pattern={queryAnalysis.pattern}
-              visualisations={queryAnalysis.visualisations}
-            />
-          ) : (
-            <Alert
-              message="Could not match any query pattern but you can still try the suggested charts."
-              banner
-            />
-          )}
-        </Space>
+        <Skeleton loading={loading}>
+          <Space direction="vertical" style={{ width: "100%" }}>
+            <Variables variableCategories={queryAnalysis.variables} />
+            {queryAnalysis.pattern ? (
+              <Pattern
+                pattern={queryAnalysis.pattern}
+                visualisations={queryAnalysis.visualisations}
+              />
+            ) : (
+              <Alert
+                message="Could not match any query pattern but you can still try the suggested charts."
+                banner
+              />
+            )}
+          </Space>
+        </Skeleton>
       )}
     </Card>
   );
@@ -130,7 +138,7 @@ const Pattern = ({ pattern, visualisations }: PatternProps) => {
             </Space>
           ))}
         </Space>
-        <Alert message="Open the Charts tab to see the recommended charts"/>
+        <Alert message="Open the Charts tab to see the recommended charts" />
       </Space>
     </Card>
   );
@@ -165,7 +173,10 @@ const Variables = ({ variableCategories }: VariablesProps) => {
                   <Space>
                     {variableCategories[category].map(
                       (v: string, index: number) => (
-                        <Tag key={index} style={{ fontSize: 14, paddingBottom: 2 }}>
+                        <Tag
+                          key={index}
+                          style={{ fontSize: 14, paddingBottom: 2 }}
+                        >
                           {v}
                         </Tag>
                       )

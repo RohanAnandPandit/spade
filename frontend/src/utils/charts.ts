@@ -1,3 +1,4 @@
+import { isGeographic } from "../api/queries";
 import {
   ChartType,
   QueryResults,
@@ -8,14 +9,16 @@ import {
 type RelationMap = { [key: string]: { [key: string]: RelationType } };
 type LinkMap = { [key: string]: Set<string> };
 
-export function getRecommendedCharts(
+export async function getRecommendedCharts(
   variables: VariableCategories,
   allRelations: RelationMap,
   results: QueryResults
 ) {
-  const { scalar, geographical, key, temporal, lexical, date, numeric } =
-    variables;
   const { header } = results;
+  const { scalar, key, temporal, lexical, date, numeric } = variables;
+  const geographical = await geographicVariables(results, variables);
+  console.log(geographical);
+
   const charts = new Set<ChartType>();
 
   if (date.length === 1 && numeric.length >= 1) {
@@ -35,7 +38,7 @@ export function getRecommendedCharts(
     charts.add(ChartType.PIE);
   }
 
-  if (geographical.length === 1 && numeric.length >= 1) {
+  if (geographical.length >= 1 && numeric.length >= 1) {
     charts.add(ChartType.CHOROPLETH_MAP);
   }
 
@@ -231,4 +234,27 @@ export function getAllRelations(results: QueryResults, columns: string[]) {
   }
 
   return { allRelations, allOutgoingLinks, allIncomingLinks };
+}
+
+async function geographicVariables(
+  results: QueryResults,
+  variables: VariableCategories
+) {
+  const { header, data } = results;
+  if (data.length === 0) return [];
+  const geo: string[] = [];
+
+  await Promise.all(
+    variables.lexical.map(async (column) => {
+      const index = header.indexOf(column);
+      const valid = await isGeographic(data[0][index]);
+
+      if (valid) {
+        geo.push(column);
+      }
+      return valid;
+    })
+  );
+
+  return geo;
 }

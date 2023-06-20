@@ -103,3 +103,19 @@ export async function getGeoJSON(region: string): Promise<GeoData> {
   }
   return { region, coordinates: [], name: "", type: "" };
 }
+
+export async function isGeographic(text: string): Promise<boolean> {
+  try {
+    const endpoint = `${BACKEND_API}/geo/valid`;
+    const response = await axios.get(endpoint, {
+      params: {
+        text,
+      },
+    });
+    return response.data.valid;
+  } catch (error) {
+    console.log(error);
+  }
+  return false;
+}
+

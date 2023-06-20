@@ -74,16 +74,14 @@ const Editor = ({
   return (
     <Row gutter={10}>
       <Col span={12}>
-        {/* <Space direction="vertical" style={{ width: "100%" }}> */}
-        <Space>
-          <Space style={{ margin: 5 }}>
-            <SelectRepository
-              repository={repository}
-              setRepository={setRepository}
-            />
-          </Space>
+        <Space wrap>
+          <SelectRepository
+            repository={repository}
+            setRepository={setRepository}
+          />
           <Button
             icon={<FiPlay size={20} />}
+            title={repository === null ? "Select repository to run query" : ""}
             loading={loading}
             onClick={() => {
               setLoading(true);
@@ -123,10 +121,9 @@ const Editor = ({
         />
       </Col>
       <Col span={12}>
-        {repository && <Analysis query={query} repository={repository} />}
+        <Analysis query={query} repository={repository} />
       </Col>
     </Row>
-    // </Space>
   );
 };
 
@@ -152,8 +149,9 @@ const SelectRepository = observer(
     return (
       <Dropdown
         menu={{
-          items: repositoryStore.repositories().map(
-            ({ name }: RepositoryInfo, index) => {
+          items: repositoryStore
+            .repositories()
+            .map(({ name }: RepositoryInfo, index) => {
               return {
                 key: `${index}`,
                 label: (
@@ -165,8 +163,7 @@ const SelectRepository = observer(
                   </Button>
                 ),
               };
-            }
-          ),
+            }),
         }}
       >
         <Button name="Choose repository">
