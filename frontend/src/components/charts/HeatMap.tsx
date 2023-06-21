@@ -1,7 +1,6 @@
 import { observer } from "mobx-react-lite";
 import { QueryResults, VariableCategories } from "../../types";
 import { useMemo } from "react";
-// import { useStore } from "../../stores/store";
 import ReactApexChart from "react-apexcharts";
 import { Alert, Space } from "antd";
 

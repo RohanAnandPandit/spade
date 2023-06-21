@@ -15,9 +15,11 @@ export async function getRecommendedCharts(
   results: QueryResults
 ) {
   const { header } = results;
-  const { scalar, key, temporal, lexical, date, numeric } = variables;
-  const geographical = await geographicVariables(results, variables);
-  console.log(geographical);
+  if (variables.geographical.length === 0) {
+    variables.geographical = await geographicVariables(results, variables);
+  }
+  const { scalar, key, temporal, geographical, lexical, date, numeric } =
+    variables;
 
   const charts = new Set<ChartType>();
 

@@ -6,6 +6,7 @@ import {
   List,
   Skeleton,
   Space,
+  Spin,
   Tag,
   Tooltip,
   Typography,
@@ -97,7 +98,7 @@ const Analysis = ({ query, repository }: AnalysisProps) => {
         <Alert message="Select a repository to see variable types and the query pattern" />
       )}
       {queryAnalysis && (
-        <Skeleton loading={loading}>
+        <Spin spinning={loading}>
           <Space direction="vertical" style={{ width: "100%" }}>
             <Variables variableCategories={queryAnalysis.variables} />
             {queryAnalysis.pattern ? (
@@ -112,7 +113,7 @@ const Analysis = ({ query, repository }: AnalysisProps) => {
               />
             )}
           </Space>
-        </Skeleton>
+        </Spin>
       )}
     </Card>
   );

@@ -15,6 +15,7 @@ import {
   Space,
   Table,
   Tag,
+  Tooltip,
   Typography,
 } from "antd";
 import { observer } from "mobx-react-lite";
@@ -166,17 +167,19 @@ const Relation = observer(
 
     return (
       <>
-        <Card
-          bodyStyle={{ padding: 10 }}
-          hoverable
-          onClick={() => setShowModal(true)}
-        >
-          <Space>
-            <Typography.Text>{left}</Typography.Text>
-            {relationIcons[relationType]}
-            <Typography.Text>{right}</Typography.Text>
-          </Space>
-        </Card>
+        <Tooltip title="Click for details">
+          <Card
+            bodyStyle={{ padding: 10 }}
+            hoverable
+            onClick={() => setShowModal(true)}
+          >
+            <Space>
+              <Typography.Text>{left}</Typography.Text>
+              {relationIcons[relationType]}
+              <Typography.Text>{right}</Typography.Text>
+            </Space>
+          </Card>
+        </Tooltip>
         <Modal
           open={showModal}
           title={
