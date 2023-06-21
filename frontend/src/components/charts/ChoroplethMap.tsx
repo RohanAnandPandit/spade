@@ -57,7 +57,8 @@ const ChoroplethMap = ({
     let maxValue = Number.MIN_SAFE_INTEGER;
 
     for (let row of results.data) {
-      const region = variables.key
+      // Concatenate geographical variables to identify the location
+      const region = variables.geographical
         .map((column: string) => row[results.header.indexOf(column)])
         .reduce((a, b) => `${removePrefix(b)}${a ? "," : ""}${a}`, "");
 
@@ -69,7 +70,7 @@ const ChoroplethMap = ({
     }
 
     return { regionValue, minValue, maxValue };
-  }, [results.data, results.header, variables.key, variables.scalar]);
+  }, [results.data, results.header, variables.geographical, variables.scalar]);
 
   const cache = useMemo(() => {
     return {};
@@ -192,21 +193,11 @@ const WorldMap = ({
   );
 };
 
-// const PlaceInfo = ({ name, property, value }) => {
-//   return (
-//     <Space direction="vertical">
-//       <Typography.Text>{name}</Typography.Text>
-//       <Typography.Text>
-//         {property}: {(value ?? "").toLocaleString()}
-//       </Typography.Text>
-//     </Space>
-//   );
-// };
-
 function reversePoint([x, y]: [number, number]) {
   return [y, x] as [number, number];
 }
 
+// Reverse points in GeoJSON coordinates to display regions in the correct orientation
 function reverseCoordinates(polygon: Coordinates) {
   return polygon.map((arr) => {
     if (arr.length > 0 && Array.isArray(arr[0])) {
