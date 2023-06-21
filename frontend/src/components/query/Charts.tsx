@@ -17,7 +17,7 @@ import {
   BsLightbulb,
   BsPieChart,
 } from "react-icons/bs";
-import { BiLineChart } from "react-icons/bi";
+import { BiLineChart, BiScatterChart } from "react-icons/bi";
 import {
   TbChartSankey,
   TbChartTreemap,
@@ -53,6 +53,7 @@ import { MdOutlineStackedBarChart } from "react-icons/md";
 import StackedBarChart from "../charts/StackedBarChart";
 import GroupedBarChart from "../charts/GroupedBarChart";
 import { RiBarChartGroupedFill } from "react-icons/ri";
+import BubbleChart from "../charts/BubbleChart";
 
 type ChartsProps = {
   query: string;
@@ -266,6 +267,22 @@ const Charts = observer(
           ),
           children: (
             <ScatterChart
+              results={results}
+              width={chartWidth}
+              height={chartHeight}
+              variables={queryAnalysis!.variables}
+            />
+          ),
+        },
+        {
+          key: ChartType.BUBBLE,
+          label: (
+            <>
+              <BiScatterChart size={18} /> Bubble
+            </>
+          ),
+          children: (
+            <BubbleChart
               results={results}
               width={chartWidth}
               height={chartHeight}
