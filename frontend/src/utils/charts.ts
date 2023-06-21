@@ -35,7 +35,7 @@ export async function getRecommendedCharts(
     }
   }
 
-  if (key.length === 1 && numeric.length >= 1) {
+  if (key.length === 1 && numeric.length >= 1 && temporal.length === 0) {
     charts.add(ChartType.BAR);
     charts.add(ChartType.PIE);
   }
