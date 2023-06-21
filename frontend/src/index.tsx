@@ -20,7 +20,7 @@ root.render(
             y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
         })(window, document, "clarity", "script", "hlisx0523d");`}
       </script>
-      <title>Semantic Web Schema and Data Visualiser</title>
+      <title>SPARQL Analyser & Data Explorer</title>
     </Helmet>
     <App />
   </BrowserRouter>
