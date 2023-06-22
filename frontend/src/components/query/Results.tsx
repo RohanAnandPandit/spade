@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Alert, Space, Switch, Table, Tooltip, Typography } from "antd";
 import { QueryResults } from "../../types";
-import { removePrefix } from "../../utils/queryResults";
+import { displayText, removePrefix } from "../../utils/queryResults";
 import Fullscreen from "./Fullscreen";
 import { useStore } from "../../stores/store";
 import { observer } from "mobx-react-lite";
@@ -52,7 +52,7 @@ const Results = observer(({ results, loading }: QueryResultsProps) => {
         dataSource={data.map((row, index) => {
           const values: any = {};
           for (let i = 0; i < row.length; i++) {
-            values[header[i]] = showPrefix ? row[i] : removePrefix(row[i]);
+            values[header[i]] = displayText(showPrefix ? row[i] : removePrefix(row[i]));
           }
           values.key = `${index}`;
           return values;
