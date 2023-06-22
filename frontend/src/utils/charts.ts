@@ -30,6 +30,7 @@ export async function getRecommendedCharts(
   if (numeric.length >= 2) {
     charts.add(ChartType.SCATTER);
     charts.add(ChartType.LINE);
+    charts.add(ChartType.AREA);
     if (numeric.length >= 3) {
       charts.add(ChartType.BUBBLE);
     }
@@ -74,7 +75,9 @@ export async function getRecommendedCharts(
     charts.add(ChartType.GROUPED_BAR);
     charts.add(ChartType.SPIDER);
     if (numeric.includes(key[1])) {
-      charts.add(ChartType.LINE);
+      charts
+      .add(ChartType.LINE);
+      charts.add(ChartType.AREA);
     }
   } else if (key.length === 1 && results.header.length >= 3) {
     const secondKeyColumn = results.header[results.header.indexOf(key[0]) + 1];
@@ -90,9 +93,11 @@ export async function getRecommendedCharts(
         charts.add(ChartType.GROUPED_BAR);
         charts.add(ChartType.SPIDER);
         charts.add(ChartType.LINE);
+        charts.add(ChartType.AREA);
       }
       if (numeric.includes(secondKeyColumn)) {
         charts.add(ChartType.LINE);
+        charts.add(ChartType.AREA);
       }
     }
   }

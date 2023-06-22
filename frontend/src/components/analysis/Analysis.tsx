@@ -19,7 +19,7 @@ import {
   VariableCategories,
 } from "../../types";
 import { getQueryAnalysis } from "../../api/queries";
-import { AiOutlineBarChart, AiOutlineRadarChart } from "react-icons/ai";
+import { AiOutlineAreaChart, AiOutlineBarChart, AiOutlineRadarChart } from "react-icons/ai";
 import { BiLineChart, BiScatterChart, BiText } from "react-icons/bi";
 import { VscGraphScatter } from "react-icons/vsc";
 import {
@@ -69,6 +69,7 @@ export const chartIcons = {
   [ChartType.CHOROPLETH_MAP]: <HiOutlineGlobe size={30} />,
   [ChartType.STACKED_BAR]: <MdOutlineStackedBarChart size={30} />,
   [ChartType.GROUPED_BAR]: <RiBarChartGroupedFill size={30} />,
+  [ChartType.AREA]: <AiOutlineAreaChart size={30} />
 };
 
 type AnalysisProps = {
