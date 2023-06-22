@@ -70,6 +70,7 @@ export enum ChartType {
   HEAT_MAP = "Heat Map",
   SPIDER = "Spider",
   NETWORK = "Network",
+  AREA = "Area"
 }
 
 export enum CategoryType {

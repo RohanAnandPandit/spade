@@ -9,7 +9,7 @@ import {
 import BarChart from "../charts/BarChart";
 import { observer } from "mobx-react-lite";
 import { useStore } from "../../stores/store";
-import { AiOutlineBarChart, AiOutlineRadarChart } from "react-icons/ai";
+import { AiOutlineAreaChart, AiOutlineBarChart, AiOutlineRadarChart } from "react-icons/ai";
 import { HiOutlineGlobe } from "react-icons/hi";
 import {
   BsBodyText,
@@ -54,6 +54,7 @@ import StackedBarChart from "../charts/StackedBarChart";
 import GroupedBarChart from "../charts/GroupedBarChart";
 import { RiBarChartGroupedFill } from "react-icons/ri";
 import BubbleChart from "../charts/BubbleChart";
+import AreaChart from "../charts/AreaChart";
 
 type ChartsProps = {
   query: string;
@@ -139,6 +140,22 @@ const Charts = observer(
           ),
           children: (
             <LineChart
+              results={results}
+              width={chartWidth}
+              height={chartHeight}
+              variables={queryAnalysis!.variables}
+            />
+          ),
+        },
+        {
+          key: ChartType.AREA,
+          label: (
+            <>
+              <AiOutlineAreaChart size={18} /> Area
+            </>
+          ),
+          children: (
+            <AreaChart
               results={results}
               width={chartWidth}
               height={chartHeight}

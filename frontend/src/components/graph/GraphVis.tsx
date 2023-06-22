@@ -6,7 +6,7 @@ import NetworkGraph, {
   Node,
   Options,
 } from "react-graph-vis";
-import { isURL, removePrefix } from "../../utils/queryResults";
+import { isNumber, isURL, removePrefix } from "../../utils/queryResults";
 import { observer } from "mobx-react-lite";
 import { useStore } from "../../stores/store";
 import "./network.css";
@@ -132,8 +132,10 @@ const GraphVis = observer(
         const { nodes, edges } = event;
         // Double clicking on a node adds all its data properties
         for (let nodeId of nodes) {
-          const uri = idToNode[nodeId].title!;
-          if (!isURL(uri)) continue; // Skip if node already contains a literal value
+          const node = idToNode[nodeId];
+
+          const uri = node.title!;
+          if (!isURL(uri)) continue; // Skip if node contains a literal value
 
           getPropertyValues(
             repository!,
@@ -149,7 +151,7 @@ const GraphVis = observer(
             setGraph(
               getNodesAndEdges({
                 links: newLinks,
-                initialGraph: graph,
+                initialGraph: { nodes: [node], edges: []},
                 nodeOptions: {
                   color: randomColor({ luminosity: "light" }),
                   shape: "ellipse",
@@ -265,7 +267,7 @@ function getNodesAndEdges({
   for (let [sub, pred, obj] of links) {
     let nodeA: Node;
     let nodeB: Node;
-    if (valueToNode[sub]) {
+    if (!isNumber(sub) && valueToNode[sub]) {
       nodeA = valueToNode[sub];
     } else {
       nodeA = {
@@ -274,10 +276,12 @@ function getNodesAndEdges({
         title: sub,
         ...nodeOptions,
       };
-      valueToNode[sub] = nodeA;
+      if (!isNumber(sub)) {
+        valueToNode[sub] = nodeA;
+      }
     }
 
-    if (valueToNode[obj]) {
+    if (!isNumber(obj) && valueToNode[obj]) {
       nodeB = valueToNode[obj];
     } else {
       nodeB = {
@@ -286,7 +290,9 @@ function getNodesAndEdges({
         title: obj,
         ...nodeOptions,
       };
-      valueToNode[obj] = nodeB;
+      if (!isNumber(obj)) {
+        valueToNode[obj] = nodeB;
+      }
     }
 
     const from = nodeA.id as number;
