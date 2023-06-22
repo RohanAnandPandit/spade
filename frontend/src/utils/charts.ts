@@ -29,7 +29,7 @@ export async function getRecommendedCharts(
 
   if (numeric.length >= 2) {
     charts.add(ChartType.SCATTER);
-
+    charts.add(ChartType.LINE);
     if (numeric.length >= 3) {
       charts.add(ChartType.BUBBLE);
     }
