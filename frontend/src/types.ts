@@ -33,7 +33,11 @@ export type QueryRecord = {
 };
 
 export type QueryId = string;
-export type QueryInfo = { name: string; sparql: string };
+export type QueryInfo = {
+  name: string;
+  sparql: string;
+  repository: RepositoryId | null;
+};
 
 export type Metadata = {
   label: string;
@@ -70,7 +74,7 @@ export enum ChartType {
   HEAT_MAP = "Heat Map",
   SPIDER = "Spider",
   NETWORK = "Network",
-  AREA = "Area"
+  AREA = "Area",
 }
 
 export enum CategoryType {
@@ -81,7 +85,7 @@ export enum CategoryType {
   GEOGRAPHICAL = "geographical",
   LEXICAL = "lexical",
   NUMERIC = "numeric",
-  OBJECT = 'object'
+  OBJECT = "object",
 }
 
 export type VariableCategories = {
@@ -108,13 +112,11 @@ export enum RelationType {
   MANY_TO_MANY = "Many-to-many",
 }
 
-
-export type Coordinates = [number, number][] | [number, number][][] ;
+export type Coordinates = [number, number][] | [number, number][][];
 
 export type GeoData = {
   region: string;
   name: string;
   coordinates: any;
   type: string;
-}
-
+};

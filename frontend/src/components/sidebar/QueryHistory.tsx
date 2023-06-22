@@ -62,7 +62,7 @@ const QueryHistory = observer(() => {
             style={{ padding: 5, paddingTop: 10, maxWidth: "100%" }}
             items={repositoryStore
               .getQueryHistory()
-              .map(({ id, sparql, date, name }) => {
+              .map(({ id, sparql, date, name, repository }) => {
                 return {
                   children: (
                     <Popover
@@ -85,7 +85,11 @@ const QueryHistory = observer(() => {
                       <Button
                         name="Click to open tab"
                         onClick={() => {
-                          const qid = queriesStore.addQuery(sparql, name);
+                          const qid = queriesStore.addQuery({
+                            sparql,
+                            name,
+                            repository,
+                          });
                           queriesStore.setCurrentQueryId(qid);
                         }}
                         style={{

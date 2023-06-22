@@ -13,25 +13,31 @@ import Charts from "./Charts";
 import { MdOutlineEditNote } from "react-icons/md";
 
 type QueryProps = {
-  query: string;
-  setQueryText: any;
-  name: string;
+  qid: string;
 };
 
-const Query = observer(({ query, setQueryText, name }: QueryProps) => {
+const Query = observer(({ qid }: QueryProps) => {
   const rootStore = useStore();
   const settings = rootStore.settingsStore;
   const repositoryStore = rootStore.repositoryStore;
-
+  const queriesStore = rootStore.queriesStore;
   const [results, setResults] = useState<QueryResults>({
     header: [],
     data: [],
   });
+  const { name, sparql: query, repository = repositoryStore.currentRepository() } = queriesStore.getQuery(qid);
+
+  const setQueryText = (text: string) => {
+    queriesStore.setQueryText(qid, text);
+  };
+
+  const setRepository = (repositoryId: RepositoryId | null) => {
+    queriesStore.setQueryRepository(qid, repositoryId);
+  };
 
   const [graphKey, setGraphKey] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("editor");
-  const [repository, setRepository] = useState<RepositoryId | null>(null);
 
   const width = Math.floor(
     (window.screen.width -

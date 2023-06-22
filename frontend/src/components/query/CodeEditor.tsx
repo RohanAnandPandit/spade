@@ -11,7 +11,7 @@ import { autocompletion, CompletionContext } from "@codemirror/autocomplete";
 
 type CodeEditorProps = {
   code: string;
-  setCode: React.Dispatch<React.SetStateAction<string>>;
+  setCode: (text: string) => void;
   language: string;
   completions: {
     keywords?: string[];
