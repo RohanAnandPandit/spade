@@ -18,7 +18,7 @@ import { addQueryToHistory } from "../../api/queries";
 
 type QueryEditorProps = {
   query: string;
-  onChange: React.Dispatch<React.SetStateAction<string>>;
+  onChange: (text: string) => void;
   width: number;
   height: number;
   onRun: (results: QueryResults) => void;
@@ -26,7 +26,7 @@ type QueryEditorProps = {
   setLoading: React.Dispatch<React.SetStateAction<boolean>>;
   queryName: string;
   repository: RepositoryId | null;
-  setRepository: React.Dispatch<React.SetStateAction<string | null>>;
+  setRepository: (repositoryId: string | null) => void;
 };
 
 const Editor = ({
@@ -141,7 +141,7 @@ const SelectRepository = observer(
     setRepository,
   }: {
     repository: string | null;
-    setRepository: React.Dispatch<React.SetStateAction<string | null>>;
+    setRepository: (repositoryId: string | null) => void;
   }) => {
     const rootStore = useStore();
     const repositoryStore = rootStore.repositoryStore;

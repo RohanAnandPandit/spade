@@ -9,6 +9,7 @@ type TargetKey = React.MouseEvent | React.KeyboardEvent | string;
 
 const QueryBrowser = observer(() => {
   const rootStore = useStore();
+  const repositoryStore = rootStore.repositoryStore;
   const queriesStore = rootStore.queriesStore;
 
   const onTabChange = (newActiveKey: string) => {
@@ -17,7 +18,9 @@ const QueryBrowser = observer(() => {
 
   const add = () => {
     // So this changes the tab to the id of the new query
-    onTabChange(queriesStore.addQuery());
+    onTabChange(
+      queriesStore.addQuery({ repository: repositoryStore.currentRepository() })
+    );
   };
 
   const remove = (targetKey: TargetKey) => {
@@ -70,15 +73,7 @@ const QueryBrowser = observer(() => {
               }
             />
           ),
-          children: (
-            <Query
-              query={queriesStore.openQueries()[qid].sparql}
-              setQueryText={(text: string) =>
-                queriesStore.setQueryText(qid, text)
-              }
-              name={queriesStore.getQueryName(qid)}
-            />
-          ),
+          children: <Query qid={qid} />,
           key: qid,
         };
       })}
