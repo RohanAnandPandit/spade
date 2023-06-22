@@ -14,7 +14,7 @@ import {
   VariableCategories,
 } from "../../types";
 import { getGeoJSON } from "../../api/queries";
-import { Space, Spin, Typography } from "antd";
+import { Segmented, Space, Spin, Typography } from "antd";
 import "./ChoroplethMap.css";
 import { removePrefix } from "../../utils/queryResults";
 import iconMarker from "leaflet/dist/images/marker-icon.png";
@@ -47,11 +47,10 @@ const ChoroplethMap = ({
   // const legendItemsReverse = [...legendItems].reverse();
   const [loading, setLoading] = useState<boolean>(false);
   const [data, setData] = useState<GeoData[]>([]);
-
+  const [scalarColumn, setScalarColumn] = useState<string>(variables.scalar[0]);
   const { regionValue, minValue, maxValue } = useMemo(() => {
+    const valueIndex = results.header.indexOf(scalarColumn);
     const regionValue = {}; // Mapping from region to value
-    const valueColumn = variables.scalar[0];
-    const valueIndex = results.header.indexOf(valueColumn);
 
     let minValue = Number.MAX_SAFE_INTEGER;
     let maxValue = Number.MIN_SAFE_INTEGER;
@@ -70,7 +69,7 @@ const ChoroplethMap = ({
     }
 
     return { regionValue, minValue, maxValue };
-  }, [results.data, results.header, variables.geographical, variables.scalar]);
+  }, [results.data, results.header, variables.geographical, scalarColumn]);
 
   const cache = useMemo(() => {
     return {};
@@ -108,17 +107,23 @@ const ChoroplethMap = ({
   ]);
 
   return (
-    <Spin spinning={loading}>
-      <WorldMap
-        geoData={data}
-        width={width - 50}
-        height={height}
-        regionValue={regionValue}
-        minValue={minValue}
-        maxValue={maxValue}
-        valueColumn={variables.scalar[0]}
+    <Space direction="vertical">
+      <Segmented
+        options={variables.numeric.map((name) => ({ label: name, value: name }))}
+        onChange={(value) => setScalarColumn(value as string)}
       />
-    </Spin>
+      <Spin spinning={loading}>
+        <WorldMap
+          geoData={data}
+          width={width - 50}
+          height={height}
+          regionValue={regionValue}
+          minValue={minValue}
+          maxValue={maxValue}
+          valueColumn={scalarColumn}
+        />
+      </Spin>
+    </Space>
   );
 };
 
@@ -141,7 +146,11 @@ const WorldMap = ({
   valueColumn,
 }: WorldMapProps) => {
   return (
-    <MapContainer style={{ width, height }} zoom={1} center={[20, 60]}>
+    <MapContainer
+      style={{ width, height }}
+      zoom={1}
+      center={[20, 60]}
+    >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
