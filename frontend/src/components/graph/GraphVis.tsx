@@ -6,7 +6,7 @@ import NetworkGraph, {
   Node,
   Options,
 } from "react-graph-vis";
-import { isNumber, isURL, removePrefix } from "../../utils/queryResults";
+import { displayText, isNumber, isURL, removePrefix } from "../../utils/queryResults";
 import { observer } from "mobx-react-lite";
 import { useStore } from "../../stores/store";
 import "./network.css";
@@ -247,9 +247,10 @@ function getNodesAndEdges({
   nodeOptions?: any;
   edgeOptions?: any;
 }) {
-  const valueToNode: { [key: string]: Node } = {};
+  const literalNodes: Node[] = [];
+  const objNodes: { [key: string]: Node } = {}; // Maps object URI to node
   for (let node of initialGraph.nodes) {
-    valueToNode[node.title!] = node;
+    objNodes[node.title!] = node;
   }
   // Ignore the id of the edges set by the graph as this causes issues for the new edges
   const edgeIds: { [key: string]: Edge } = {};
@@ -259,39 +260,43 @@ function getNodesAndEdges({
   const edgeCounts: { [key: string]: number } = {};
 
   let availableId: number =
-    Object.values(valueToNode).length === 0
+    Object.values(objNodes).length === 0
       ? 0
-      : Math.max(...Object.values(valueToNode).map(({ id }) => id as number)) +
+      : Math.max(...Object.values(objNodes).map(({ id }) => id as number)) +
         1;
 
   for (let [sub, pred, obj] of links) {
     let nodeA: Node;
     let nodeB: Node;
-    if (!isNumber(sub) && valueToNode[sub]) {
-      nodeA = valueToNode[sub];
+    if (!isNumber(sub) && objNodes[sub]) {
+      nodeA = objNodes[sub];
     } else {
       nodeA = {
         id: availableId++,
-        label: removePrefix(sub),
+        label: displayText(sub),
         title: sub,
         ...nodeOptions,
       };
-      if (!isNumber(sub)) {
-        valueToNode[sub] = nodeA;
+      if (isNumber(sub)) {
+        literalNodes.push(nodeA);
+      } else {
+        objNodes[sub] = nodeA;
       }
     }
 
-    if (!isNumber(obj) && valueToNode[obj]) {
-      nodeB = valueToNode[obj];
+    if (objNodes[obj]) {
+      nodeB = objNodes[obj];
     } else {
       nodeB = {
         id: availableId++,
-        label: removePrefix(obj),
+        label: displayText(obj),
         title: obj,
         ...nodeOptions,
       };
-      if (!isNumber(obj)) {
-        valueToNode[obj] = nodeB;
+      if (isNumber(obj)) {
+        literalNodes.push(nodeB);
+      } else {
+        objNodes[obj] = nodeB;
       }
     }
 
@@ -316,7 +321,7 @@ function getNodesAndEdges({
     edgeCounts[pairId] = edgeCounts[pairId] ?? 0 + 1;
   }
   const graph = {
-    nodes: Object.values(valueToNode),
+    nodes: [...literalNodes, ...Object.values(objNodes)],
     edges: Object.values(edgeIds),
   };
 
