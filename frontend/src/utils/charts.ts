@@ -35,17 +35,19 @@ export async function getRecommendedCharts(
     }
   }
 
-  if (key.length === 1 && numeric.length >= 1 && temporal.length === 0) {
-    charts.add(ChartType.BAR);
-    charts.add(ChartType.PIE);
-  }
+  if (temporal.length === 0) {
+    if (key.length === 1 && numeric.length >= 1) {
+      charts.add(ChartType.BAR);
+      charts.add(ChartType.PIE);
+    }
 
-  if (geographical.length >= 1 && numeric.length >= 1) {
-    charts.add(ChartType.CHOROPLETH_MAP);
-  }
+    if (geographical.length >= 1 && numeric.length >= 1) {
+      charts.add(ChartType.CHOROPLETH_MAP);
+    }
 
-  if ((key.length === 1 || lexical.length === 1) && numeric.length === 1) {
-    charts.add(ChartType.WORD_CLOUD);
+    if ((key.length === 1 || lexical.length === 1) && numeric.length === 1) {
+      charts.add(ChartType.WORD_CLOUD);
+    }
   }
 
   if (key.length >= 2) {
