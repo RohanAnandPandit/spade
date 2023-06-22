@@ -29,23 +29,26 @@ export async function getRecommendedCharts(
 
   if (numeric.length >= 2) {
     charts.add(ChartType.SCATTER);
-
+    charts.add(ChartType.LINE);
+    charts.add(ChartType.AREA);
     if (numeric.length >= 3) {
       charts.add(ChartType.BUBBLE);
     }
   }
 
-  if (key.length === 1 && numeric.length >= 1 && temporal.length === 0) {
-    charts.add(ChartType.BAR);
-    charts.add(ChartType.PIE);
-  }
+  if (temporal.length === 0) {
+    if (key.length === 1 && numeric.length >= 1) {
+      charts.add(ChartType.BAR);
+      charts.add(ChartType.PIE);
+    }
 
-  if (geographical.length >= 1 && numeric.length >= 1) {
-    charts.add(ChartType.CHOROPLETH_MAP);
-  }
+    if (geographical.length >= 1 && numeric.length >= 1) {
+      charts.add(ChartType.CHOROPLETH_MAP);
+    }
 
-  if ((key.length === 1 || lexical.length === 1) && numeric.length === 1) {
-    charts.add(ChartType.WORD_CLOUD);
+    if ((key.length === 1 || lexical.length === 1) && numeric.length === 1) {
+      charts.add(ChartType.WORD_CLOUD);
+    }
   }
 
   if (key.length >= 2) {
@@ -72,7 +75,9 @@ export async function getRecommendedCharts(
     charts.add(ChartType.GROUPED_BAR);
     charts.add(ChartType.SPIDER);
     if (numeric.includes(key[1])) {
-      charts.add(ChartType.LINE);
+      charts
+      .add(ChartType.LINE);
+      charts.add(ChartType.AREA);
     }
   } else if (key.length === 1 && results.header.length >= 3) {
     const secondKeyColumn = results.header[results.header.indexOf(key[0]) + 1];
@@ -88,9 +93,11 @@ export async function getRecommendedCharts(
         charts.add(ChartType.GROUPED_BAR);
         charts.add(ChartType.SPIDER);
         charts.add(ChartType.LINE);
+        charts.add(ChartType.AREA);
       }
       if (numeric.includes(secondKeyColumn)) {
         charts.add(ChartType.LINE);
+        charts.add(ChartType.AREA);
       }
     }
   }
