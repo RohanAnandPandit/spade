@@ -60,19 +60,17 @@ export async function getRecommendedCharts(
     );
     if (isHierarchical) {
       charts.add(ChartType.HIERARCHY_TREE);
-    } else {
-      charts.add(ChartType.NETWORK);
     }
+    charts.add(ChartType.NETWORK);
     if (scalar.length >= 1) {
       if (isHierarchical) {
         charts.add(ChartType.TREE_MAP);
         charts.add(ChartType.SUNBURST);
         charts.add(ChartType.CIRCLE_PACKING);
-      } else {
-        charts.add(ChartType.HEAT_MAP);
-        charts.add(ChartType.CHORD_DIAGRAM);
-        charts.add(ChartType.SANKEY);
       }
+      charts.add(ChartType.HEAT_MAP);
+      charts.add(ChartType.CHORD_DIAGRAM);
+      charts.add(ChartType.SANKEY);
     }
   }
   if (key.length === 2 && header.length >= 3) {
@@ -118,7 +116,6 @@ export function isCompositeKey(
   for (let row of results.data) {
     const s = columnIdxs.map((i) => row[i]).join(",");
     if (values.has(s)) {
-      console.log(s);
       return false;
     }
     values.add(s);
@@ -234,6 +231,7 @@ export function getAllRelations(results: QueryResults, columns: string[]) {
       const colA = columns[i];
       const colB = columns[j];
       allRelations[colA] = allRelations[colA] ?? {};
+      allRelations[colB] = allRelations[colB] ?? {};
       allOutgoingLinks[colA] = allOutgoingLinks[colA] ?? {};
       allIncomingLinks[colB] = allIncomingLinks[colB] ?? {};
 
@@ -243,10 +241,23 @@ export function getAllRelations(results: QueryResults, columns: string[]) {
 
       const relationType = getColumnRelationship(outgoingLinks, incomingLinks);
       allRelations[colA][colB] = relationType;
+      allRelations[colB][colA] = oppositeRelation(relationType);
     }
   }
 
   return { allRelations, allOutgoingLinks, allIncomingLinks };
+}
+
+function oppositeRelation(relation: RelationType) {
+  switch (relation) {
+    case RelationType.ONE_TO_ONE:
+    case RelationType.MANY_TO_MANY:
+      return relation;
+    case RelationType.ONE_TO_MANY:
+      return RelationType.MANY_TO_ONE;
+    case RelationType.MANY_TO_ONE:
+      return RelationType.ONE_TO_MANY;
+  }
 }
 
 async function geographicVariables(
