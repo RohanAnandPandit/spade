@@ -19,8 +19,17 @@ import {
   VariableCategories,
 } from "../../types";
 import { getQueryAnalysis } from "../../api/queries";
-import { AiOutlineAreaChart, AiOutlineBarChart, AiOutlineRadarChart } from "react-icons/ai";
-import { BiLineChart, BiScatterChart, BiText } from "react-icons/bi";
+import {
+  AiOutlineAreaChart,
+  AiOutlineBarChart,
+  AiOutlineRadarChart,
+} from "react-icons/ai";
+import {
+  BiLineChart,
+  BiNetworkChart,
+  BiScatterChart,
+  BiText,
+} from "react-icons/bi";
 import { VscGraphScatter } from "react-icons/vsc";
 import {
   BsBodyText,
@@ -69,7 +78,8 @@ export const chartIcons = {
   [ChartType.CHOROPLETH_MAP]: <HiOutlineGlobe size={30} />,
   [ChartType.STACKED_BAR]: <MdOutlineStackedBarChart size={30} />,
   [ChartType.GROUPED_BAR]: <RiBarChartGroupedFill size={30} />,
-  [ChartType.AREA]: <AiOutlineAreaChart size={30} />
+  [ChartType.AREA]: <AiOutlineAreaChart size={30} />,
+  [ChartType.GRAPH]: <BiNetworkChart size={30} />,
 };
 
 type AnalysisProps = {
@@ -127,20 +137,18 @@ type PatternProps = {
 
 const Pattern = ({ pattern, visualisations }: PatternProps) => {
   return (
-    <Card type="inner" title={pattern} style={{ width: "100%" }}>
+    <Card
+      type="inner"
+      title="Visualisations for this pattern"
+      style={{ width: "100%" }}
+    >
       <Space direction="vertical">
-        <Typography.Text style={{ fontSize: 20 }}>
-          Common charts
-        </Typography.Text>
-        <Space>
+        <Typography.Text style={{ fontSize: 20 }}>{pattern}</Typography.Text>
+        <Space split={<Divider type="vertical" />}>
           {visualisations.map((chart) => (
-            <Space key={chart}>
               <Tooltip title={chart}>{chartIcons[chart] ?? chart}</Tooltip>
-              <Divider type="vertical" />
-            </Space>
           ))}
         </Space>
-        <Alert message="Open the Charts tab to see the recommended charts" />
       </Space>
     </Card>
   );
