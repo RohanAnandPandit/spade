@@ -29,7 +29,7 @@ type GraphVisProps = {
   interactive?: boolean;
 };
 
-type GraphInfo = { title: string; data: GraphData };
+type GraphInfo = { key: string; title: string; data: GraphData };
 
 const GraphVis = observer(
   ({
@@ -45,9 +45,14 @@ const GraphVis = observer(
     const settings = rootStore.settingsStore;
     const [currentIdx, setCurrentIdx] = useState<number>(-1);
     const [history, setHistory] = useState<GraphInfo[]>([]);
-    const { title, data: graph } = useMemo(
+    const {
+      key,
+      title,
+      data: graph,
+    } = useMemo(
       () =>
         history[currentIdx] ?? {
+          key: "loading",
           title: "Loading",
           data: { nodes: [], edges: [] },
         },
@@ -77,6 +82,7 @@ const GraphVis = observer(
 
     useEffect(() => {
       addGraph({
+        key: "Original",
         title: "Original",
         data: getNodesAndEdges({
           links,
@@ -176,6 +182,7 @@ const GraphVis = observer(
               value,
             ]);
             addGraph({
+              key: `Data properties of ${node.title!}`,
               title: `Data properties of ${node.label!}`,
               data: getNodesAndEdges({
                 links: newLinks,
@@ -205,6 +212,9 @@ const GraphVis = observer(
             edges: newEdges,
           };
           addGraph({
+            key: `Only ${removePrefix(edge.title!)} properties for ${
+              fromNode.title
+            }`,
             title: `Only ${removePrefix(edge.label!)} properties for ${
               fromNode.label
             }`,
@@ -234,6 +244,7 @@ const GraphVis = observer(
             ]);
             // The initialGraph is not given so all other nodes, except for the current one, get removed
             addGraph({
+              key: `Object properties of ${node.title}`,
               title: `Object properties of ${node.label}`,
               data: getNodesAndEdges({
                 links: newLinks,
@@ -260,6 +271,7 @@ const GraphVis = observer(
             edges: [edge],
           };
           addGraph({
+            key: `Only relationships from ${fromNode.title} and ${toNode.title}`,
             title: `Only relationships from ${fromNode.label} and ${toNode.label}`,
             data: newGraph,
           });
@@ -288,7 +300,7 @@ const GraphVis = observer(
           </Space>
         )}
         <NetworkGraph
-          key={title}
+          key={key}
           graph={graph}
           options={graphOptions}
           events={interactive ? events : {}}
