@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Space, Tabs, TabsProps } from "antd";
+import { Space, Tabs, TabsProps, Tooltip } from "antd";
 import { observer } from "mobx-react-lite";
 import { BiNetworkChart } from "react-icons/bi";
 import { BsBarChartSteps, BsTable } from "react-icons/bs";
@@ -25,7 +25,11 @@ const Query = observer(({ qid }: QueryProps) => {
     header: [],
     data: [],
   });
-  const { name, sparql: query, repository = repositoryStore.currentRepository() } = queriesStore.getQuery(qid);
+  const {
+    name,
+    sparql: query,
+    repository = repositoryStore.currentRepository(),
+  } = queriesStore.getQuery(qid);
 
   const setQueryText = (text: string) => {
     queriesStore.setQueryText(qid, text);
@@ -108,10 +112,12 @@ const Query = observer(({ qid }: QueryProps) => {
     {
       key: "charts",
       label: (
-        <Space.Compact>
-          <BsBarChartSteps size={15} style={{ margin: 5 }} />
-          Charts
-        </Space.Compact>
+        <Tooltip title="View recommended charts">
+          <Space.Compact>
+            <BsBarChartSteps size={15} style={{ margin: 5 }} />
+            Charts
+          </Space.Compact>
+        </Tooltip>
       ),
       disabled: isEmpty(results),
       children: (

@@ -6,13 +6,19 @@ import NetworkGraph, {
   Node,
   Options,
 } from "react-graph-vis";
-import { displayText, isNumber, isURL, removePrefix } from "../../utils/queryResults";
+import {
+  displayText,
+  isNumber,
+  isURL,
+  removePrefix,
+} from "../../utils/queryResults";
 import { observer } from "mobx-react-lite";
 import { useStore } from "../../stores/store";
 import "./network.css";
 import { getPropertyValues } from "../../api/dataset";
 import randomColor from "randomcolor";
 import getUuidByString from "uuid-by-string";
+import { Button, Divider, Space, Typography } from "antd";
 
 type GraphVisProps = {
   links: Triplet[];
@@ -22,6 +28,8 @@ type GraphVisProps = {
   repository?: RepositoryId;
   interactive?: boolean;
 };
+
+type GraphInfo = { key: string; title: string; data: GraphData };
 
 const GraphVis = observer(
   ({
@@ -35,9 +43,32 @@ const GraphVis = observer(
     const rootStore = useStore();
     const username = rootStore.authStore.username!;
     const settings = rootStore.settingsStore;
-    // const [, setLoading] = useState<boolean>(true);
+    const [currentIdx, setCurrentIdx] = useState<number>(-1);
+    const [history, setHistory] = useState<GraphInfo[]>([]);
+    const {
+      key,
+      title,
+      data: graph,
+    } = useMemo(
+      () =>
+        history[currentIdx] ?? {
+          key: "loading",
+          title: "Loading",
+          data: { nodes: [], edges: [] },
+        },
+      [history, currentIdx]
+    );
 
-    const [graph, setGraph] = useState<GraphData>({ nodes: [], edges: [] });
+    // const goToLast = useCallback(() => {
+    //   setCurrentIdx(history.length - 1);
+    // }, [history]);
+
+    const addGraph = (graph: GraphInfo) => {
+      setHistory((history) => {
+        setCurrentIdx(history.length);
+        return [...history, graph];
+      });
+    };
 
     const edgeOptions = useMemo(() => {
       return {
@@ -50,8 +81,10 @@ const GraphVis = observer(
     }, [settings]);
 
     useEffect(() => {
-      setGraph(
-        getNodesAndEdges({
+      addGraph({
+        key: "Original",
+        title: "Original",
+        data: getNodesAndEdges({
           links,
           nodeOptions: {
             shape: "box",
@@ -59,8 +92,8 @@ const GraphVis = observer(
             color: randomColor({ luminosity: "light" }),
           },
           edgeOptions,
-        })
-      );
+        }),
+      });
     }, [links, edgeOptions]);
 
     const idToNode: { [key: number]: Node } = useMemo(() => {
@@ -148,25 +181,29 @@ const GraphVis = observer(
               prop,
               value,
             ]);
-            setGraph(
-              getNodesAndEdges({
+            addGraph({
+              key: `Data properties of ${node.title!}`,
+              title: `Data properties of ${node.label!}`,
+              data: getNodesAndEdges({
                 links: newLinks,
-                initialGraph: { nodes: [node], edges: []},
+                initialGraph: { nodes: [node], edges: [] },
                 nodeOptions: {
                   color: randomColor({ luminosity: "light" }),
                   shape: "ellipse",
                   font: { size: 25 },
                 },
                 edgeOptions,
-              })
-            );
+              }),
+            });
           });
+          return;
         }
         // Double clicking on an edge filters down to all edges with the same title
         for (let edgeId of edges) {
           const edge = idToEdge[edgeId];
+          const fromNode = idToNode[edge.from!];
           const newEdges = graph.edges.filter(
-            (e: Edge) => e.title === edge.title
+            (e: Edge) => e.title === edge.title && e.from === edge.from!
           );
           const newGraph = {
             nodes: newEdges
@@ -174,14 +211,24 @@ const GraphVis = observer(
               .flat(1),
             edges: newEdges,
           };
-          setGraph(newGraph);
+          addGraph({
+            key: `Only ${removePrefix(edge.title!)} properties for ${
+              fromNode.title
+            }`,
+            title: `Only ${removePrefix(edge.label!)} properties for ${
+              fromNode.label
+            }`,
+            data: newGraph,
+          });
+          return;
         }
       },
       hold: function (event: any) {
         // Click and hold on a node shows all object properties of current node
         const { nodes, edges } = event;
         for (let nodeId of nodes) {
-          const uri = idToNode[nodeId].title!;
+          const node = idToNode[nodeId];
+          const uri = node.title!;
           if (!isURL(uri)) continue; // Skip if node contains a literal value
 
           getPropertyValues(
@@ -196,8 +243,10 @@ const GraphVis = observer(
               value,
             ]);
             // The initialGraph is not given so all other nodes, except for the current one, get removed
-            setGraph(
-              getNodesAndEdges({
+            addGraph({
+              key: `Object properties of ${node.title}`,
+              title: `Object properties of ${node.label}`,
+              data: getNodesAndEdges({
                 links: newLinks,
                 nodeOptions: {
                   shape: "box",
@@ -205,33 +254,61 @@ const GraphVis = observer(
                   font: { size: 30 },
                 },
                 edgeOptions,
-              })
-            );
+              }),
+            });
           });
+          return;
         }
 
         for (let edgeId of edges) {
           const edge = idToEdge[edgeId];
+          const fromNode = idToNode[edge.from!];
+          const toNode = idToNode[edge.to!];
           const newGraph = {
             nodes: graph.nodes.filter(
               ({ id }) => id === edge.from || id === edge.to
             ),
             edges: [edge],
           };
-          setGraph(newGraph);
+          addGraph({
+            key: `Only relationships from ${fromNode.title} and ${toNode.title}`,
+            title: `Only relationships from ${fromNode.label} and ${toNode.label}`,
+            data: newGraph,
+          });
+          return;
         }
       },
     };
 
     return (
-      <NetworkGraph
-        graph={graph}
-        options={graphOptions}
-        events={interactive ? events : {}}
-        getNetwork={(network: any) => {
-          //  if you want access to vis.js network api you can set the state in a parent component using this property
-        }}
-      />
+      <Space direction="vertical">
+        {interactive && (
+          <Space split={<Divider type="vertical" />}>
+            <Button
+              disabled={currentIdx <= 0}
+              onClick={() => setCurrentIdx(currentIdx - 1)}
+            >
+              Prev
+            </Button>
+            <Typography.Text style={{ fontSize: 20 }}>{title}</Typography.Text>
+            <Button
+              disabled={currentIdx === history.length - 1}
+              onClick={() => setCurrentIdx(currentIdx + 1)}
+            >
+              Next
+            </Button>
+          </Space>
+        )}
+        <NetworkGraph
+          key={key}
+          graph={graph}
+          options={graphOptions}
+          events={interactive ? events : {}}
+          getNetwork={(network: any) => {
+            //  if you want access to vis.js network api you can set the state in a parent component using this property
+          }}
+        />
+      </Space>
     );
   }
 );
@@ -262,8 +339,7 @@ function getNodesAndEdges({
   let availableId: number =
     Object.values(objNodes).length === 0
       ? 0
-      : Math.max(...Object.values(objNodes).map(({ id }) => id as number)) +
-        1;
+      : Math.max(...Object.values(objNodes).map(({ id }) => id as number)) + 1;
 
   for (let [sub, pred, obj] of links) {
     let nodeA: Node;

@@ -50,11 +50,11 @@ export const ColumnRelations = observer(
     return (
       <Card title="Entity Relationships">
         {variables.key.length < 2 ? (
-          <Alert message="Entity relationships are between two or more key columns. Currently there is only one." />
+          <Alert message="Entity relationships are between two key columns." />
         ) : (
           <Space>
-            {variables.key.map((colA: string, i: number) =>
-              variables.key.map((colB: string, j: number) => {
+            {Object.keys(allRelations).map((colA: string, i: number) =>
+              Object.keys(allRelations).map((colB: string, j: number) => {
                 return (
                   i < j && (
                     <Relation
@@ -146,6 +146,7 @@ const Relation = observer(
 
     const [showModal, setShowModal] = useState<boolean>(false);
     // const [loading, setLoading] = useState<boolean>(true);
+    console.log(allIncomingLinks, allOutgoingLinks);
     const { incomingLinks, outgoingLinks } = useMemo(() => {
       return {
         incomingLinks: allIncomingLinks[colB][colA],

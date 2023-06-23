@@ -52,7 +52,12 @@ export async function getRecommendedCharts(
   }
 
   if (key.length >= 2) {
-    const isHierarchical = columnsAreHierarchical(allRelations, variables.key);
+    const isHierarchical = columnsAreHierarchical(
+      allRelations,
+      Object.keys(allRelations).sort(
+        (a, b) => variables.key.indexOf(a) - variables.key.indexOf(b)
+      )
+    );
     if (isHierarchical) {
       charts.add(ChartType.HIERARCHY_TREE);
     } else {
@@ -75,8 +80,7 @@ export async function getRecommendedCharts(
     charts.add(ChartType.GROUPED_BAR);
     charts.add(ChartType.SPIDER);
     if (numeric.includes(key[1])) {
-      charts
-      .add(ChartType.LINE);
+      charts.add(ChartType.LINE);
       charts.add(ChartType.AREA);
     }
   } else if (key.length === 1 && results.header.length >= 3) {

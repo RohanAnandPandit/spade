@@ -39,7 +39,7 @@ const Graph = observer(({ links, repository }: GraphProps) => {
 });
 
 const GraphHelp = () => {
-  const [showModal, setShowHModal] = useState<boolean>(false);
+  const [showModal, setShowModal] = useState<boolean>(false);
 
   const treeData: DataNode[] = [
     {
@@ -135,13 +135,13 @@ const GraphHelp = () => {
           </Tooltip>
         }
         style={{ bottom: 10, right: 15 }}
-        onClick={() => setShowHModal(true)}
+        onClick={() => setShowModal(true)}
       />
       <Modal
         title={`Graph interaction guide`}
         open={showModal}
         footer={null}
-        onCancel={() => setShowHModal(false)}
+        onCancel={() => setShowModal(false)}
         maskClosable
       >
         <Tree
