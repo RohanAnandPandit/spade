@@ -75,6 +75,7 @@ export enum ChartType {
   SPIDER = "Spider",
   NETWORK = "Network",
   AREA = "Area",
+  GRAPH = 'Graph',
 }
 
 export enum CategoryType {

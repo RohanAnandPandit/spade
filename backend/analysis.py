@@ -1,16 +1,21 @@
-import os.path
 import re
 import shlex
 from pathlib import Path
 from typing import Dict
 from backend.repository import RDFRepository
-from .util import remove_comments, is_url, separator_split
+from backend.util import remove_comments, is_url, separator_split
 
 QUERY_PATH = Path(__file__).parent / 'queries'
 
 SELECT_STATEMENT = re.compile(
-    r'^\s*select +(distinct +)?(?P<variables>[^\n]+)\s*(from|where)\s*\{?$',
+    r'^\s*select +(distinct +)?(?P<variables>.+)\s*'
+    r'(from|where)\s*\{?$',
     re.MULTILINE | re.IGNORECASE | re.DOTALL)
+
+CONSTRUCT_STATEMENT = re.compile(
+    r'^\s*construct +\{\s*(?P<triplet>[^{}]+)\s*\}\s*$',
+    re.MULTILINE | re.IGNORECASE | re.DOTALL
+)
 
 
 class QueryAnalyser:
@@ -26,8 +31,9 @@ class QueryAnalyser:
         self.data_prop_of_var = {}
         self.obj_prop_of_var = {}
         # Variables in the select clause
-        self.select_variables = []
+        self.used_variables = []
         self.get_select_variables()
+        self.get_construct_variables()
         # Type of data variable
         self.data_var_type = {}
         # Class of variable if it is an object
@@ -141,11 +147,24 @@ class QueryAnalyser:
             if vars_.strip() == '*':
                 continue
             names = [token for token in shlex.split(vars_) if
-                     token.startswith('?')]
+                     is_sparql_variable(token)]
 
             for var in names:
-                if var not in self.select_variables:
-                    self.select_variables.append(var)
+                if var not in self.used_variables:
+                    self.used_variables.append(var)
+
+    def get_construct_variables(self):
+        match = CONSTRUCT_STATEMENT.search(self.query)
+        if not match:
+            return
+        vars_ = match.group('triplet')
+
+        names = [token for token in shlex.split(vars_) if
+                 is_sparql_variable(token)]
+
+        for var in names:
+            if var not in self.used_variables:
+                self.used_variables.append(var)
 
     def is_data_property(self, *, prop_uri: str):
         types = self.get_types(uri=prop_uri)
@@ -172,7 +191,7 @@ class QueryAnalyser:
             'object': [],
             'numeric': []
         }
-        for var in self.select_variables:
+        for var in self.used_variables:
             var_name = variable_name(var)
             if var in self.var_class:
                 var_categories['object'].append(var_name)
@@ -196,7 +215,7 @@ class QueryAnalyser:
     def class_vars_used(self):
         class_vars = set()
 
-        for var in self.select_variables:
+        for var in self.used_variables:
             if var in self.var_class:
                 class_vars.add(self.var_class[var])
                 continue
@@ -232,7 +251,7 @@ class QueryAnalyser:
     def class_with_data_properties(self) -> bool:
         if self.class_vars_used() != 1:
             return False
-        for var in self.select_variables:
+        for var in self.used_variables:
             if var in self.key_of_var:
                 continue
             if variable_name(var) not in self.var_categories['scalar']:
@@ -247,7 +266,7 @@ class QueryAnalyser:
         if len(self.key_of_var) < 2:
             return False
 
-        key_vars = [var for var in self.select_variables if
+        key_vars = [var for var in self.used_variables if
                     var in self.key_of_var]
 
         for i in range(len(key_vars) - 1):
@@ -266,7 +285,7 @@ class QueryAnalyser:
         if self.class_vars_used() != 2:
             return False
 
-        key_vars = [var for var in self.select_variables if
+        key_vars = [var for var in self.used_variables if
                     var in self.key_of_var]
 
         if len(key_vars) != 2:
@@ -286,7 +305,7 @@ class QueryAnalyser:
         if self.class_vars_used() != 3:
             return False
 
-        key_vars = [var for var in self.select_variables if
+        key_vars = [var for var in self.used_variables if
                     var in self.key_of_var]
 
         if len(key_vars) != 2:
@@ -311,6 +330,9 @@ class QueryAnalyser:
                 return True
 
         return False
+
+    def is_graph_query(self):
+        return CONSTRUCT_STATEMENT.search(self.query) is not None
 
 
 def is_sparql_variable(s: str):
@@ -412,7 +434,11 @@ def query_analysis(query: str, repository: RDFRepository):
     analyser = QueryAnalyser(query=query, repository=repository)
     pattern = None
     visualisations = []
-    if analyser.class_with_data_properties():
+
+    if analyser.is_graph_query():
+        pattern = 'RDF Graph'
+        visualisations = ['Graph']
+    elif analyser.class_with_data_properties():
         pattern = 'Class with data properties'
         visualisations = ['Calendar', 'Scatter', 'Bubble', 'Bar',
                           'Choropleth Map', 'Word Cloud', 'Pie']
@@ -434,5 +460,25 @@ def query_analysis(query: str, repository: RDFRepository):
 
 
 if __name__ == '__main__':
-    pass
-
+    # from .db import get_repository
+    q = '''
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    PREFIX : <http://www.semwebtech.org/mondial/10/meta#>
+    
+    CONSTRUCT { ?c :encompassedBy ?continent }
+    WHERE {
+     ?c rdf:type :Country ;
+       :name ?country ;
+       :encompassedByInfo ?en .
+     ?en :encompassedBy ?con ;
+         :percent ?percent .
+     ?con rdf:type :Continent ;
+          :name ?continent .
+      # FILTER (?percent > 50) .
+    }
+    # LIMIT 100
+    '''
+    # mondial = get_repository(repository_id='mondial', username='rohan')
+    # qa = QueryAnalyser(query=q, repository=mondial)
+    print(CONSTRUCT_STATEMENT.search(q).group('triplet'))
