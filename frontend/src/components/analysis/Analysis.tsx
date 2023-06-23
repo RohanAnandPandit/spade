@@ -145,7 +145,7 @@ const Pattern = ({ pattern, visualisations }: PatternProps) => {
         <Typography.Text style={{ fontSize: 20 }}>{pattern}</Typography.Text>
         <Space split={<Divider type="vertical" />}>
           {visualisations.map((chart) => (
-              <Tooltip title={chart}>{chartIcons[chart] ?? chart}</Tooltip>
+              <Tooltip key={chart} title={chart}>{chartIcons[chart] ?? chart}</Tooltip>
           ))}
         </Space>
       </Space>
