@@ -58,6 +58,7 @@ export async function getRecommendedCharts(
         (a, b) => variables.key.indexOf(a) - variables.key.indexOf(b)
       )
     );
+    console.log('isHierarchical: ', isHierarchical);
     if (isHierarchical) {
       charts.add(ChartType.HIERARCHY_TREE);
     }
@@ -214,7 +215,7 @@ function columnsAreHierarchical(
 
 function relationsAreHierarchical(relations: RelationType[]) {
   for (let r of relations) {
-    if (r !== RelationType.ONE_TO_MANY && r !== RelationType.ONE_TO_ONE) {
+    if (r === RelationType.MANY_TO_MANY) {
       return false;
     }
   }
