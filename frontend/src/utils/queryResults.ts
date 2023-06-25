@@ -83,12 +83,14 @@ export function uniqueValues(data: Row[], colIdx: number): string[] {
   return Array.from(values);
 }
 
-
-export function displayText(text: string) {
+export function displayText(
+  text: string,
+  options: { removePrefix: boolean } = { removePrefix: true }
+) {
   if (isNumber(text)) {
     return parseFloat(text).toLocaleString();
   }
-  if (isURL(text)) {
+  if (options.removePrefix && isURL(text)) {
     return removePrefix(text);
   }
   return text;

@@ -129,7 +129,7 @@ const GraphVis = observer(
         color: settings.darkMode() ? "white" : "black",
         font: { size: 10 },
       },
-      width: `${width}px`,
+      width: `100%`,
       height: `${height}px`,
       physics: {
         forceAtlas2Based: {
@@ -281,7 +281,7 @@ const GraphVis = observer(
     };
 
     return (
-      <Space direction="vertical">
+      <Space direction="vertical" style={{ width, height }}>
         {interactive && (
           <Space split={<Divider type="vertical" />}>
             <Button

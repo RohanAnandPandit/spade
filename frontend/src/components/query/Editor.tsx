@@ -73,7 +73,7 @@ const Editor = ({
 
   return (
     <Row gutter={10}>
-      <Col span={12}>
+      <Col style={{ width: Math.floor(width / 2) }}>{/*span={12}>*/}
         <Space wrap>
           <SelectRepository
             repository={repository}
@@ -104,7 +104,6 @@ const Editor = ({
           <SaveQuery repository={repository} query={query} name={queryName} />
           <Templates templates={sparqlTemplates} />
         </Space>
-
         <CodeEditor
           code={query}
           setCode={onChange}
@@ -116,11 +115,11 @@ const Editor = ({
             variables: getTokens(query).filter((token) => isVariable(token)),
           }}
           darkTheme={settings.darkMode()}
-          width={Math.floor(width / 2)}
+          width={Math.floor(width / 2) - 10}
           height={height}
         />
       </Col>
-      <Col span={12}>
+      <Col style={{ width: Math.floor((width - 50) / 2) }}>
         <Analysis query={query} repository={repository} />
       </Col>
     </Row>
