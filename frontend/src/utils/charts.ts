@@ -52,13 +52,7 @@ export async function getRecommendedCharts(
   }
 
   if (key.length >= 2) {
-    const isHierarchical = columnsAreHierarchical(
-      allRelations,
-      Object.keys(allRelations).sort(
-        (a, b) => variables.key.indexOf(a) - variables.key.indexOf(b)
-      )
-    );
-    console.log('isHierarchical: ', isHierarchical);
+    const isHierarchical = columnsAreHierarchical(allRelations, variables.key);
     if (isHierarchical) {
       charts.add(ChartType.HIERARCHY_TREE);
     }
