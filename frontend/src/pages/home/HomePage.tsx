@@ -29,7 +29,7 @@ const HomePage = observer(() => {
       <Layout style={{ padding: "0 10px " }}>
         <Content
           style={{
-            padding: 24,
+            padding: 20,
             margin: 0,
             background: colorBgContainer,
           }}
