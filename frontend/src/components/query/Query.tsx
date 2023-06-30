@@ -1,16 +1,35 @@
-import React, { useState } from "react";
-import { Space, Tabs, TabsProps, Tooltip } from "antd";
+import React, { useEffect, useState } from "react";
+import {
+  Button,
+  Space,
+  Tabs,
+  TabsProps,
+  Tooltip,
+  App as AntdApp,
+  Dropdown,
+} from "antd";
 import { observer } from "mobx-react-lite";
 import { BiNetworkChart } from "react-icons/bi";
 import { BsBarChartSteps, BsTable } from "react-icons/bs";
 import { useStore } from "../../stores/store";
-import { QueryResults, RepositoryId, Triplet } from "../../types";
-import { isEmpty, isGraph } from "../../utils/queryResults";
+import {
+  ChartType,
+  QueryAnalysis,
+  QueryResults,
+  RepositoryId,
+  RepositoryInfo,
+  Triplet,
+} from "../../types";
+import { isEmpty } from "../../utils/queryResults";
 import Graph from "./Graph";
 import Editor from "./Editor";
 import Results from "./Results";
 import Charts from "./Charts";
 import { MdOutlineEditNote } from "react-icons/md";
+import { runSparqlQuery } from "../../api/sparql";
+import { FiPlay } from "react-icons/fi";
+import { RiGitRepositoryLine } from "react-icons/ri";
+import { getQueryAnalysis } from "../../api/queries";
 
 type QueryProps = {
   qid: string;
@@ -21,6 +40,8 @@ const Query = observer(({ qid }: QueryProps) => {
   const settings = rootStore.settingsStore;
   const repositoryStore = rootStore.repositoryStore;
   const queriesStore = rootStore.queriesStore;
+  const authStore = rootStore.authStore;
+  const username = authStore.username!;
   const [results, setResults] = useState<QueryResults>({
     header: [],
     data: [],
@@ -44,13 +65,34 @@ const Query = observer(({ qid }: QueryProps) => {
   const [activeTab, setActiveTab] = useState<string>("editor");
 
   const width = Math.floor(
-    (window.screen.width -
-      (settings.fullScreen() ? 0 : settings.sidebarWidth())) *
-      (settings.fullScreen() ? 0.95 : 0.85)
+    window.screen.width - (settings.fullScreen() ? 0 : settings.sidebarWidth() + 200)
   );
   const height = Math.floor(
-    window.screen.height * (settings.fullScreen() ? 0.75 : 0.6)
+    window.screen.height - (settings.fullScreen() ? 250 : 50)
   );
+
+  const { notification } = AntdApp.useApp();
+
+  const showNotification = (time: number) => {
+    notification.info({
+      message: "Query finished!",
+      description: `Got results in ${time} ms`,
+      placement: "top",
+      duration: 3,
+    });
+  };
+
+  const [queryAnalysis, setQueryAnalysis] = useState<QueryAnalysis | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    if (repository) {
+      getQueryAnalysis(query, repository, username).then((res) => {
+        setQueryAnalysis(res);
+        setLoading(false);
+      });
+    }
+  }, [query, repository, username]);
 
   const items: TabsProps["items"] = [
     {
@@ -66,19 +108,10 @@ const Query = observer(({ qid }: QueryProps) => {
           query={query}
           queryName={name}
           onChange={setQueryText}
-          onRun={(results) => {
-            setResults(results);
-            setGraphKey((key) => key + 1);
-            repositoryStore.updateQueryHistory();
-            setLoading(false);
-            setActiveTab("results");
-          }}
           width={width}
           height={height}
-          loading={loading}
-          setLoading={setLoading}
           repository={repository}
-          setRepository={setRepository}
+          queryAnalysis={queryAnalysis}
         />
       ),
     },
@@ -100,7 +133,7 @@ const Query = observer(({ qid }: QueryProps) => {
           Graph
         </Space.Compact>
       ),
-      disabled: isEmpty(results) || !isGraph(results),
+      disabled: isEmpty(results) || !queryAnalysis?.visualisations.includes(ChartType.GRAPH),
       children: (
         <Graph
           key={graphKey}
@@ -119,7 +152,7 @@ const Query = observer(({ qid }: QueryProps) => {
           </Space.Compact>
         </Tooltip>
       ),
-      disabled: isEmpty(results),
+      disabled: isEmpty(results) || queryAnalysis?.visualisations.includes(ChartType.GRAPH),
       children: (
         <Charts
           query={query}
@@ -136,8 +169,85 @@ const Query = observer(({ qid }: QueryProps) => {
       activeKey={activeTab}
       items={items}
       onChange={(activeKey) => setActiveTab(activeKey)}
+      tabBarExtraContent={{
+        left: (
+          <Button
+            style={{ marginRight: 20 }}
+            icon={<FiPlay size={20} />}
+            title={repository ? "Run query" : "Select repository to run query"}
+            disabled={repository === null}
+            loading={loading}
+            onClick={() => {
+              setLoading(true);
+              const start = new Date().getTime();
+              runSparqlQuery(
+                repository!,
+                queriesStore.currentQuery().sparql,
+                authStore.username!
+              ).then((results) => {
+                showNotification(new Date().getTime() - start);
+                setResults(results);
+                setGraphKey((key) => key + 1);
+                repositoryStore.updateQueryHistory();
+                setLoading(false);
+                setActiveTab("results");
+              });
+            }}
+          >
+            Run
+          </Button>
+        ),
+        right: (
+          <SelectRepository
+            repository={repository}
+            setRepository={setRepository}
+          />
+        ),
+      }}
     />
   );
 });
+
+const SelectRepository = observer(
+  ({
+    repository,
+    setRepository,
+  }: {
+    repository: string | null;
+    setRepository: (repositoryId: string | null) => void;
+  }) => {
+    const rootStore = useStore();
+    const repositoryStore = rootStore.repositoryStore;
+
+    return (
+      <Dropdown
+        menu={{
+          items: repositoryStore
+            .repositories()
+            .map(({ name }: RepositoryInfo, index) => {
+              return {
+                key: `${index}`,
+                label: (
+                  <Button
+                    onClick={() => setRepository(name)}
+                    style={{ width: "100%", height: "100%" }}
+                  >
+                    {name}
+                  </Button>
+                ),
+              };
+            }),
+        }}
+      >
+        <Button name="Choose repository">
+          <Space>
+            <RiGitRepositoryLine size={20} />
+            {repository || "Choose repository"}
+          </Space>
+        </Button>
+      </Dropdown>
+    );
+  }
+);
 
 export default Query;
