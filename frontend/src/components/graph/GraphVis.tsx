@@ -59,10 +59,6 @@ const GraphVis = observer(
       [history, currentIdx]
     );
 
-    // const goToLast = useCallback(() => {
-    //   setCurrentIdx(history.length - 1);
-    // }, [history]);
-
     const addGraph = (graph: GraphInfo) => {
       setHistory((history) => {
         setCurrentIdx(history.length);
@@ -205,10 +201,18 @@ const GraphVis = observer(
           const newEdges = graph.edges.filter(
             (e: Edge) => e.title === edge.title && e.from === edge.from!
           );
+          const newNodes: {[key: number]: Node} = {};
+
+          for (let e of newEdges) {
+            if (e.from) {
+              newNodes[e.from] = idToNode[e.from];
+            }
+            if (e.to) {
+              newNodes[e.to] = idToNode[e.to];
+            }
+          }
           const newGraph = {
-            nodes: newEdges
-              .map((e: Edge) => [idToNode[e.from!], idToNode[e.to!]])
-              .flat(1),
+            nodes: Object.values(newNodes),
             edges: newEdges,
           };
           addGraph({
@@ -338,7 +342,7 @@ function getNodesAndEdges({
 
   let availableId: number =
     Object.values(objNodes).length === 0
-      ? 0
+      ? 1
       : Math.max(...Object.values(objNodes).map(({ id }) => id as number)) + 1;
 
   for (let [sub, pred, obj] of links) {
