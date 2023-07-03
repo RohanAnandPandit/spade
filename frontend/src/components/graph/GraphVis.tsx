@@ -60,10 +60,10 @@ const GraphVis = observer(
     );
 
     const addGraph = (graph: GraphInfo) => {
-      setHistory((history) => {
-        setCurrentIdx(history.length);
-        return [...history, graph];
-      });
+      setCurrentIdx((currentIdx: number) => {
+        setHistory((history) => [...history.slice(0, currentIdx + 1), graph])
+        return currentIdx + 1;
+      })
     };
 
     const edgeOptions = useMemo(() => {
