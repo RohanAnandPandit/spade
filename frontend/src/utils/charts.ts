@@ -15,9 +15,14 @@ export async function getRecommendedCharts(
   results: QueryResults
 ) {
   const { header } = results;
+
   if (variables.geographical.length === 0) {
-    variables.geographical = await geographicVariables(results, variables);
+    variables.geographical = await geographicVariables(results, variables.lexical);
   }
+  if (variables.key.length === 0) {
+    variables.key = keyVariables(results, variables.lexical);
+  }
+
   const { scalar, key, temporal, geographical, lexical, date, numeric } =
     variables;
 
@@ -52,13 +57,7 @@ export async function getRecommendedCharts(
   }
 
   if (key.length >= 2) {
-    const isHierarchical = columnsAreHierarchical(
-      allRelations,
-      Object.keys(allRelations).sort(
-        (a, b) => variables.key.indexOf(a) - variables.key.indexOf(b)
-      )
-    );
-    console.log('isHierarchical: ', isHierarchical);
+    const isHierarchical = columnsAreHierarchical(allRelations, variables.key);
     if (isHierarchical) {
       charts.add(ChartType.HIERARCHY_TREE);
     }
@@ -85,6 +84,7 @@ export async function getRecommendedCharts(
   } else if (key.length === 1 && results.header.length >= 3) {
     const secondKeyColumn = results.header[results.header.indexOf(key[0]) + 1];
     const areDependent = isCompositeKey([key[0], secondKeyColumn], results);
+
     if (areDependent) {
       if (lexical.includes(secondKeyColumn)) {
         charts.add(ChartType.STACKED_BAR);
@@ -263,14 +263,14 @@ function oppositeRelation(relation: RelationType) {
 
 async function geographicVariables(
   results: QueryResults,
-  variables: VariableCategories
+  variables: string[]
 ) {
   const { header, data } = results;
   if (data.length === 0) return [];
   const geo: string[] = [];
 
   await Promise.all(
-    variables.lexical.map(async (column) => {
+    variables.map(async (column) => {
       const index = header.indexOf(column);
       const valid = await isGeographic(data[0][index]);
 
@@ -282,4 +282,22 @@ async function geographicVariables(
   );
 
   return geo;
+}
+
+function keyVariables(results: QueryResults, variables: string[]) {
+  const { header, data } = results;
+  if (data.length === 0) return [];
+  const keys: string[] = [];
+
+  for (let variable of variables) {
+    const idx = header.indexOf(variable);
+    const values = new Set<string>();
+    for (let row of data) {
+      values.add(row[idx]);
+    }
+    if (values.size === data.length) {
+      keys.push(variable);
+    }
+  }
+  return keys;
 }

@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import {
   Alert,
   Card,
@@ -13,11 +12,9 @@ import {
 import {
   ChartType,
   QueryAnalysis,
-  RepositoryId,
   CategoryType,
   VariableCategories,
 } from "../../types";
-import { getQueryAnalysis } from "../../api/queries";
 import {
   AiOutlineAreaChart,
   AiOutlineBarChart,
@@ -28,6 +25,7 @@ import {
   BiNetworkChart,
   BiScatterChart,
   BiText,
+  BiSolidAnalyse
 } from "react-icons/bi";
 import { VscGraphScatter } from "react-icons/vsc";
 import {
@@ -55,7 +53,6 @@ import { TiChartPieOutline } from "react-icons/ti";
 import { ImSphere, ImTree } from "react-icons/im";
 import { HiOutlineGlobe } from "react-icons/hi";
 import { RiBarChartGroupedFill } from "react-icons/ri";
-import { useStore } from "../../stores/store";
 
 export const chartIcons = {
   [ChartType.BAR]: <AiOutlineBarChart size={35} />,
@@ -82,48 +79,36 @@ export const chartIcons = {
 };
 
 type AnalysisProps = {
-  query: string;
-  repository: RepositoryId | null;
+  queryAnalysis: QueryAnalysis | null;
 };
 
-const Analysis = ({ query, repository }: AnalysisProps) => {
-  const username = useStore().authStore.username!;
-
-  const [queryAnalysis, setQueryAnalysis] = useState<QueryAnalysis | null>();
-  const [loading, setLoading] = useState<boolean>(true);
-
-  useEffect(() => {
-    setLoading(true);
-    if (repository) {
-      getQueryAnalysis(query, repository, username).then((res) => {
-        setQueryAnalysis(res);
-        setLoading(false);
-      });
-    }
-  }, [query, repository, username]);
-
+const Analysis = ({ queryAnalysis }: AnalysisProps) => {
   return (
-    <Card title="Analysis" style={{ width: "100%" }}>
-      {repository === null && (
-        <Alert message="Select a repository to see variable types and the query pattern" />
-      )}
-      {queryAnalysis && (
-        <Spin spinning={loading}>
-          <Space direction="vertical" style={{ width: "100%" }}>
-            <Variables variableCategories={queryAnalysis.variables} />
-            {queryAnalysis.pattern ? (
-              <Pattern
-                pattern={queryAnalysis.pattern}
-                visualisations={queryAnalysis.visualisations}
-              />
-            ) : (
-              <Alert
-                message="Could not match any query pattern but you can still try the suggested charts."
-                banner
-              />
-            )}
-          </Space>
-        </Spin>
+    <Card
+      title={
+        <>
+          <BiSolidAnalyse size={20} /> Analysis
+        </>
+      }
+      style={{ width: "100%" }}
+    >
+      {queryAnalysis ? (
+        <Space direction="vertical" style={{ width: "100%" }}>
+          <Variables variableCategories={queryAnalysis.variables} />
+          {queryAnalysis.pattern ? (
+            <Pattern
+              pattern={queryAnalysis.pattern}
+              visualisations={queryAnalysis.visualisations}
+            />
+          ) : (
+            <Alert
+              message="Could not match any query pattern but you can still try the suggested charts."
+              banner
+            />
+          )}
+        </Space>
+      ) : (
+        <Spin />
       )}
     </Card>
   );
@@ -145,7 +130,9 @@ const Pattern = ({ pattern, visualisations }: PatternProps) => {
         <Typography.Text style={{ fontSize: 20 }}>{pattern}</Typography.Text>
         <Space split={<Divider type="vertical" />}>
           {visualisations.map((chart) => (
-              <Tooltip key={chart} title={chart}>{chartIcons[chart] ?? chart}</Tooltip>
+            <Tooltip key={chart} title={chart}>
+              {chartIcons[chart] ?? chart}
+            </Tooltip>
           ))}
         </Space>
       </Space>
