@@ -20,6 +20,7 @@ MONGODB_USERNAME=
 MONGODB_PASSWORD=
 MONGODB_URL=
 TEST_ENDPOINT=
+FLASK_SECRET_KEY=
 ```
 
 The app uses the database ```dataVisualiser``` uses two collections: ```queries``` and ```repositories```. There is also a ```geoData``` collection for GeoJSON data about countries and cities.

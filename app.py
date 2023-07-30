@@ -24,7 +24,7 @@ if BUILD == 'development':
 else:
     app = Flask(__name__, static_url_path='', static_folder='frontend/build')
 
-app.secret_key = 'imperial-college-london'
+app.secret_key = os.environ.get('FLASK_SECRET_KEY')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = {'rdf', 'xml', 'nt', 'n3', 'ttl', 'nt11', 'txt'}
 
