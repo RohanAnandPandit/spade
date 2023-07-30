@@ -124,7 +124,7 @@ class QueryAnalyser:
         metadata = get_metadata(uri=prop_uri,
                                 repository=self.repository)
 
-        return metadata['range']
+        return metadata.get('range', None)
 
     def get_types(self, *, uri: str):
 
@@ -132,7 +132,7 @@ class QueryAnalyser:
             result = self.repository.run_query(
                 query=query.read().format(uri=uri))
 
-        return [row[0] for row in result['data']]
+        return [row[0] for row in result.get('data', [])]
 
     def get_select_variables(self):
         """
@@ -388,7 +388,7 @@ def get_metadata(*, uri: str, repository: RDFRepository):
         result = repository.run_query(query=query.read().format(uri=uri))
 
     fields = result['header']
-    values = result['data'][0]
+    values = result['data'][0] if result['data'] else []
 
     return dict(zip(fields, values))
 

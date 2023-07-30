@@ -64,7 +64,7 @@ const CodeEditor = ({
         setCode(value);
       }}
       theme={darkTheme ? duotoneDark : duotoneLight}
-      style={{ margin: 5 }}
+      style={{ margin: 5, fontSize: 15 }}
     />
   );
 };

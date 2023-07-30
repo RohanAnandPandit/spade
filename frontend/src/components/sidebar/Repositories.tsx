@@ -181,31 +181,34 @@ const AllRepositories = observer(() => {
   const repositoryStore = rootStore.repositoryStore;
 
   return (
-    <Space direction="vertical">
-      {repositoryStore.repositories().map(
-        ({ name, description, endpoint }: RepositoryInfo, index: number) => (
-          <Card
-            title={
-              <Space>
-                {name}
-                <DeleteRepository repository={name} />
-              </Space>
-            }
-            key={`repository-${index}`}
-            type="inner"
-          >
-            <Space direction="vertical">
-              <Typography.Text>{description}</Typography.Text>
-              {endpoint && (
+    <Space direction="vertical" style={{ width: "100%" }}>
+      {repositoryStore
+        .repositories()
+        .map(
+          ({ name, description, endpoint }: RepositoryInfo, index: number) => (
+            <Card
+              style={{ width: "100%" }}
+              title={
                 <Space>
-                  <AiFillApi size={20} />
-                  <Typography.Text>{endpoint}</Typography.Text>
+                  {name}
+                  <DeleteRepository repository={name} />
                 </Space>
-              )}
-            </Space>
-          </Card>
-        )
-      )}
+              }
+              key={`repository-${index}`}
+              type="inner"
+            >
+              <Space direction="vertical" style={{ width: "100%" }}>
+                <Typography.Text>{description}</Typography.Text>
+                {endpoint && (
+                  <Space>
+                    <AiFillApi size={20} />
+                    <Typography.Text>{endpoint}</Typography.Text>
+                  </Space>
+                )}
+              </Space>
+            </Card>
+          )
+        )}
     </Space>
   );
 });

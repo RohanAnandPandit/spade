@@ -451,7 +451,7 @@ const Charts = observer(
     const { allRelations, allIncomingLinks, allOutgoingLinks } = useMemo(() => {
       setLoading(true);
       const { allRelations, allIncomingLinks, allOutgoingLinks } =
-        getAllRelations(results, results.header);
+        getAllRelations(results, queryAnalysis.variables.key);
 
       getRecommendedCharts(queryAnalysis.variables, allRelations, results).then(
         (charts) => setRecommendedCharts(charts)

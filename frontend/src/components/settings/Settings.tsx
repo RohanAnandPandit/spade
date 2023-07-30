@@ -1,11 +1,4 @@
-import {
-  Divider,
-  Drawer,
-  FloatButton,
-  Space,
-  Switch,
-  Tooltip,
-} from "antd";
+import { Divider, Drawer, FloatButton, Space, Switch, Tooltip } from "antd";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
 import { IoMdSettings } from "react-icons/io";
@@ -36,11 +29,10 @@ const Settings = () => {
           icon={<IoMdSettings size={25} style={{ paddingRight: 7 }} />}
           onClick={showDrawer}
           style={{ top: 10 }}
-
         />
       </Tooltip>
       <Drawer title="Settings" placement="right" onClose={onClose} open={open}>
-        <Space direction="vertical">
+        <Space direction="vertical" style={{ width: "100%" }}>
           <Space>
             <Switch
               checked={settings.darkMode()}

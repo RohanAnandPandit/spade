@@ -23,17 +23,17 @@ class SettingsStore {
   constructor(rootStore: RootStore) {
     this.rootStore = rootStore;
     makeAutoObservable(this);
-    makePersistable(this, {
-      name: "Settings",
-      properties: [
-        {
-          key: "state",
-          serialize: (value) => JSON.stringify(value),
-          deserialize: (value) => JSON.parse(value),
-        },
-      ],
-      storage: window.localStorage,
-    });
+    // makePersistable(this, {
+    //   name: "Settings",
+    //   properties: [
+    //     {
+    //       key: "state",
+    //       serialize: (value) => JSON.stringify(value),
+    //       deserialize: (value) => JSON.parse(value),
+    //     },
+    //   ],
+    //   storage: window.localStorage,
+    // });
   }
 
 
@@ -58,10 +58,11 @@ class SettingsStore {
   }
 
   screenWidth = (): number => {
-    return Math.max(
-      document.documentElement.clientWidth || Number.MAX_SAFE_INTEGER,
-      window.innerWidth || Number.MAX_SAFE_INTEGER
-    );
+    return window.screen.availWidth;
+    // return Math.max(
+    //   document.documentElement.clientWidth || Number.MAX_SAFE_INTEGER,
+    //   window.innerWidth || Number.MAX_SAFE_INTEGER
+    // );
   }
 
   screenHeight = (): number => {

@@ -1,9 +1,5 @@
 import { RDFGraph, QueryResults, Row } from "../types";
 
-export function isGraph(results: QueryResults) {
-  return results.header.length === 3;
-}
-
 export function emptyGraph(): RDFGraph {
   return {
     header: ["subject", "predicate", "object"],
