@@ -10,13 +10,10 @@ from backend.repository import RDFRepository, LocalRepository, RemoteRepository
 
 load_dotenv(find_dotenv())
 
-DB_PATH = 'backend/database.db'
 COMPRESSION = 'gzip'
-MONGODB_USERNAME = os.environ['MONGODB_USERNAME']
-MONGODB_PASSWORD = os.environ['MONGODB_PASSWORD']
+MONGODB_URL = os.environ['MONGODB_URL']
 
-uri = f"mongodb+srv://{MONGODB_USERNAME}:{MONGODB_PASSWORD}@cluster0.jpzpy" \
-      f".mongodb.net/?retryWrites=true"
+uri = f"{MONGODB_URL}/?retryWrites=true"
 # Create a new client and connect to the server
 client = MongoClient(uri, server_api=ServerApi('1'))
 db = client['dataVisualiserDB']
