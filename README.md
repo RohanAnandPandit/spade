@@ -28,4 +28,4 @@ You can download an RDF database such as GraphDB if you want to try specific dat
 
 Now you can run ```app.py``` to start the Flask server which will serve the application and API at ```localhost:5000```. Alternatively you can run the backend and frontend separately if you want to try making changes yourself.
 
-Do refer to the project report if you would like to know more. There is also a Heroku application set up but may not be live now.
+You can read the full report (https://drive.google.com/file/d/15Ye-3h-WNre-DRcqaEtCioe7PnCrBMZp/view?usp=sharing) for the project for further details . There is also a Heroku application set up that may be deactivated.
