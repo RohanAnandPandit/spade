@@ -25,7 +25,7 @@ FLASK_SECRET_KEY=
 The build can be development or production. The MongoDB username and password need to be configured using your MongoDB account on the website. The ```TEST_ENDPOINT``` can be left empty if you do not have Mondial database running locally.
 
 
-The app uses the database ```dataVisualiser``` uses two collections: ```queries``` and ```repositories```. There is also a ```geoData``` collection for GeoJSON data about countries and cities.
+The app uses the database ```dataVisualiserDB``` uses two collections: ```queries``` and ```repositories```. There is also a ```geoData``` collection for GeoJSON data about countries and cities.
 
 You can download the GraphDB application if you want to try specific datasets. The GraphDB application must be running if you are using its REST API. You can create the Mondial repository by downloading and importing ```mondial.n3``` and ```mondial-meta.n3``` into the repository. The files can be downloaded links on the website  (https://www.dbis.informatik.uni-goettingen.de/Mondial/).
 
