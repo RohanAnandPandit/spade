@@ -10,100 +10,98 @@ from backend.repository import RDFRepository, LocalRepository, RemoteRepository
 
 load_dotenv(find_dotenv())
 
-COMPRESSION = 'gzip'
-MONGODB_URL = os.environ['MONGODB_URL']
+COMPRESSION = "gzip"
+MONGODB_URL = os.environ["MONGODB_URL"]
 
-uri = f"{MONGODB_URL}/?retryWrites=true"
+uri = MONGODB_URL
 # Create a new client and connect to the server
-client = MongoClient(uri, server_api=ServerApi('1'))
-db = client['dataVisualiserDB']
+client = MongoClient(uri, server_api=ServerApi("1"))
+db = client["dataVisualiserDB"]
 
 
 def add_user(*, username: str):
-    users = db['users']
-    users.insert_one({'username': username})
+    users = db["users"]
+    users.insert_one({"username": username})
 
 
 def get_queries(*, repository_id: str, username: str):
-    queries = db['queries']
-    return list(queries.find({
-        'repository': repository_id,
-        'user': username
-    }, {'_id': 0}).sort([('date', pymongo.DESCENDING)]))
+    queries = db["queries"]
+    return list(
+        queries.find({"repository": repository_id, "user": username}, {"_id": 0}).sort(
+            [("date", pymongo.DESCENDING)]
+        )
+    )
 
 
-def get_repository(*, repository_id: str,
-                   username: str) -> RDFRepository | None:
-    repositories = db['repositories']
-    repo = repositories.find_one({'name': repository_id, 'user': username})
+def get_repository(*, repository_id: str, username: str) -> RDFRepository | None:
+    repositories = db["repositories"]
+    repo = repositories.find_one({"name": repository_id, "user": username})
     if not repo:
         return None
-    if 'graph' in repo:
-        return LocalRepository(name=repository_id,
-                               graph=compress_pickle.loads(repo['graph'],
-                                                           COMPRESSION))
-    elif 'endpoint' in repo:
-        return RemoteRepository(name=repository_id, endpoint=repo['endpoint'])
+    if "graph" in repo:
+        return LocalRepository(
+            name=repository_id, graph=compress_pickle.loads(repo["graph"], COMPRESSION)
+        )
+    elif "endpoint" in repo:
+        return RemoteRepository(name=repository_id, endpoint=repo["endpoint"])
     return None
 
 
 def delete_repository(*, repository_id: str, username: str):
-    repositories = db['repositories']
-    return repositories.delete_one({'name': repository_id, 'user': username})
+    repositories = db["repositories"]
+    return repositories.delete_one({"name": repository_id, "user": username})
 
 
 def get_repository_info(*, username: str):
-    repositories = db['repositories']
-    details = repositories.find({'user': username},
-                                {'_id': 0, 'name': 1, 'description': 1,
-                                 'endpoint': 1})
+    repositories = db["repositories"]
+    details = repositories.find(
+        {"user": username}, {"_id": 0, "name": 1, "description": 1, "endpoint": 1}
+    )
 
     return list(details)
 
 
-def add_repository(*, repository_id: str, username: str,
-                   description: str, graph=None, endpoint=None):
-    repositories = db['repositories']
-    repo = {
-        'name': repository_id,
-        'user': username,
-        'description': description
-    }
+def add_repository(
+    *, repository_id: str, username: str, description: str, graph=None, endpoint=None
+):
+    repositories = db["repositories"]
+    repo = {"name": repository_id, "user": username, "description": description}
     if graph:
-        repo['graph'] = compress_pickle.dumps(graph, COMPRESSION)
+        repo["graph"] = compress_pickle.dumps(graph, COMPRESSION)
     elif endpoint:
-        repo['endpoint'] = endpoint
+        repo["endpoint"] = endpoint
     return repositories.insert_one(repo)
 
 
-def update_repository(*, username: str, repository_id: str, graph=None,
-                      endpoint=None):
-    repositories = db['repositories']
+def update_repository(*, username: str, repository_id: str, graph=None, endpoint=None):
+    repositories = db["repositories"]
     if graph:
-        repositories.update_one({'name': repository_id, 'user': username}, {
-            '$set': {'graph': compress_pickle.dumps(graph, COMPRESSION)}
-        })
+        repositories.update_one(
+            {"name": repository_id, "user": username},
+            {"$set": {"graph": compress_pickle.dumps(graph, COMPRESSION)}},
+        )
     elif endpoint:
-        repositories.update_one({'name': repository_id, 'user': username}, {
-            '$set': {'endpoint': endpoint}
-        })
+        repositories.update_one(
+            {"name": repository_id, "user": username}, {"$set": {"endpoint": endpoint}}
+        )
 
 
-def save_query(*, name: str, sparql: str, repository_id: str,
-               username: str):
-    queries = db['queries']
-    return queries.insert_one({
-        'name': name,
-        'sparql': sparql,
-        'repository': repository_id,
-        'user': username,
-        'date': datetime.now()
-    })
+def save_query(*, name: str, sparql: str, repository_id: str, username: str):
+    queries = db["queries"]
+    return queries.insert_one(
+        {
+            "name": name,
+            "sparql": sparql,
+            "repository": repository_id,
+            "user": username,
+            "date": datetime.now(),
+        }
+    )
 
 
 def delete_all_queries(*, repository_id: str, username: str) -> None:
-    queries = db['queries']
-    queries.delete_many({'repository': repository_id, 'user': username})
+    queries = db["queries"]
+    queries.delete_many({"repository": repository_id, "user": username})
 
 
 cc = coco.CountryConverter()
@@ -114,24 +112,22 @@ def region_short_name(region):
 
 
 def geo_json_data(name):
-    geoData = db['geoData']
+    geoData = db["geoData"]
     standard_name = cc.convert(name, to="ISO3")
     location = None
-    if standard_name != 'not found':
-        location = geoData.find_one({'properties.ISO_A3': standard_name},
-                                    {'_id': 0})
+    if standard_name != "not found":
+        location = geoData.find_one({"properties.ISO_A3": standard_name}, {"_id": 0})
     else:
-        location = geoData.find_one({'properties.NAME': name}, {'_id': 0})
+        location = geoData.find_one({"properties.NAME": name}, {"_id": 0})
 
         if not location:
-            location = geoData.find_one({'properties.NAME': name.upper()},
-                                        {'_id': 0})
+            location = geoData.find_one({"properties.NAME": name.upper()}, {"_id": 0})
 
     return location
 
 
-if __name__ == '__main__':
-    cc.convert('Pune', to='name_short')
+if __name__ == "__main__":
+    cc.convert("Pune", to="name_short")
     # save_query(title='Get countries',
     #            sparql='SELECT ?country ...',
     #            repository_id='mondial',
@@ -161,7 +157,7 @@ if __name__ == '__main__':
 
     # t1 = time.time()
     # repository = get_repository(repository_id='mondial', username='rohan')
-    qry = '''
+    qry = """
     # PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     # PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     # PREFIX : <http://www.semwebtech.org/mondial/10/meta#>
@@ -193,7 +189,7 @@ WHERE {
       :name ?continent .
   # FILTER (?percent > 50) .
 } 
-        '''
+        """
     # results = repository.run_query(query=qry)
     #
     # t2 = time.time()
