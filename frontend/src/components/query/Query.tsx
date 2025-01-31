@@ -65,7 +65,8 @@ const Query = observer(({ qid }: QueryProps) => {
   const [activeTab, setActiveTab] = useState<string>("editor");
 
   const width = Math.floor(
-    window.screen.width - (settings.fullScreen() ? 0 : settings.sidebarWidth() + 200)
+    window.screen.width -
+      (settings.fullScreen() ? 0 : settings.sidebarWidth() + 200)
   );
   const height = Math.floor(
     window.screen.height - (settings.fullScreen() ? 250 : 50)
@@ -82,7 +83,9 @@ const Query = observer(({ qid }: QueryProps) => {
     });
   };
 
-  const [queryAnalysis, setQueryAnalysis] = useState<QueryAnalysis | null>(null);
+  const [queryAnalysis, setQueryAnalysis] = useState<QueryAnalysis | null>(
+    null
+  );
 
   useEffect(() => {
     setLoading(true);
@@ -133,7 +136,9 @@ const Query = observer(({ qid }: QueryProps) => {
           Graph
         </Space.Compact>
       ),
-      disabled: isEmpty(results) || !queryAnalysis?.visualisations.includes(ChartType.GRAPH),
+      disabled:
+        isEmpty(results) ||
+        !queryAnalysis?.visualisations.includes(ChartType.GRAPH),
       children: (
         <Graph
           key={graphKey}
@@ -152,7 +157,9 @@ const Query = observer(({ qid }: QueryProps) => {
           </Space.Compact>
         </Tooltip>
       ),
-      disabled: isEmpty(results) || queryAnalysis?.visualisations.includes(ChartType.GRAPH),
+      disabled:
+        isEmpty(results) ||
+        queryAnalysis?.visualisations.includes(ChartType.GRAPH),
       children: (
         <Charts
           query={query}
@@ -178,7 +185,7 @@ const Query = observer(({ qid }: QueryProps) => {
             disabled={repository === null}
             loading={loading}
             onClick={() => {
-              setLoading(true);
+              // setLoading(true);
               const start = new Date().getTime();
               runSparqlQuery(
                 repository!,
