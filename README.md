@@ -1,36 +1,150 @@
-# SPADE
+# SPADE (SPARQL Analysis and Data Explorer)
 
-SPADE (SPARQL Analysis and Data Explorer) is a tool to visualise semantic data using the RDF/OWL schemas.
+SPADE is a powerful tool for visualizing semantic data using RDF/OWL schemas. It provides an intuitive interface to explore and analyze semantic web data through a modern web application.
 
-The frontend for the web app has been built using React/TypeScript and the backend has been built using Python with a Flask server for the application.
+## Features
 
-The frontend requires the ```BACKEND_API``` environment variable. This will be ```localhost:5000``` when running the Flask server locally. Add this in the .env file in the frontend directory.
+- Interactive visualization of RDF/OWL schemas
+- SPARQL query interface
+- Real-time data exploration
+- Support for multiple data sources including GraphDB
+- Geographic data visualization
 
-Delete any existing ```build/``` folder in ```frontend/``` and run 
+## Tech Stack
+
+### Frontend
+- React with TypeScript
+- Modern UI components
+- Interactive data visualization
+
+### Backend
+- Python with Flask
+- MongoDB for data storage
+- SPARQL endpoint integration
+- RESTful API
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js (v14 or later)
+- Python 3.8+
+- MongoDB
+- Yarn package manager
+- GraphDB (optional, for specific datasets)
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone [repository-url]
+   cd schema-and-data-visualiser
+   ```
+
+2. **Set up the backend**
+   ```bash
+   # Create and activate a virtual environment
+   python -m venv venv
+   source venv/bin/activate  # On Windows: .\venv\Scripts\activate
+   
+   # Install Python dependencies
+   pip install -r requirements.txt
+   ```
+
+3. **Set up the frontend**
+   ```bash
+   cd frontend
+   yarn install
+   ```
+
+### Configuration
+
+1. **Backend Configuration**
+   Create a `.env` file in the root directory with the following variables:
+   ```env
+   BUILD=development  # or 'production'
+   MONGODB_USERNAME=your_username
+   MONGODB_PASSWORD=your_password
+   MONGODB_URL=your_mongodb_connection_string
+   TEST_ENDPOINT=  # Optional: leave empty if not using Mondial database locally
+   FLASK_SECRET_KEY=your_secret_key
+   ```
+
+2. **Frontend Configuration**
+   Create a `.env` file in the `frontend` directory:
+   ```env
+   REACT_APP_BACKEND_API=http://localhost:5000
+   ```
+
+### Database Setup
+
+The application uses MongoDB with the following collections:
+- `queries`: Stores saved SPARQL queries
+- `repositories`: Manages data repositories
+- `geoData`: Contains GeoJSON data for countries and cities
+
+For GraphDB integration (optional):
+1. Download and install GraphDB
+2. Create a new repository
+3. Import `mondial.n3` and `mondial-meta.n3` files (available at [Mondial Database](https://www.dbis.informatik.uni-goettingen.de/Mondial/))
+
+## Running the Application
+
+### Development Mode
+
+1. **Start the backend**
+   ```bash
+   # In the root directory
+   python app.py
+   ```
+
+2. **Start the frontend**
+   ```bash
+   # In the frontend directory
+   yarn start
+   ```
+   The application will be available at `http://localhost:3000`
+
+### Production Build
+
+1. Build the frontend:
+   ```bash
+   cd frontend
+   rm -rf build  # Remove existing build if any
+   yarn build
+   ```
+
+2. The Flask server will serve the frontend build when running `app.py`
+
+## Project Structure
+
 ```
-yarn build
+schema-and-data-visualiser/
+├── backend/               # Backend Python code
+│   ├── queries/          # SPARQL query templates
+│   ├── tests/            # Backend tests
+│   ├── __init__.py
+│   ├── analysis.py       # Data analysis logic
+│   ├── db.py            # Database operations
+│   └── ...
+├── frontend/             # Frontend React application
+│   ├── public/           # Static files
+│   └── src/              # Source code
+├── .env                  # Environment variables
+├── app.py               # Main Flask application
+└── requirements.txt     # Python dependencies
 ```
 
-The backend uses a MongoDB database. You can install MongoDB from their official website as well as the MongoDBCompass application. 
+## Deployment
 
-You can add a .env file in the root folder using this template.
-```
-BUILD=
-MONGODB_USERNAME=
-MONGODB_PASSWORD=
-MONGODB_URL=
-TEST_ENDPOINT=
-FLASK_SECRET_KEY=
-```
-The build can be development or production. The MongoDB username and password need to be configured using your MongoDB account on the website. The ```TEST_ENDPOINT``` can be left empty if you do not have Mondial database running locally.
+The application can be deployed to Heroku or similar platforms. A Heroku configuration is already set up in the repository.
 
 
-The app uses the database ```dataVisualiserDB``` uses two collections: ```queries``` and ```repositories```. There is also a ```geoData``` collection for GeoJSON data about countries and cities.
+## Contributing
 
-You can download the GraphDB application if you want to try specific datasets. The GraphDB application must be running if you are using its REST API. You can create the Mondial repository by downloading and importing ```mondial.n3``` and ```mondial-meta.n3``` into the repository. The files can be downloaded links on the website  (https://www.dbis.informatik.uni-goettingen.de/Mondial/).
+Contributions are welcome! Please feel free to submit issues or pull requests.
 
-Now you can run ```app.py``` to start the Flask server which will serve the application and API at ```localhost:5000```. Alternatively you can run the backend and frontend separately if you want to try making changes yourself.
+## Contact
 
-You can read the full report (bit.ly/3rV4jm) for the project for further details. There is also a Heroku application set up which is not currently active but can be made available on request.
+For any questions or suggestions, please contact the project maintainer.
 
-Feel free to contact me if you need any help or would like to suggest improvements to the project.
