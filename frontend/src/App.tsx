@@ -7,7 +7,6 @@ import Settings from "./components/settings/Settings";
 import { useStore } from "./stores/store";
 import HomePage from "./pages/home/HomePage";
 import ContactPage from "./pages/contact/ContactPage";
-import "../node_modules/bootstrap/dist/css/bootstrap.min.css";
 import Login from "./pages/home/Login";
 
 const { Header } = Layout;

@@ -1,7 +1,7 @@
 import axios from "axios";
 import { GeoData, QueryAnalysis, QueryRecord } from "../types";
 
-const BACKEND_API = process.env.REACT_APP_BACKEND_API;
+const BACKEND_API = import.meta.env.VITE_API_URL ?? "http://localhost:5000";
 
 export async function getQueryHistory(
   repository: string,
@@ -118,4 +118,3 @@ export async function isGeographic(text: string): Promise<boolean> {
   }
   return false;
 }
-

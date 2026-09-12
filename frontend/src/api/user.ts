@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BACKEND_API = process.env.REACT_APP_BACKEND_API;
+const BACKEND_API = import.meta.env.VITE_API_URL ?? "http://localhost:5000";
 
 export async function login(username: string): Promise<string> {
     try {

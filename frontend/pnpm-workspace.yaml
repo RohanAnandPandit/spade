@@ -1,0 +1,14 @@
+packages:
+  - "."
+
+overrides:
+  lodash: ^4.17.23
+  react-graph-vis>uuid: ^11.1.0
+
+minimumReleaseAgeExclude:
+  - apexcharts@7.3.0
+
+peerDependencyRules:
+  allowedVersions:
+    react: "18"
+    react-dom: "18"

@@ -2,7 +2,7 @@ import axios from "axios";
 import { Metadata, PropertyType, RDFGraph, RepositoryId, URI } from "../types";
 import { emptyGraph } from "../utils/queryResults";
 
-const BACKEND_API = process.env.REACT_APP_BACKEND_API;
+const BACKEND_API = import.meta.env.VITE_API_URL ?? "http://localhost:5000";
 
 export async function getClasses(
   repository: RepositoryId,

@@ -1,7 +1,7 @@
 import axios from "axios";
 import { QueryResults, RepositoryId, RepositoryInfo } from "../types";
 
-const BACKEND_API = process.env.REACT_APP_BACKEND_API;
+const BACKEND_API = import.meta.env.VITE_API_URL ?? "http://localhost:5000";
 
 export async function allRepositories(
   username: string
