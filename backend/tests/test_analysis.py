@@ -2,7 +2,7 @@ import re
 
 import pytest
 
-from backend.analysis import get_where_clause, query_analysis
+from backend.analysis import get_where_clause, query_analysis, type_category
 from backend.repository import RDFRepository
 
 
@@ -90,3 +90,8 @@ def test_construct_query_does_not_require_a_remote_endpoint(
 )
 def test_where_clause_parsing(query: str, expected: str | None) -> None:
     assert get_where_clause(query) == expected
+
+
+@pytest.mark.parametrize("rdf_type", ["date", "dateTime"])
+def test_date_types_are_classified(rdf_type: str) -> None:
+    assert type_category(type_uri=rdf_type) == ["date"]

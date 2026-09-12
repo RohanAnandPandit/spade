@@ -1,20 +1,21 @@
 import re
 import shlex
 from pathlib import Path
-from typing import Dict
-from backend.repository import RDFRepository
-from backend.util import remove_comments, is_url, separator_split
 
-QUERY_PATH = Path(__file__).parent / 'queries'
+from backend.repository import RDFRepository
+from backend.util import is_url, remove_comments, separator_split
+
+QUERY_PATH = Path(__file__).parent / "queries"
 
 SELECT_STATEMENT = re.compile(
-    r'^\s*select +(distinct +)?(?P<variables>.+)\s*'
-    r'(from|where)\s*\{?$',
-    re.MULTILINE | re.IGNORECASE | re.DOTALL)
+    r"^\s*select +(distinct +)?(?P<variables>.+)\s*"
+    r"(from|where)\s*\{?$",
+    re.MULTILINE | re.IGNORECASE | re.DOTALL,
+)
 
 CONSTRUCT_STATEMENT = re.compile(
-    r'^\s*construct +\{\s*(?P<triplet>[^{}]+)\s*\}\s*$',
-    re.MULTILINE | re.IGNORECASE | re.DOTALL
+    r"^\s*construct +\{\s*(?P<triplet>[^{}]+)\s*\}\s*$",
+    re.MULTILINE | re.IGNORECASE | re.DOTALL,
 )
 
 
@@ -49,8 +50,9 @@ class QueryAnalyser:
     def get_prefixes(self):
         prefixes = {}
         prefix_pattern = re.compile(
-            r'prefix\s+(?P<name>[^\s\n]+)\s+<(?P<uri>[^\s\n]+)>\s*\n',
-            re.IGNORECASE | re.MULTILINE | re.DOTALL)
+            r"prefix\s+(?P<name>[^\s\n]+)\s+<(?P<uri>[^\s\n]+)>\s*\n",
+            re.IGNORECASE | re.MULTILINE | re.DOTALL,
+        )
         for name, uri in prefix_pattern.findall(self.query):
             prefixes[name] = uri
 
@@ -62,26 +64,27 @@ class QueryAnalyser:
             return
 
         statement_pattern = re.compile(
-            r'^(\n*|;) *(?P<subject>\?\w+) +(?P<properties>[^.]+)\s*\.\s*$',
-            re.IGNORECASE | re.MULTILINE | re.DOTALL)
+            r"^(\n*|;) *(?P<subject>\?\w+) +(?P<properties>[^.]+)\s*\.\s*$",
+            re.IGNORECASE | re.MULTILINE | re.DOTALL,
+        )
 
         statements = statement_pattern.finditer(conditions)
 
         for match in statements:
-            subject = match.group('subject')
-            properties = match.group('properties')
+            subject = match.group("subject")
+            properties = match.group("properties")
 
             if subject not in self.triples:
                 self.triples[subject] = {}
 
-            patterns = [shlex.split(s.strip()) for s in
-                        separator_split(properties)]
+            patterns = [shlex.split(s.strip()) for s in separator_split(properties)]
 
             pairs = [group for group in patterns if len(group) == 2]
 
             for [prop, obj] in pairs:
-                if prop in ['rdf:type', 'rdfs:type',
-                            'a'] and is_sparql_variable(subject):
+                if prop in ["rdf:type", "rdfs:type", "a"] and is_sparql_variable(
+                    subject
+                ):
                     self.var_class[subject] = obj
                     continue
 
@@ -92,22 +95,19 @@ class QueryAnalyser:
                 if not prop_uri or not is_sparql_variable(obj):
                     continue
 
-                prop_types = list(map(remove_prefix,
-                                      self.get_types(uri=prop_uri)))
+                prop_types = list(map(remove_prefix, self.get_types(uri=prop_uri)))
 
-                if 'DatatypeProperty' in prop_types:
-                    self.data_var_type[obj] = self.get_prop_range(
-                        prop_uri=prop_uri)
+                if "DatatypeProperty" in prop_types:
+                    self.data_var_type[obj] = self.get_prop_range(prop_uri=prop_uri)
                     self.data_prop_of_var[obj] = subject
-                    if 'InverseFunctionalProperty' in prop_types:
+                    if "InverseFunctionalProperty" in prop_types:
                         self.key_of_var[obj] = subject
                         self.key_func_props.add(prop_uri)
                 else:
-                    self.var_class[obj] = self.get_prop_range(
-                        prop_uri=prop_uri)
+                    self.var_class[obj] = self.get_prop_range(prop_uri=prop_uri)
                     self.obj_prop_of_var[obj] = subject
 
-                if 'FunctionalProperty' in prop_types:
+                if "FunctionalProperty" in prop_types:
                     self.func_props.add(prop_uri)
 
         self.scan_conditions(text=conditions)
@@ -121,18 +121,16 @@ class QueryAnalyser:
         self.triples[sub][predicate].add(obj)
 
     def get_prop_range(self, *, prop_uri: str):
-        metadata = get_metadata(uri=prop_uri,
-                                repository=self.repository)
+        metadata = get_metadata(uri=prop_uri, repository=self.repository)
 
-        return metadata.get('range', None)
+        return metadata.get("range", None)
 
     def get_types(self, *, uri: str):
 
-        with open(f'{QUERY_PATH}/get_type.sparql', 'r') as query:
-            result = self.repository.run_query(
-                query=query.read().format(uri=uri))
+        with open(f"{QUERY_PATH}/get_type.sparql") as query:
+            result = self.repository.run_query(query=query.read().format(uri=uri))
 
-        return [row[0] for row in result.get('data', [])]
+        return [row[0] for row in result.get("data", [])]
 
     def get_select_variables(self):
         """
@@ -143,11 +141,10 @@ class QueryAnalyser:
         matches = list(SELECT_STATEMENT.finditer(self.query))
 
         for select_statement in matches:
-            vars_ = select_statement.group('variables')
-            if vars_.strip() == '*':
+            vars_ = select_statement.group("variables")
+            if vars_.strip() == "*":
                 continue
-            names = [token for token in shlex.split(vars_) if
-                     is_sparql_variable(token)]
+            names = [token for token in shlex.split(vars_) if is_sparql_variable(token)]
 
             for var in names:
                 if var not in self.used_variables:
@@ -157,10 +154,9 @@ class QueryAnalyser:
         match = CONSTRUCT_STATEMENT.search(self.query)
         if not match:
             return
-        vars_ = match.group('triplet')
+        vars_ = match.group("triplet")
 
-        names = [token for token in shlex.split(vars_) if
-                 is_sparql_variable(token)]
+        names = [token for token in shlex.split(vars_) if is_sparql_variable(token)]
 
         for var in names:
             if var not in self.used_variables:
@@ -168,9 +164,9 @@ class QueryAnalyser:
 
     def is_data_property(self, *, prop_uri: str):
         types = self.get_types(uri=prop_uri)
-        return 'DatatypeProperty' in list(map(remove_prefix, types))
+        return "DatatypeProperty" in list(map(remove_prefix, types))
 
-    def get_variable_categories(self) -> Dict:
+    def get_variable_categories(self) -> dict:
         """
         Returns the variables of different categories
         :param repository:
@@ -182,24 +178,24 @@ class QueryAnalyser:
         :return:
         """
         var_categories = {
-            'key': [],
-            'scalar': [],
-            'temporal': [],
-            'geographical': [],
-            'lexical': [],
-            'date': [],
-            'object': [],
-            'numeric': []
+            "key": [],
+            "scalar": [],
+            "temporal": [],
+            "geographical": [],
+            "lexical": [],
+            "date": [],
+            "object": [],
+            "numeric": [],
         }
         for var in self.used_variables:
             var_name = variable_name(var)
             if var in self.var_class:
-                var_categories['object'].append(var_name)
-                var_categories['key'].append(var_name)
+                var_categories["object"].append(var_name)
+                var_categories["key"].append(var_name)
                 continue
 
             if var in self.key_of_var:
-                var_categories['key'].append(var_name)
+                var_categories["key"].append(var_name)
 
             if var in self.data_var_type:
                 type_name = remove_prefix(self.data_var_type[var])
@@ -207,8 +203,9 @@ class QueryAnalyser:
                 for catg in type_category(type_uri=type_name):
                     var_categories[catg].append(var_name)
 
-        var_categories['scalar'] = var_categories['temporal'] + \
-                                   var_categories['numeric']
+        var_categories["scalar"] = (
+            var_categories["temporal"] + var_categories["numeric"]
+        )
 
         return var_categories
 
@@ -223,8 +220,9 @@ class QueryAnalyser:
 
         return len(class_vars)
 
-    def connected_by_props(self, var_a: str, var_b: str,
-                           func_props=False, inv_func_props=False) -> bool:
+    def connected_by_props(
+        self, var_a: str, var_b: str, func_props=False, inv_func_props=False
+    ) -> bool:
         stack = [var_a]
         while stack:
             curr = stack.pop()
@@ -254,7 +252,7 @@ class QueryAnalyser:
         for var in self.used_variables:
             if var in self.key_of_var:
                 continue
-            if variable_name(var) not in self.var_categories['scalar']:
+            if variable_name(var) not in self.var_categories["scalar"]:
                 return False
 
         return True
@@ -266,17 +264,17 @@ class QueryAnalyser:
         if len(self.key_of_var) < 2:
             return False
 
-        key_vars = [var for var in self.used_variables if
-                    var in self.key_of_var]
+        key_vars = [var for var in self.used_variables if var in self.key_of_var]
 
         for i in range(len(key_vars) - 1):
             class_var_a = self.key_of_var[key_vars[i + 1]]
             class_var_b = self.key_of_var[key_vars[i]]
 
-            if not self.connected_by_props(class_var_a, class_var_b,
-                                           func_props=True) and \
-                    not self.connected_by_props(class_var_b, class_var_a,
-                                                inv_func_props=True):
+            if not self.connected_by_props(
+                class_var_a, class_var_b, func_props=True
+            ) and not self.connected_by_props(
+                class_var_b, class_var_a, inv_func_props=True
+            ):
                 return False
 
         return True
@@ -285,8 +283,7 @@ class QueryAnalyser:
         if self.class_vars_used() != 2:
             return False
 
-        key_vars = [var for var in self.used_variables if
-                    var in self.key_of_var]
+        key_vars = [var for var in self.used_variables if var in self.key_of_var]
 
         if len(key_vars) != 2:
             return False
@@ -295,18 +292,18 @@ class QueryAnalyser:
             class_var_a = self.key_of_var[key_vars[i]]
             class_var_b = self.key_of_var[key_vars[i + 1]]
 
-            if not self.connected_by_props(class_var_a, class_var_b,
-                                           inv_func_props=True):
+            if not self.connected_by_props(
+                class_var_a, class_var_b, inv_func_props=True
+            ):
                 return False
 
-        return len(self.var_categories['numeric']) == 1
+        return len(self.var_categories["numeric"]) == 1
 
     def three_classes_linked_by_func_props(self):
         if self.class_vars_used() != 3:
             return False
 
-        key_vars = [var for var in self.used_variables if
-                    var in self.key_of_var]
+        key_vars = [var for var in self.used_variables if var in self.key_of_var]
 
         if len(key_vars) != 2:
             return False
@@ -317,16 +314,16 @@ class QueryAnalyser:
         CB = self.data_prop_of_var[TBK]
         CC = self.data_prop_of_var[TCK]
 
-        if self.var_categories['numeric']:
-            TA1 = self.var_categories['numeric'][0]
-            CA = self.data_prop_of_var[f'?{TA1}']
-            if not (self.connected_by_props(CA, CB) and
-                    self.connected_by_props(CA, CC)):
+        if self.var_categories["numeric"]:
+            TA1 = self.var_categories["numeric"][0]
+            CA = self.data_prop_of_var[f"?{TA1}"]
+            if not (
+                self.connected_by_props(CA, CB) and self.connected_by_props(CA, CC)
+            ):
                 return False
 
         for CA in self.var_class:
-            if self.connected_by_props(CA, CB) and \
-                    self.connected_by_props(CA, CC):
+            if self.connected_by_props(CA, CB) and self.connected_by_props(CA, CC):
                 return True
 
         return False
@@ -336,11 +333,11 @@ class QueryAnalyser:
 
 
 def is_sparql_variable(s: str):
-    return s.startswith('?')
+    return s.startswith("?")
 
 
 def variable_name(var: str):
-    return var.replace('?', '')
+    return var.replace("?", "")
 
 
 def remove_prefix(uri: str, prefix=None) -> str:
@@ -351,11 +348,11 @@ def remove_prefix(uri: str, prefix=None) -> str:
     :return:
     """
     if not uri:
-        return ''
+        return ""
     if prefix:
-        return uri.replace(prefix, '')
+        return uri.replace(prefix, "")
 
-    return uri.split('/')[-1].split('#')[-1]
+    return uri.split("/")[-1].split("#")[-1]
 
 
 def get_full_uri(*, uri: str, prefixes) -> str | None:
@@ -384,13 +381,13 @@ def get_metadata(*, uri: str, repository: RDFRepository):
     :param repository:
     :return:
     """
-    with open(f'{QUERY_PATH}/meta_information.sparql', 'r') as query:
+    with open(f"{QUERY_PATH}/meta_information.sparql") as query:
         result = repository.run_query(query=query.read().format(uri=uri))
 
-    fields = result['header']
-    values = result['data'][0] if result['data'] else []
+    fields = result["header"]
+    values = result["data"][0] if result["data"] else []
 
-    return dict(zip(fields, values))
+    return dict(zip(fields, values, strict=False))
 
 
 def type_category(*, type_uri) -> [str]:
@@ -401,13 +398,17 @@ def type_category(*, type_uri) -> [str]:
     """
 
     categories_types = {
-        'numeric': {'int', 'integer', 'decimal', 'negativeInteger',
-                    'nonNegativeInteger'},
-        'temporal': {'gDay', 'gYear', 'time', 'gMonth', 'gMonthDay',
-                     'gYearMonth'},
-        'date': {'date'  'dateTime'},
-        'lexical': {'string'},
-        'geographical': {}
+        "numeric": {
+            "int",
+            "integer",
+            "decimal",
+            "negativeInteger",
+            "nonNegativeInteger",
+        },
+        "temporal": {"gDay", "gYear", "time", "gMonth", "gMonthDay", "gYearMonth"},
+        "date": {"date", "dateTime"},
+        "lexical": {"string"},
+        "geographical": {},
     }
 
     type_name = remove_prefix(type_uri)
@@ -416,12 +417,14 @@ def type_category(*, type_uri) -> [str]:
         if type_name in categories_types[ctg]:
             categories.append(ctg)
 
-    return categories if categories else ['object']
+    return categories if categories else ["object"]
 
 
 def get_where_clause(query: str):
-    pattern = re.compile(r'\s*where\s*\{\s*(?P<conditions>.*)\s*\}\s*',
-                         re.IGNORECASE | re.MULTILINE | re.DOTALL)
+    pattern = re.compile(
+        r"\s*where\s*\{\s*(?P<conditions>.*)\s*\}\s*",
+        re.IGNORECASE | re.MULTILINE | re.DOTALL,
+    )
     matches = pattern.findall(query)
     if not matches:
         return None
@@ -436,49 +439,33 @@ def query_analysis(query: str, repository: RDFRepository):
     visualisations = []
 
     if analyser.is_graph_query():
-        pattern = 'RDF Graph'
-        visualisations = ['Graph']
+        pattern = "RDF Graph"
+        visualisations = ["Graph"]
     elif analyser.class_with_data_properties():
-        pattern = 'Class with data properties'
-        visualisations = ['Calendar', 'Scatter', 'Bubble', 'Bar',
-                          'Choropleth Map', 'Word Cloud', 'Pie']
+        pattern = "Class with data properties"
+        visualisations = [
+            "Calendar",
+            "Scatter",
+            "Bubble",
+            "Bar",
+            "Choropleth Map",
+            "Word Cloud",
+            "Pie",
+        ]
     elif analyser.two_classes_linked_by_func_prop():
-        pattern = 'Two classes linked by a functional property'
-        visualisations = ['Tree Map', 'Hierarchy Tree', 'Circle Packing',
-                          'Sunburst']
+        pattern = "Two classes linked by a functional property"
+        visualisations = ["Tree Map", "Hierarchy Tree", "Circle Packing", "Sunburst"]
     elif analyser.two_classes_linked_by_key_func_prop():
-        pattern = 'Two classes linked by a key functional property'
-        visualisations = ['Line', 'Spider', 'Stacked Bar', 'Grouped Bar']
+        pattern = "Two classes linked by a key functional property"
+        visualisations = ["Line", "Spider", "Stacked Bar", "Grouped Bar"]
     elif analyser.three_classes_linked_by_func_props():
-        pattern = 'Three classes linked by functional properties'
-        visualisations = ['Sankey', 'Network', 'Chord Diagram', 'Heat Map']
+        pattern = "Three classes linked by functional properties"
+        visualisations = ["Sankey", "Network", "Chord Diagram", "Heat Map"]
 
-    result = {'pattern': pattern, 'variables': analyser.var_categories,
-              'visualisations': visualisations}
+    result = {
+        "pattern": pattern,
+        "variables": analyser.var_categories,
+        "visualisations": visualisations,
+    }
 
     return result
-
-
-if __name__ == '__main__':
-    # from .db import get_repository
-    q = '''
-    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-    PREFIX : <http://www.semwebtech.org/mondial/10/meta#>
-    
-    CONSTRUCT { ?c :encompassedBy ?continent }
-    WHERE {
-     ?c rdf:type :Country ;
-       :name ?country ;
-       :encompassedByInfo ?en .
-     ?en :encompassedBy ?con ;
-         :percent ?percent .
-     ?con rdf:type :Continent ;
-          :name ?continent .
-      # FILTER (?percent > 50) .
-    }
-    # LIMIT 100
-    '''
-    # mondial = get_repository(repository_id='mondial', username='rohan')
-    # qa = QueryAnalyser(query=q, repository=mondial)
-    print(CONSTRUCT_STATEMENT.search(q).group('triplet'))

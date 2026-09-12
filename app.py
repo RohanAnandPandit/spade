@@ -1,438 +1,364 @@
 import os
-import urllib
+from pathlib import Path
 
 import requests
-from flask import Flask, request, jsonify, flash, send_from_directory, session
-from werkzeug.utils import secure_filename
+from flask import Flask, abort, jsonify, request, send_from_directory
 from flask_cors import CORS
-from dotenv import load_dotenv, find_dotenv
-from backend.analysis import query_analysis, QUERY_PATH
-from backend.db import save_query, get_queries, delete_all_queries, \
-    get_repository, get_repository_info, add_repository, delete_repository, \
-    geo_json_data, region_short_name
-from backend.util import run_query_file, import_data
+from pymongo.errors import PyMongoError, ServerSelectionTimeoutError
+from werkzeug.exceptions import HTTPException
+from werkzeug.utils import secure_filename
 
-load_dotenv(find_dotenv())
+from backend.analysis import QUERY_PATH, query_analysis
+from backend.db import (
+    DatabaseNotConfiguredError,
+    add_repository,
+    delete_all_queries,
+    delete_repository,
+    geo_json_data,
+    get_queries,
+    get_repository,
+    get_repository_info,
+    region_short_name,
+    save_query,
+)
+from backend.repository import REMOTE_TIMEOUT, USER_AGENT, RemoteRepositoryError
+from backend.util import import_data, run_query_file
 
-UPLOAD_FOLDER = 'imports'
+BUILD = os.environ.get("BUILD", "development")
+UPLOAD_FOLDER = Path(os.environ.get("UPLOAD_FOLDER", "imports"))
+ALLOWED_EXTENSIONS = {"rdf", "xml", "nt", "n3", "ttl", "nt11", "txt"}
+NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
+GEOGRAPHICAL_TYPES = {"city", "country", "continent", "administrative", "town"}
 
-BUILD = os.environ['BUILD']
-
-if BUILD == 'development':
-    app = Flask(__name__)
-    CORS(app, origins=["http://localhost:3000"])
+if BUILD == "production":
+    app = Flask(__name__, static_url_path="", static_folder="frontend/dist")
 else:
-    app = Flask(__name__, static_url_path='', static_folder='frontend/build')
+    app = Flask(__name__)
+    CORS(app, origins=["http://localhost:5173"])
 
-app.secret_key = os.environ.get('FLASK_SECRET_KEY')
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-ALLOWED_EXTENSIONS = {'rdf', 'xml', 'nt', 'n3', 'ttl', 'nt11', 'txt'}
-
-BAD_REQUEST = 400
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+app.config["MAX_CONTENT_LENGTH"] = 32 * 1024 * 1024
 
 
-@app.route("/", defaults={'path': ''})
-def serve(path):
-    return send_from_directory(app.static_folder, 'index.html')
+@app.errorhandler(HTTPException)
+def handle_http_error(error: HTTPException):
+    return jsonify(error=error.description), error.code
 
 
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+@app.errorhandler(DatabaseNotConfiguredError)
+def handle_database_not_configured(error: DatabaseNotConfiguredError):
+    return jsonify(error=str(error)), 503
 
 
-@app.route('/upload', methods=['POST'])
+@app.errorhandler(ServerSelectionTimeoutError)
+@app.errorhandler(requests.Timeout)
+def handle_timeout(error: Exception):
+    return jsonify(error="The upstream service timed out"), 504
+
+
+@app.errorhandler(RemoteRepositoryError)
+@app.errorhandler(requests.RequestException)
+@app.errorhandler(PyMongoError)
+def handle_upstream_failure(error: Exception):
+    return jsonify(error=str(error) or "An upstream service failed"), 502
+
+
+@app.errorhandler(ValueError)
+def handle_invalid_value(error: ValueError):
+    return jsonify(error=str(error)), 400
+
+
+def required_arg(name: str) -> str:
+    value = request.args.get(name, type=str)
+    if value is None or not value.strip():
+        abort(400, description=f"Missing query parameter: {name}")
+    return value
+
+
+def required_json(*names: str) -> dict:
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        abort(400, description="A JSON request body is required")
+    missing = [name for name in names if not str(payload.get(name, "")).strip()]
+    if missing:
+        abort(400, description=f"Missing JSON field(s): {', '.join(missing)}")
+    return payload
+
+
+def requested_repository():
+    repository_id = required_arg("repository")
+    username = required_arg("username")
+    repository = get_repository(repository_id=repository_id, username=username)
+    if repository is None:
+        abort(404, description=f"Repository '{repository_id}' was not found")
+    return repository
+
+
+def checked_result(result: dict):
+    if error := result.get("error"):
+        abort(400, description=error)
+    return result
+
+
+def allowed_file(filename: str) -> bool:
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+@app.post("/upload")
 def upload_file():
-    if request.method == 'POST':
-        # check if the post request has the file part
-        if 'file' not in request.files:
-            flash('No file part')
-            return {}
-        file = request.files['file']
-        # If the user does not select a file, the browser submits an
-        # empty file without a filename.
-        if file.filename == '':
-            flash('No selected file')
-            return {}
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            print(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            if not os.path.isdir(UPLOAD_FOLDER):
-                os.makedirs(UPLOAD_FOLDER)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            return {}
+    uploaded_file = request.files.get("file")
+    if uploaded_file is None:
+        abort(400, description="No file was provided")
+    if not uploaded_file.filename:
+        abort(400, description="The uploaded file has no filename")
+    if not allowed_file(uploaded_file.filename):
+        abort(400, description="Unsupported RDF file extension")
+
+    filename = secure_filename(uploaded_file.filename)
+    app.config["UPLOAD_FOLDER"].mkdir(parents=True, exist_ok=True)
+    uploaded_file.save(app.config["UPLOAD_FOLDER"] / filename)
+    return jsonify(filename=filename), 201
 
 
-@app.route('/login', methods=['POST'])
+@app.post("/login")
 def login():
-    if request.method == 'POST':
-        username = request.args['username']
-        return username
+    return required_arg("username")
 
 
-@app.route('/logout', methods=['POST'])
+@app.post("/logout")
 def logout():
-    if request.method == 'POST':
-        return ''
+    return "", 204
 
 
-@app.route('/repositories', methods=['GET', 'DELETE'])
+@app.route("/repositories", methods=["GET", "DELETE"])
 def repositories():
-    if request.method == 'GET':
-        username = request.args['username']
+    username = required_arg("username")
+    if request.method == "GET":
         return jsonify(get_repository_info(username=username))
 
-    elif request.method == 'DELETE':
-        username = request.args['username']
-        repository_id = request.args['repository']
-        delete_repository(repository_id=repository_id, username=username)
-        return repository_id
+    repository_id = required_arg("repository")
+    result = delete_repository(repository_id=repository_id, username=username)
+    if result.deleted_count == 0:
+        abort(404, description=f"Repository '{repository_id}' was not found")
+    return repository_id
 
 
-@app.route('/repositories/local', methods=['POST'])
+@app.post("/repositories/local")
 def add_local_repo():
-    if request.method == 'POST':
-        name = request.json['name']
-        description = request.json['description']
-        data_url = request.json['dataUrl']
-        schema_url = request.json['schemaUrl']
-        username = request.json['username']
-        graph = import_data(data_url=data_url,
-                            schema_url=schema_url)
-        add_repository(repository_id=name, username=username, graph=graph,
-                       description=description)
-
-        return name
+    payload = required_json("name", "description", "dataUrl", "schemaUrl", "username")
+    graph = import_data(data_url=payload["dataUrl"], schema_url=payload["schemaUrl"])
+    add_repository(
+        repository_id=payload["name"],
+        username=payload["username"],
+        graph=graph,
+        description=payload["description"],
+    )
+    return payload["name"], 201
 
 
-@app.route('/repositories/remote', methods=['POST'])
+@app.post("/repositories/remote")
 def add_remote_repo():
-    if request.method == 'POST':
-        name = request.json['name']
-        endpoint = request.json['endpoint']
-        username = request.json['username']
-        description = request.json['description']
-
-        add_repository(repository_id=name, username=username, endpoint=endpoint,
-                       description=description)
-
-        return name
+    payload = required_json("name", "endpoint", "username", "description")
+    add_repository(
+        repository_id=payload["name"],
+        username=payload["username"],
+        endpoint=payload["endpoint"],
+        description=payload["description"],
+    )
+    return payload["name"], 201
 
 
-@app.route('/sparql', methods=['GET'])
+@app.get("/sparql")
 def run_query():
-    if request.method == 'GET':
-        repository_id = request.args['repository']
-        query = request.args['query']
-        username = request.args['username']
-
-        repository = get_repository(repository_id=repository_id,
-                                    username=username)
-
-        return repository.run_query(query=query)
+    repository = requested_repository()
+    result = checked_result(repository.run_query(query=required_arg("query")))
+    return jsonify(result)
 
 
-@app.route('/saved-queries', methods=['GET', 'POST', 'DELETE'])
+@app.route("/saved-queries", methods=["GET", "POST", "DELETE"])
 def history():
-    if request.method == 'GET':
-        repository_id = request.args['repository']
-        username = request.args['username']
-        return jsonify(
-            get_queries(repository_id=repository_id, username=username))
+    if request.method == "POST":
+        payload = required_json("username", "repository", "sparql", "name")
+        save_query(
+            repository_id=payload["repository"],
+            sparql=payload["sparql"],
+            name=payload["name"],
+            username=payload["username"],
+        )
+        return payload["name"], 201
 
-    elif request.method == 'POST':
-        username = request.json['username']
-        repository = request.json['repository']
-        sparql = request.json['sparql']
-        name = request.json['name']
-        if name:
-            save_query(repository_id=repository,
-                       sparql=sparql,
-                       name=name,
-                       username=username)
-        return name
-    elif request.method == 'DELETE':
-        username = request.args['username']
-        repository_id = request.args['repository']
-        return delete_all_queries(repository_id=repository_id,
-                                  username=username)
+    repository_id = required_arg("repository")
+    username = required_arg("username")
+    if request.method == "GET":
+        return jsonify(get_queries(repository_id=repository_id, username=username))
+
+    delete_all_queries(repository_id=repository_id, username=username)
+    return "", 204
 
 
-@app.route('/dataset/classes', methods=['GET'])
+def run_dataset_query(filename: str, **values):
+    repository = requested_repository()
+    path = QUERY_PATH / filename
+    if values:
+        query = path.read_text().format(**values)
+        return checked_result(repository.run_query(query=query))
+    return checked_result(run_query_file(repository=repository, path=str(path)))
+
+
+@app.get("/dataset/classes")
 def classes():
-    if request.method == 'GET':
-        username = request.args['username']
-        repository_id = request.args['repository']
-        repository = get_repository(repository_id=repository_id,
-                                    username=username)
-        result = run_query_file(repository=repository,
-                                path=f'{QUERY_PATH}/all_classes.sparql')
-
-        return [row[0] for row in result['data']]
+    return [row[0] for row in run_dataset_query("all_classes.sparql")["data"]]
 
 
-@app.route('/dataset/class-hierarchy', methods=['GET'])
+@app.get("/dataset/class-hierarchy")
 def class_hierarchy():
-    if request.method == 'GET':
-        username = request.args['username']
-        repository_id = request.args['repository']
-        repository = get_repository(repository_id=repository_id,
-                                    username=username)
-        result = run_query_file(repository=repository,
-                                path=f'{QUERY_PATH}/class_hierarchy.sparql')
-
-        header = ['subject', 'predicate', 'object']
-        data = result['data']
-        return jsonify({'header': header, 'data': data})
+    result = run_dataset_query("class_hierarchy.sparql")
+    return jsonify(
+        {"header": ["subject", "predicate", "object"], "data": result["data"]}
+    )
 
 
-@app.route('/dataset/triplet-count', methods=['GET'])
+@app.get("/dataset/triplet-count")
 def triplets():
-    if request.method == 'GET':
-        username = request.args['username']
-        repository_id = request.args['repository']
-        repository = get_repository(repository_id=repository_id,
-                                    username=username)
-        result = run_query_file(repository=repository,
-                                path=f'{QUERY_PATH}/count_triplets.sparql')
-
-        return result['data'][0][0]
+    result = run_dataset_query("count_triplets.sparql")
+    if not result["data"]:
+        abort(404, description="No triplet count was returned")
+    return str(result["data"][0][0])
 
 
-@app.route('/dataset/all-types', methods=['GET'])
+@app.get("/dataset/all-types")
 def all_types():
-    if request.method == 'GET':
-        username = request.args['username']
-        repository_id = request.args['repository']
-        repository = get_repository(repository_id=repository_id,
-                                    username=username)
-        result = run_query_file(repository=repository,
-                                path=f'{QUERY_PATH}/all_types.sparql')
-
-        return [row[0] for row in result['data']]
+    return [row[0] for row in run_dataset_query("all_types.sparql")["data"]]
 
 
-@app.route('/dataset/type', methods=['GET'])
+@app.get("/dataset/type")
 def get_type():
-    if request.method == 'GET':
-        uri = request.args['uri']
-        username = request.args['username']
-        repository_id = request.args['repository']
-        repository = get_repository(repository_id=repository_id,
-                                    username=username)
-
-        with open(f'{QUERY_PATH}/get_type.sparql', 'r') as query:
-            result = repository.run_query(query=query.read().format(uri=uri))
-
-        return [row[0] for row in result['data']]
+    result = run_dataset_query("get_type.sparql", uri=required_arg("uri"))
+    return [row[0] for row in result["data"]]
 
 
-@app.route('/dataset/type-properties', methods=['GET'])
+@app.get("/dataset/type-properties")
 def type_properties():
-    if request.method == 'GET':
-        rdf_type = request.args['type']
-        username = request.args['username']
-        repository_id = request.args['repository']
-        repository = get_repository(repository_id=repository_id,
-                                    username=username)
-        with open(f'{QUERY_PATH}/type_properties.sparql', 'r') as query:
-            result = repository.run_query(
-                query=query.read().format(type=rdf_type))
-
-        return [row[0] for row in result['data']]
+    result = run_dataset_query("type_properties.sparql", type=required_arg("type"))
+    return [row[0] for row in result["data"]]
 
 
-@app.route('/dataset/meta-information', methods=['GET'])
+@app.get("/dataset/meta-information")
 def meta_information():
-    if request.method == 'GET':
-        uri = request.args['uri']
-        username = request.args['username']
-        repository_id = request.args['repository']
-        repository = get_repository(repository_id=repository_id,
-                                    username=username)
-        with open(f'{QUERY_PATH}/meta_information.sparql', 'r') as query:
-            result = repository.run_query(query=query.read().format(uri=uri))
-
-        fields = result['header']
-        values = result['data'][0]
-
-        return jsonify(dict(zip(fields, values)))
+    result = run_dataset_query("meta_information.sparql", uri=required_arg("uri"))
+    if not result["data"]:
+        abort(404, description="No metadata was found for this URI")
+    return jsonify(dict(zip(result["header"], result["data"][0], strict=False)))
 
 
-@app.route('/dataset/outgoing-links', methods=['GET'])
+def link_counts(filename: str):
+    result = run_dataset_query(filename, uri=required_arg("uri"))
+    return jsonify({uri: int(count) for uri, count in result["data"]})
+
+
+@app.get("/dataset/outgoing-links")
 def outgoing_links():
-    if request.method == 'GET':
-        uri = request.args['uri']
-        username = request.args['username']
-        repository_id = request.args['repository']
-        repository = get_repository(repository_id=repository_id,
-                                    username=username)
-        with open(f'{QUERY_PATH}/outgoing_links.sparql', 'r') as query:
-            result = repository.run_query(query=query.read().format(uri=uri))
-
-        links = {}
-        for [uri, count] in result['data']:
-            links[uri] = int(count)
-
-        return jsonify(links)
+    return link_counts("outgoing_links.sparql")
 
 
-@app.route('/dataset/incoming-links', methods=['GET'])
+@app.get("/dataset/incoming-links")
 def incoming_links():
-    if request.method == 'GET':
-        uri = request.args['uri']
-        username = request.args['username']
-        repository_id = request.args['repository']
-        repository = get_repository(repository_id=repository_id,
-                                    username=username)
-        with open(f'{QUERY_PATH}/incoming_links.sparql', 'r') as query:
-            result = repository.run_query(query=query.read().format(uri=uri))
-
-        links = {}
-        for [uri, count] in result['data']:
-            links[uri] = int(count)
-
-        return jsonify(links)
+    return link_counts("incoming_links.sparql")
 
 
-@app.route('/dataset/all-properties', methods=['GET'])
+@app.get("/dataset/all-properties")
 def all_properties():
-    if request.method == 'GET':
-        username = request.args['username']
-        repository_id = request.args['repository']
-        repository = get_repository(repository_id=repository_id,
-                                    username=username)
-        result = run_query_file(repository=repository,
-                                path=f'{QUERY_PATH}/all_properties.sparql')
-
-        return [row[0] for row in result['data']]
+    return [row[0] for row in run_dataset_query("all_properties.sparql")["data"]]
 
 
-@app.route('/dataset/type-instances', methods=['GET'])
+@app.get("/dataset/type-instances")
 def type_instances():
-    if request.method == 'GET':
-        username = request.args['username']
-        repository_id = request.args['repository']
-        repository = get_repository(repository_id=repository_id,
-                                    username=username)
-        type_ = request.args['type']
-        with open(f'{QUERY_PATH}/type_instances.sparql', 'r') as query:
-            result = repository.run_query(query=query.read().format(type=type_))
-
-        return [row[0] for row in result['data']]
+    result = run_dataset_query("type_instances.sparql", type=required_arg("type"))
+    return [row[0] for row in result["data"]]
 
 
-@app.route('/dataset/property-values', methods=['GET'])
+@app.get("/dataset/property-values")
 def property_values():
-    if request.method == 'GET':
-        username = request.args['username']
-        repository_id = request.args['repository']
-        repository = get_repository(repository_id=repository_id,
-                                    username=username)
-        uri = request.args['uri']
-        prop_type = request.args['propType']
-        with open(f'{QUERY_PATH}/property_values.sparql', 'r') as query:
-            result = repository.run_query(
-                query=query.read().format(uri=uri, prop_type=prop_type))
-
-        return result['data']
+    result = run_dataset_query(
+        "property_values.sparql",
+        uri=required_arg("uri"),
+        prop_type=required_arg("propType"),
+    )
+    return result["data"]
 
 
-@app.route('/analysis', methods=['GET'])
+@app.get("/analysis")
 def analysis():
-    if request.method == 'GET':
-        username = request.args['username']
-        query = request.args['query']
-        repository_id = request.args['repository']
-        repository = get_repository(repository_id=repository_id,
-                                    username=username)
-        return jsonify(
-            query_analysis(query=query, repository=repository))
+    repository = requested_repository()
+    return jsonify(query_analysis(query=required_arg("query"), repository=repository))
 
 
-def get_region_query(region):
-    query = []
-    for name in region.split(','):
+def get_region_query(region: str) -> str:
+    names = []
+    for name in region.split(","):
         short_name = region_short_name(name)
-        if short_name != 'not found':
-            query.append(short_name)
-        else:
-            query.append(name)
-
-    return ', '.join(query)
+        names.append(name if short_name == "not found" else short_name)
+    return ", ".join(names)
 
 
-def remove_last_comma(text):
-    return ','.join(text.split(',')[:-1])
+def nominatim_search(query: str):
+    response = requests.get(
+        NOMINATIM_URL,
+        params={"q": query, "polygon_geojson": 1, "format": "json"},
+        headers={"User-Agent": USER_AGENT},
+        timeout=REMOTE_TIMEOUT,
+    )
+    response.raise_for_status()
+    return [
+        entry for entry in response.json() if entry.get("type") in GEOGRAPHICAL_TYPES
+    ]
 
 
-@app.route('/geo', methods=['GET'])
+@app.get("/geo")
 def geo():
-    OK = 200
-    if request.method == 'GET':
-        MAP_API = 'https://nominatim.openstreetmap.org/search.php?q={query}' \
-                  '&polygon_geojson=1&format=json'
-        coordinates = None
-        type_ = None
-        if 'region' in request.args:
-            region = request.args['region']
-            query = get_region_query(region)
-            while query:
-                url = MAP_API.format(query=urllib.parse.quote(query, safe=""))
-                response = requests.get(url)
+    region = required_arg("region")
+    query = get_region_query(region)
+    while query:
+        polygons = nominatim_search(query)
+        if polygons:
+            geojson = polygons[0].get("geojson", {})
+            return jsonify(
+                geoData={
+                    "region": region,
+                    "type": geojson.get("type"),
+                    "name": query,
+                    "coordinates": geojson.get("coordinates"),
+                }
+            )
+        query = ",".join(query.split(",")[:-1])
 
-                if response.status_code == OK:
-                    polygons = [data
-                                for data in response.json() if
-                                data['type'] in (
-                                    'city', 'country', 'continent',
-                                    'administrative', 'town')]
-                    if polygons:
-                        coordinates = polygons[0]["geojson"]['coordinates']
-                        type_ = polygons[0]["geojson"]['type']
-                        return {'geoData': {'region': region, 'type': type_,
-                                            'name': query,
-                                            'coordinates': coordinates}}
-
-                query = remove_last_comma(query)
-
-            data = geo_json_data(region)
-            if data:
-                coordinates = data['geometry']['coordinates']
-                type_ = data['geometry']['type']
-
-            return {'geoData': {'region': region, 'type': type_, 'name': query,
-                                'coordinates': coordinates}}
+    data = geo_json_data(region)
+    geometry = data.get("geometry", {}) if data else {}
+    return jsonify(
+        geoData={
+            "region": region,
+            "type": geometry.get("type"),
+            "name": region,
+            "coordinates": geometry.get("coordinates"),
+        }
+    )
 
 
-@app.route('/geo/valid', methods=['GET'])
+@app.get("/geo/valid")
 def geographical_name():
-    OK = 200
-    if request.method == 'GET':
-        MAP_API = 'https://nominatim.openstreetmap.org/search.php?q={query}' \
-                  '&polygon_geojson=1&format=json'
+    return jsonify(valid=bool(nominatim_search(get_region_query(required_arg("text")))))
 
-        if 'text' in request.args:
-            region = request.args['text']
-            query = get_region_query(region)
 
-            url = MAP_API.format(query=urllib.parse.quote(query, safe=""))
-            response = requests.get(url)
-
-            if response.status_code == OK:
-                polygons = [data
-                            for data in response.json() if
-                            data['type'] in (
-                                'city', 'country', 'continent',
-                                'administrative', 'town')]
-                if polygons:
-                    return {'valid': True}
-
-        return {'valid': False}
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def serve(path: str):
+    if BUILD != "production" or app.static_folder is None:
+        return jsonify(service="SPADE API", frontend="Run pnpm dev on port 5173")
+    static_path = Path(app.static_folder) / path
+    if path and static_path.is_file():
+        return send_from_directory(app.static_folder, path)
+    return send_from_directory(app.static_folder, "index.html")
 
 
 if __name__ == "__main__":
-    if os.environ.get('BUILD') == 'development':
-        app.run(debug=True, port=5000)
-    elif os.environ.get('BUILD') == 'production':
-        app.run(host='0.0.0.0')
+    app.run(debug=BUILD == "development", host="0.0.0.0", port=5000)

@@ -1,197 +1,138 @@
-from datetime import datetime
-import compress_pickle
 import os
-import pymongo
-import country_converter as coco
-from pymongo import MongoClient
-from pymongo.server_api import ServerApi
-from dotenv import load_dotenv, find_dotenv
-from backend.repository import RDFRepository, LocalRepository, RemoteRepository
+from datetime import UTC, datetime
+from functools import lru_cache
 
-load_dotenv(find_dotenv())
+import compress_pickle
+import country_converter as coco
+import pymongo
+from pymongo import MongoClient
+from pymongo.database import Database
+from pymongo.server_api import ServerApi
+
+from backend.repository import LocalRepository, RDFRepository, RemoteRepository
 
 COMPRESSION = "gzip"
-MONGODB_URL = os.environ["MONGODB_URL"]
+DATABASE_NAME = "dataVisualiserDB"
 
-uri = MONGODB_URL
-# Create a new client and connect to the server
-client = MongoClient(uri, server_api=ServerApi("1"))
-db = client["dataVisualiserDB"]
+
+class DatabaseNotConfiguredError(RuntimeError):
+    """Raised when a persistence endpoint is used without MongoDB configured."""
+
+
+@lru_cache(maxsize=1)
+def get_database() -> Database:
+    uri = os.environ.get("MONGODB_URL")
+    if not uri:
+        raise DatabaseNotConfiguredError(
+            "MONGODB_URL is required for repository and query persistence"
+        )
+    client = MongoClient(
+        uri,
+        server_api=ServerApi("1"),
+        connect=False,
+        serverSelectionTimeoutMS=5_000,
+    )
+    return client[DATABASE_NAME]
 
 
 def add_user(*, username: str):
-    users = db["users"]
-    users.insert_one({"username": username})
+    return get_database()["users"].insert_one({"username": username})
 
 
 def get_queries(*, repository_id: str, username: str):
-    queries = db["queries"]
     return list(
-        queries.find({"repository": repository_id, "user": username}, {"_id": 0}).sort(
-            [("date", pymongo.DESCENDING)]
-        )
+        get_database()["queries"]
+        .find({"repository": repository_id, "user": username}, {"_id": 0})
+        .sort([("date", pymongo.DESCENDING)])
     )
 
 
 def get_repository(*, repository_id: str, username: str) -> RDFRepository | None:
-    repositories = db["repositories"]
-    repo = repositories.find_one({"name": repository_id, "user": username})
+    repo = get_database()["repositories"].find_one(
+        {"name": repository_id, "user": username}
+    )
     if not repo:
         return None
     if "graph" in repo:
         return LocalRepository(
             name=repository_id, graph=compress_pickle.loads(repo["graph"], COMPRESSION)
         )
-    elif "endpoint" in repo:
+    if "endpoint" in repo:
         return RemoteRepository(name=repository_id, endpoint=repo["endpoint"])
     return None
 
 
 def delete_repository(*, repository_id: str, username: str):
-    repositories = db["repositories"]
-    return repositories.delete_one({"name": repository_id, "user": username})
+    return get_database()["repositories"].delete_one(
+        {"name": repository_id, "user": username}
+    )
 
 
 def get_repository_info(*, username: str):
-    repositories = db["repositories"]
-    details = repositories.find(
+    details = get_database()["repositories"].find(
         {"user": username}, {"_id": 0, "name": 1, "description": 1, "endpoint": 1}
     )
-
     return list(details)
 
 
 def add_repository(
     *, repository_id: str, username: str, description: str, graph=None, endpoint=None
 ):
-    repositories = db["repositories"]
     repo = {"name": repository_id, "user": username, "description": description}
-    if graph:
+    if graph is not None:
         repo["graph"] = compress_pickle.dumps(graph, COMPRESSION)
     elif endpoint:
         repo["endpoint"] = endpoint
-    return repositories.insert_one(repo)
+    else:
+        raise ValueError("A graph or remote endpoint is required")
+    return get_database()["repositories"].insert_one(repo)
 
 
 def update_repository(*, username: str, repository_id: str, graph=None, endpoint=None):
-    repositories = db["repositories"]
-    if graph:
-        repositories.update_one(
-            {"name": repository_id, "user": username},
-            {"$set": {"graph": compress_pickle.dumps(graph, COMPRESSION)}},
-        )
+    values = None
+    if graph is not None:
+        values = {"graph": compress_pickle.dumps(graph, COMPRESSION)}
     elif endpoint:
-        repositories.update_one(
-            {"name": repository_id, "user": username}, {"$set": {"endpoint": endpoint}}
-        )
+        values = {"endpoint": endpoint}
+    if values is None:
+        raise ValueError("A graph or remote endpoint is required")
+    return get_database()["repositories"].update_one(
+        {"name": repository_id, "user": username}, {"$set": values}
+    )
 
 
 def save_query(*, name: str, sparql: str, repository_id: str, username: str):
-    queries = db["queries"]
-    return queries.insert_one(
+    return get_database()["queries"].insert_one(
         {
             "name": name,
             "sparql": sparql,
             "repository": repository_id,
             "user": username,
-            "date": datetime.now(),
+            "date": datetime.now(UTC),
         }
     )
 
 
 def delete_all_queries(*, repository_id: str, username: str) -> None:
-    queries = db["queries"]
-    queries.delete_many({"repository": repository_id, "user": username})
+    get_database()["queries"].delete_many(
+        {"repository": repository_id, "user": username}
+    )
 
 
-cc = coco.CountryConverter()
+country_converter = coco.CountryConverter()
 
 
-def region_short_name(region):
-    return cc.convert(region, to="name_short")
+def region_short_name(region: str):
+    return country_converter.convert(region, to="name_short")
 
 
-def geo_json_data(name):
-    geoData = db["geoData"]
-    standard_name = cc.convert(name, to="ISO3")
-    location = None
+def geo_json_data(name: str):
+    collection = get_database()["geoData"]
+    standard_name = country_converter.convert(name, to="ISO3")
     if standard_name != "not found":
-        location = geoData.find_one({"properties.ISO_A3": standard_name}, {"_id": 0})
-    else:
-        location = geoData.find_one({"properties.NAME": name}, {"_id": 0})
+        return collection.find_one({"properties.ISO_A3": standard_name}, {"_id": 0})
 
-        if not location:
-            location = geoData.find_one({"properties.NAME": name.upper()}, {"_id": 0})
-
-    return location
-
-
-if __name__ == "__main__":
-    cc.convert("Pune", to="name_short")
-    # save_query(title='Get countries',
-    #            sparql='SELECT ?country ...',
-    #            repository_id='mondial',
-    #            username='rohan')
-    # from backend.util import import_data
-    #
-    # g = import_data(
-    #     data_url='https://www.dbis.informatik.uni-goettingen.de/Mondial'
-    #              '/Mondial-RDF/mondial.n3',
-    #     schema_url='https://www.dbis.informatik.uni-goettingen.de/Mondial'
-    #                '/Mondial-RDF/mondial-meta.n3')
-    # repo = LocalRepository(name="mondial", graph=g)
-    # add_repository(repository=repo, username='rohan', description="Trial")
-    # print(list(get_queries('mondial', 'rohan')))
-    import time
-
-    # t1 = time.time()
-    # repository = LocalRepository(name="mondial",
-    #                              data_url='https://www.dbis.informatik.uni-goettingen.de/Mondial/Mondial-RDF/mondial.n3',
-    #                              schema_url='https://www.dbis.informatik.uni-goettingen.de/Mondial/Mondial-RDF/mondial-meta.n3')
-
-    # repository = get_repository(repository_id='mondial', username='rohan')
-
-    # repository = GraphDBRepository(name="mondial2",
-    #                                server=os.environ['GRAPHDB_SERVER'])
-    # add_repository(repository=repository, username='rohan', description="Trial")
-
-    # t1 = time.time()
-    # repository = get_repository(repository_id='mondial', username='rohan')
-    qry = """
-    # PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-    # PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-    # PREFIX : <http://www.semwebtech.org/mondial/10/meta#>
-    # 
-    # SELECT ?inflation ?unemployment
-    # WHERE {
-    #   ?c rdf:type :Country ;
-    #     :name "India" ;
-    #     :inflation ?inflation ;
-    #     :unemployment ?unemployment .
-    # }
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-PREFIX : <http://www.semwebtech.org/mondial/10/meta#>
-
-SELECT DISTINCT ?continent ?country ?countryPop
-WHERE {
- ?ct rdf:type :City ;
-       :name ?city ;
-       :cityIn ?c ;
-       :population ?cityPop .
- ?c rdf:type :Country ;
-   :name ?country ;
-   :population ?countryPop ;
-   :encompassedByInfo ?en .
- ?en :encompassedBy ?con ;
-     :percent ?percent .
- ?con rdf:type :Continent ;
-      :name ?continent .
-  # FILTER (?percent > 50) .
-} 
-        """
-    # results = repository.run_query(query=qry)
-    #
-    # t2 = time.time()
-    # print('Time taken: ', t2 - t1)
-    # print(results)
+    location = collection.find_one({"properties.NAME": name}, {"_id": 0})
+    return location or collection.find_one(
+        {"properties.NAME": name.upper()}, {"_id": 0}
+    )
