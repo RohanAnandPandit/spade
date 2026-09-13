@@ -1,104 +1,71 @@
 # SPADE
 
 SPADE (SPARQL Analysis and Data Explorer) is a web application for querying,
-analysing, and visualising RDF data. The current foundation uses a Flask API
-and a React 18 single-page application built with Vite.
+analysing, and visualising RDF data. It uses a FastAPI API, PostgreSQL-backed
+accounts and persistence, and a React 18 single-page application built with
+Vite.
 
-## Current stack
+## Stack
 
-- Python 3.13, Flask, RDFLib, uv, pytest, and Ruff
-- React 18, TypeScript, Vite, pnpm, Vitest, and Testing Library
-- MongoDB-backed saved repositories and query history (transitional)
-- Local RDF files and remote SPARQL endpoints
+- Python 3.13, FastAPI, SQLAlchemy 2.0, Alembic, psycopg 3, RDFLib, and pytest
+- PostgreSQL for users, sessions, workspaces, repositories, query history, and
+  geographic fallback data
+- Argon2 password hashing and revocable database-backed browser sessions
+- React 18, TypeScript, Vite, pnpm, Vitest, MobX, and Ant Design
 
-SPADE has no login or authentication layer. It generates an anonymous workspace
-ID in browser storage and uses it to keep repositories and query history
-separate. Clearing browser storage creates a new workspace and makes the old
-workspace inaccessible from that browser. Do not expose this transitional
-version directly to the public internet; server-managed workspace sessions
-belong in the versioned PostgreSQL API.
+An account is required to use the explorer. Browser sessions use secure,
+HTTP-only cookies and CSRF protection. The public API is versioned under
+`/api/v1`; interactive OpenAPI documentation is available at `/docs`.
 
-MongoDB is not needed to install the project, import the backend, run tests, or
-build the frontend. Repository and saved-query endpoints currently need a
-MongoDB connection; this storage layer will be replaced by PostgreSQL in a
-separate modernization branch. No S3 or provider-specific deployment service is
-required.
+## Development
 
-## Prerequisites
-
-- Python 3.13
-- [uv](https://docs.astral.sh/uv/)
-- Node.js 22.12 or newer
-- pnpm 12.4.1 (the version is pinned in `frontend/package.json`)
-- MongoDB only when exercising persistence endpoints
-
-## Development setup
-
-Install the locked backend dependencies from the repository root:
+Prerequisites are Python 3.13, uv, PostgreSQL, Node.js 22.12 or newer, and pnpm
+12.4.1.
 
 ```bash
 uv sync --locked
+cp .env.example .env
+uv run alembic upgrade head
+uv run python -m backend.seed
+uv run uvicorn app:app --reload --port 5000
 ```
 
-Install the locked frontend dependencies:
+The seed command creates an idempotent local test account and its workspace. It
+refuses to run when `BUILD=production`; optional `--email` and `--password`
+arguments can override the development defaults.
+
+In another terminal:
 
 ```bash
 cd frontend
 pnpm install --frozen-lockfile
-```
-
-Copy the example environment files if you need to customise the defaults:
-
-```bash
-cp .env.example .env
-cp frontend/.env.example frontend/.env
-```
-
-Start the API from the repository root:
-
-```bash
-uv run flask --app app run --debug --port 5000
-```
-
-In another terminal, start Vite:
-
-```bash
-cd frontend
 pnpm dev
 ```
 
-The frontend runs at `http://localhost:5173` and calls the API at
-`http://localhost:5000` by default.
+The frontend runs at `http://localhost:5173` and proxies `/api` to the FastAPI
+server at `http://localhost:5000`.
 
-In VS Code, run the `SPADE: Start App` task to start both development servers in
-parallel. The `SPADE: Backend` and `SPADE: Frontend` tasks are also available
-when only one service is needed.
-
-## Environment variables
+## Configuration
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `BUILD` | `development` | Set to `production` to serve `frontend/dist` from Flask. |
-| `MONGODB_URL` | unset | Transitional MongoDB connection string for repository and query persistence. |
-| `UPLOAD_FOLDER` | `imports` | Local directory used by the upload endpoint. |
-| `VITE_API_URL` | `http://localhost:5000` | Frontend API origin; set in `frontend/.env`. |
-
-If `MONGODB_URL` is unset, persistence endpoints return a controlled `503`
-response instead of preventing the application from starting.
+| `BUILD` | `development` | Enables production cookies and built-frontend serving when set to `production`. |
+| `DATABASE_URL` | local PostgreSQL | SQLAlchemy psycopg connection URL. |
+| `ALLOWED_ORIGINS` | `http://localhost:5173` | Exact comma-separated credentialed CORS origins. |
+| `SESSION_DAYS` | `7` | Fixed browser-session lifetime. |
+| `MAX_UPLOAD_BYTES` | `33554432` | Combined RDF data and schema upload limit. |
+| `VITE_API_URL` | empty | Optional API origin for split-origin deployments; local and production defaults are same-origin. |
 
 ## Quality checks
 
-Run the backend checks from the repository root:
-
 ```bash
-uv run ruff format --check backend app.py
-uv run ruff check backend app.py
+uv run ruff format --check backend app.py alembic
+uv run ruff check backend app.py alembic
 uv run pytest --cov=backend --cov-report=term-missing
 ```
 
-Run the frontend checks from `frontend/`:
-
 ```bash
+cd frontend
 pnpm format:check
 pnpm lint
 pnpm typecheck
@@ -106,51 +73,32 @@ pnpm test
 pnpm build
 ```
 
-GitHub Actions runs these checks and audits production dependencies on pull
-requests and pushes to `main`.
+## Legacy MongoDB migration
 
-## Production build
-
-Build the frontend:
-
-```bash
-cd frontend
-pnpm install --frozen-lockfile
-pnpm build
-```
-
-Then run Flask with any WSGI-compatible host:
+The application has no MongoDB runtime dependency. To import trusted data from
+the previous deployment, install the migration dependency group and configure
+both `MONGODB_URL` and `DATABASE_URL`:
 
 ```bash
-BUILD=production uv run gunicorn app:app
+uv sync --group migration
+uv run --group migration python -m backend.migrate_mongodb --dry-run
+uv run --group migration python -m backend.migrate_mongodb
 ```
 
-Flask serves the generated `frontend/dist` directory, including client-side
-routes. Deployment configuration is intentionally provider-neutral.
+The importer never writes to MongoDB and is safe to rerun. Legacy local graphs
+are Python pickles, so only migrate a database you control. Anonymous workspace
+IDs are retained and claimed when their browser creates an account.
 
-## Repository layout
+## Production
 
-```text
-.
-├── app.py                  # Flask application and API routes
-├── backend/                # Analysis, repositories, persistence, and tests
-├── frontend/               # React, TypeScript, Vite, and frontend tests
-├── pyproject.toml          # Direct Python dependencies and tool settings
-├── uv.lock                 # Locked Python dependency graph
-└── .github/workflows/ci.yml
+Build `frontend/dist`, apply migrations, and run the ASGI application:
+
+```bash
+cd frontend && pnpm install --frozen-lockfile && pnpm build
+cd ..
+uv run alembic upgrade head
+BUILD=production uv run uvicorn app:app --host 0.0.0.0 --port 8000
 ```
 
-## Modernization roadmap
-
-This foundation deliberately keeps the existing Flask API, MongoDB persistence,
-MobX stores, and chart catalogue to keep the first migration reviewable. Planned
-follow-up branches are:
-
-1. `codex/postgres-fastapi`: PostgreSQL, SQLAlchemy, Alembic, FastAPI, and a
-   versioned API that works with local PostgreSQL, Neon, or Supabase.
-2. `codex/frontend-architecture`: React 19, generated API contracts, TanStack
-   Query, Zustand, and an accessibility-focused interface refresh.
-3. `codex/visualization-consolidation`: typed chart transformations and a
-   smaller set of maintained visualisation libraries.
-4. `codex/security-and-deployment`: SSRF protection, quotas, rate limits,
-   cleanup policies, provider-neutral containers, and end-to-end tests.
+Use HTTPS in production so authentication cookies are transmitted. Snapshot and
+stop writes to the legacy MongoDB deployment before running the one-time import.
