@@ -1,24 +1,51 @@
 .env
 .env.*
 !.env.example
+
+# Python environments, bytecode, tooling, and test caches
 .venv/
 __pycache__/
 *.py[cod]
+*$py.class
 .pytest_cache/
 .ruff_cache/
+.mypy_cache/
+.pyre/
+.pyright/
+.hypothesis/
+.tox/
+.nox/
+.uv-cache/
 .coverage
+.coverage.*
 htmlcov/
 
+# Shared operating-system, editor, and generic tool caches
 .DS_Store
 .idea/
 .vscode/*
 !.vscode/tasks.json
 .VSCodeCounter/
+.cache/
+*.cache
+*.log
 
+# Frontend dependencies, build output, and tooling caches
 frontend/node_modules/
 frontend/build/
 frontend/dist/
 frontend/coverage/
+frontend/.vite/
+frontend/.cache/
+frontend/.eslintcache
+frontend/.stylelintcache
+*.tsbuildinfo
+.parcel-cache/
+.turbo/
+.npm/
+.pnpm-store/
+.yarn/cache/
+.yarn/unplugged/
 
+# Local application data
 imports/
-*.log
