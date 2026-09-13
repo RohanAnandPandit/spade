@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getPropertyValues } from "../../api/dataset";
-import { Descriptions, Skeleton } from "antd";
+import { Descriptions, message, Skeleton } from "antd";
 import { displayText, removePrefix } from "../../utils/queryResults";
 import { PropertyType, RepositoryId, URI } from "../../types";
 import { useStore } from "../../stores/store";
@@ -17,16 +17,29 @@ export const PropertyValues = ({
   propType,
 }: PropertyValuesProps) => {
   const username = useStore().authStore.username!;
-  
+
   const [data, setData] = useState<[URI, string][]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
+    let active = true;
     setLoading(true);
-    getPropertyValues(repository, uri, propType, username).then((res) => {
-      setData(res);
-      setLoading(false);
-    });
+    getPropertyValues(repository, uri, propType, username)
+      .then((res) => {
+        if (active) setData(res);
+      })
+      .catch(() => {
+        if (active) {
+          setData([]);
+          message.error("Could not load property values.");
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [repository, uri, propType, username]);
 
   return (

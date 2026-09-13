@@ -1,104 +1,115 @@
-import { useEffect, useMemo, useState } from "react";
-import ChordDiagram from "react-chord-diagram";
-import { RepositoryId, URI } from "../../types";
+import { ResponsiveChord } from "@nivo/chord";
+import { Alert, Divider, message } from "antd";
+import { useEffect, useState } from "react";
+
 import {
+  getAllTypes,
   getIncomingLinks,
   getOutgoingLinks,
-  getAllTypes,
 } from "../../api/dataset";
-import { removePrefix } from "../../utils/queryResults";
-import randomColor from "randomcolor";
-import { Alert, Divider } from "antd";
 import { useStore } from "../../stores/store";
+import { RepositoryId, URI } from "../../types";
+import { removePrefix } from "../../utils/queryResults";
 
 type ClassLinksProps = {
   repository: RepositoryId;
   width: number;
 };
 
+type LinkMatrix = {
+  labels: URI[];
+  incoming: number[][];
+  outgoing: number[][];
+};
+
+const EMPTY_LINKS: LinkMatrix = { labels: [], incoming: [], outgoing: [] };
+
 const ClassLinks = ({ repository, width }: ClassLinksProps) => {
   const username = useStore().authStore.username!;
-
-  const rootStore = useStore();
-  const settings = rootStore.settingsStore;
-
-  const [types, setTypes] = useState<URI[]>([]);
+  const [links, setLinks] = useState<LinkMatrix>(EMPTY_LINKS);
 
   useEffect(() => {
-    getAllTypes(repository, username).then((res: URI[]) => {
-      setTypes(res);
-    });
+    let active = true;
+
+    const loadLinks = async () => {
+      try {
+        const labels = await getAllTypes(repository, username);
+        const [outgoingMaps, incomingMaps] = await Promise.all([
+          Promise.all(
+            labels.map((source) =>
+              getOutgoingLinks(repository, source, username)
+            )
+          ),
+          Promise.all(
+            labels.map((source) =>
+              getIncomingLinks(repository, source, username)
+            )
+          ),
+        ]);
+        if (!active) return;
+        setLinks({
+          labels,
+          outgoing: outgoingMaps.map((values) =>
+            labels.map((target) => Number(values[target] ?? 0))
+          ),
+          incoming: incomingMaps.map((values) =>
+            labels.map((target) => Number(values[target] ?? 0))
+          ),
+        });
+      } catch {
+        if (active) {
+          setLinks(EMPTY_LINKS);
+          message.error("Could not load class relationships.");
+        }
+      }
+    };
+
+    void loadLinks();
+    return () => {
+      active = false;
+    };
   }, [repository, username]);
 
-  const outMatrix: number[][] = useMemo(() => {
-    const links = {};
-    for (let source of types) {
-      links[source] = [];
-      getOutgoingLinks(repository, source, username).then((res) => {
-        for (let target of types) {
-          links[source].push(parseInt((res[target] ?? 0) as any));
-        }
-      });
-    }
-    const m = types.map((source) => links[source]);
-    return m;
-  }, [repository, types, username]);
-
-  const inMatrix: number[][] = useMemo(() => {
-    const links = {};
-    for (let source of types) {
-      links[source] = [];
-      getIncomingLinks(repository, source, username).then((res) => {
-        for (let target of types) {
-          links[source].push(parseInt((res[target] ?? 0) as any));
-        }
-      });
-    }
-    const m = types.map((source) => links[source]);
-    return m;
-  }, [repository, types, username]);
+  const height = Math.max(420, Math.min(window.innerHeight - 160, width));
+  const labels = links.labels.map(removePrefix);
 
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        flexDirection: "column",
-      }}
-    >
-      <Alert message="Hover or click on a node to hide other ribbons" />
+    <div style={{ width, maxWidth: "100%" }}>
+      <Alert message="Hover over a class to inspect its relationships" />
       <Divider>Outgoing</Divider>
-      <ChordDiagram
-        matrix={outMatrix}
-        componentId={1}
-        groupLabels={types.map((t: URI) => removePrefix(t))}
-        groupColors={types.map(() =>
-          randomColor({ luminosity: settings.darkMode() ? "light" : "dark" })
-        )}
-        labelColors={types.map(() => (settings.darkMode() ? "white" : "black"))}
-        style={{ margin: "auto", padding: 50, font: "white" }}
-        width={width}
-        outerRadius={width - 1000}
-        height={window.screen.height - 100}
-        persistHoverOnClick
-      />
+      <DatasetChord data={links.outgoing} keys={labels} height={height} />
       <Divider>Incoming</Divider>
-      <ChordDiagram
-        matrix={inMatrix}
-        componentId={1}
-        groupLabels={types.map((t: URI) => removePrefix(t))}
-        groupColors={types.map(() =>
-          randomColor({ luminosity: settings.darkMode() ? "light" : "dark" })
-        )}
-        labelColors={types.map(() => (settings.darkMode() ? "white" : "black"))}
-        style={{ margin: "auto", padding: 50, font: "white" }}
-        width={width}
-        outerRadius={width - 1000}
-        height={window.screen.height - 100}
-        persistHoverOnClick
-      />
+      <DatasetChord data={links.incoming} keys={labels} height={height} />
     </div>
   );
 };
+
+const DatasetChord = ({
+  data,
+  keys,
+  height,
+}: {
+  data: number[][];
+  keys: string[];
+  height: number;
+}) => (
+  <div style={{ height }}>
+    {data.length > 0 ? (
+      <ResponsiveChord
+        data={data}
+        keys={keys}
+        margin={{ top: 50, right: 80, bottom: 50, left: 80 }}
+        padAngle={0.02}
+        innerRadiusRatio={0.96}
+        inactiveArcOpacity={0.25}
+        inactiveRibbonOpacity={0.2}
+        labelRotation={-90}
+        colors={{ scheme: "nivo" }}
+      />
+    ) : (
+      <Alert type="info" message="No class relationships were found." />
+    )}
+  </div>
+);
 
 export default ClassLinks;

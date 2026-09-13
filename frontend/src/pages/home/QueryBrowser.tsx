@@ -25,10 +25,6 @@ const QueryBrowser = observer(() => {
 
   const remove = (targetKey: TargetKey) => {
     queriesStore.removeQuery(targetKey as string);
-    if (targetKey === queriesStore.currentQueryId()) {
-      const newActiveKey = Object.keys(queriesStore.openQueries())[0];
-      onTabChange(newActiveKey);
-    }
   };
 
   const onEdit = (
@@ -55,7 +51,6 @@ const QueryBrowser = observer(() => {
             <Input
               title={queriesStore.openQueries()[qid].name}
               onKeyDown={(e) => e.stopPropagation()}
-              // onChange={(e) => console.log(e.target.value)}
               style={{
                 margin: 0,
                 cursor: "pointer",

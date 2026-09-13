@@ -25,7 +25,7 @@ import {
   BiNetworkChart,
   BiScatterChart,
   BiText,
-  BiSolidAnalyse
+  BiSolidAnalyse,
 } from "react-icons/bi";
 import { VscGraphScatter } from "react-icons/vsc";
 import {
@@ -43,7 +43,7 @@ import {
   MdOutlineStackedBarChart,
 } from "react-icons/md";
 import {
-  Tb123,
+  TbNumber,
   TbChartSankey,
   TbChartTreemap,
   TbCircles,
@@ -80,9 +80,10 @@ export const chartIcons = {
 
 type AnalysisProps = {
   queryAnalysis: QueryAnalysis | null;
+  loading: boolean;
 };
 
-const Analysis = ({ queryAnalysis }: AnalysisProps) => {
+const Analysis = ({ queryAnalysis, loading }: AnalysisProps) => {
   return (
     <Card
       title={
@@ -92,7 +93,9 @@ const Analysis = ({ queryAnalysis }: AnalysisProps) => {
       }
       style={{ width: "100%" }}
     >
-      {queryAnalysis ? (
+      {loading ? (
+        <Spin />
+      ) : queryAnalysis ? (
         <Space direction="vertical" style={{ width: "100%" }}>
           <Variables variableCategories={queryAnalysis.variables} />
           {queryAnalysis.pattern ? (
@@ -108,7 +111,7 @@ const Analysis = ({ queryAnalysis }: AnalysisProps) => {
           )}
         </Space>
       ) : (
-        <Spin />
+        <Alert message="Select a repository and enter a query to see its analysis." />
       )}
     </Card>
   );
@@ -144,14 +147,14 @@ type VariablesProps = {
   variableCategories: VariableCategories;
 };
 
-const categoryIcon = {
+const categoryIcon: Record<CategoryType, React.ReactNode> = {
   [CategoryType.KEY]: <GoKey size={20} />,
   [CategoryType.DATE]: <BsCalendarDateFill size={20} />,
   [CategoryType.TEMPORAL]: <IoMdTime size={20} />,
   [CategoryType.GEOGRAPHICAL]: <BsGeoAltFill size={20} />,
   [CategoryType.SCALAR]: <MdNumbers size={25} />,
   [CategoryType.LEXICAL]: <BiText size={20} />,
-  [CategoryType.NUMERIC]: <Tb123 size={25} />,
+  [CategoryType.NUMERIC]: <TbNumber size={25} />,
   [CategoryType.OBJECT]: <MdOutlineDataObject size={20} />,
 };
 
@@ -159,7 +162,7 @@ const Variables = ({ variableCategories }: VariablesProps) => {
   return (
     <div>
       <List header={"Variables"}>
-        {Object.keys(variableCategories).map(
+        {(Object.keys(variableCategories) as CategoryType[]).map(
           (category, index) =>
             variableCategories[category].length > 0 && (
               <List.Item key={category}>

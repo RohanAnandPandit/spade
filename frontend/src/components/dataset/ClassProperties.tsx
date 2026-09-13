@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Divider, Select, Skeleton, Space, Typography } from "antd";
+import { Divider, message, Select, Skeleton, Space, Typography } from "antd";
 import { RepositoryId, URI } from "../../types";
 import { removePrefix } from "../../utils/queryResults";
 import { getTypeProperties, getAllTypes } from "../../api/dataset";
@@ -18,10 +18,20 @@ const ClassProperties = ({ repository }: TypesProps) => {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    getAllTypes(repository, username).then((res: URI[]) => {
-      setAllTypes(res);
-      setLoading(false);
-    });
+    let active = true;
+    getAllTypes(repository, username)
+      .then((res: URI[]) => {
+        if (active) setAllTypes(res);
+      })
+      .catch(() => {
+        if (active) message.error("Could not load repository classes.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [repository, username]);
 
   return (
@@ -58,10 +68,23 @@ const Properties = ({ repository, type }: PropertiesProps) => {
   useEffect(() => {
     setLoading(true);
     setProperty(null);
-    getTypeProperties(repository, type, username).then((res: URI[]) => {
-      setAllProperties(res);
-      setLoading(false);
-    });
+    let active = true;
+    getTypeProperties(repository, type, username)
+      .then((res: URI[]) => {
+        if (active) setAllProperties(res);
+      })
+      .catch(() => {
+        if (active) {
+          setAllProperties([]);
+          message.error("Could not load class properties.");
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [repository, type, username]);
 
   return (
@@ -80,8 +103,8 @@ const Properties = ({ repository, type }: PropertiesProps) => {
         </Space.Compact>
         {property && (
           <Skeleton active loading={loading}>
-              <Divider>{property}</Divider>
-              <MetaInfo repository={repository} uri={property} />
+            <Divider>{property}</Divider>
+            <MetaInfo repository={repository} uri={property} />
           </Skeleton>
         )}
       </Space>

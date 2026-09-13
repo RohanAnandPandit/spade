@@ -8,6 +8,7 @@ import {
   Space,
   Timeline,
   Typography,
+  App as AntdApp,
 } from "antd";
 import { useStore } from "../../stores/store";
 import { MdDelete } from "react-icons/md";
@@ -21,7 +22,7 @@ const QueryHistory = observer(() => {
   const repositoryStore = rootStore.repositoryStore;
 
   useEffect(() => {
-    repositoryStore.updateQueryHistory();
+    void repositoryStore.updateQueryHistory();
   }, [repositoryStore]);
 
   return (
@@ -114,6 +115,16 @@ const QueryHistory = observer(() => {
 const DeleteHistory = observer(() => {
   const rootStore = useStore();
   const repositoryStore = rootStore.repositoryStore;
+  const { message } = AntdApp.useApp();
+
+  const deleteHistory = async () => {
+    try {
+      await repositoryStore.clearQueryHistory();
+      message.success("Query history cleared.");
+    } catch {
+      message.error("Could not clear query history.");
+    }
+  };
 
   return (
     <Popconfirm
@@ -121,7 +132,7 @@ const DeleteHistory = observer(() => {
       description={`Are you sure?`}
       okText="Yes"
       cancelText="No"
-      onConfirm={() => repositoryStore.clearQueryHistory()}
+      onConfirm={() => void deleteHistory()}
       style={{ justifyContent: "center" }}
       placement="top"
       disabled={repositoryStore.queryHistory().length === 0}

@@ -33,14 +33,15 @@ const SelectRepository = observer(() => {
   const repositoryStore = rootStore.repositoryStore;
 
   useEffect(() => {
-    repositoryStore.updateRepositories();
+    void repositoryStore.updateRepositories();
   }, [repositoryStore]);
 
   return (
     <Dropdown
       menu={{
-        items: repositoryStore.repositories().map(
-          ({ name }: RepositoryInfo, index: number) => {
+        items: repositoryStore
+          .repositories()
+          .map(({ name }: RepositoryInfo, index: number) => {
             return {
               key: `${index}`,
               label: (
@@ -59,8 +60,7 @@ const SelectRepository = observer(() => {
                 </Popover>
               ),
             };
-          }
-        ),
+          }),
       }}
     >
       <Button style={{ width: "95%", margin: 5 }} name="Choose repository">

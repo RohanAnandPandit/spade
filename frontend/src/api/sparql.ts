@@ -1,21 +1,13 @@
-import axios from "axios";
 import { QueryResults, RepositoryId, RepositoryInfo } from "../types";
-
-const BACKEND_API = import.meta.env.VITE_API_URL ?? "http://localhost:5000";
+import { api } from "./client";
 
 export async function allRepositories(
   username: string
 ): Promise<RepositoryInfo[]> {
-  try {
-    const endpoint = `${BACKEND_API}/repositories?username=${encodeURIComponent(
-      username
-    )}`;
-    const response = await axios.get(endpoint);
-    const repositories = response.data;
-
-    return repositories;
-  } catch (error) {}
-  return [];
+  const response = await api.get<RepositoryInfo[]>("/repositories", {
+    params: { username },
+  });
+  return response.data;
 }
 
 export async function addRemoteRepository(
@@ -24,18 +16,13 @@ export async function addRemoteRepository(
   description: string,
   username: string
 ): Promise<string> {
-  try {
-    const endpoint = `${BACKEND_API}/repositories/remote`;
-    const response = await axios.post(endpoint, {
-      name,
-      endpoint: sparqlEndpoint,
-      description,
-      username,
-    });
-    const repository_id = response.data;
-    return repository_id;
-  } catch (error) {}
-  return "";
+  const response = await api.post<string>("/repositories/remote", {
+    name,
+    endpoint: sparqlEndpoint,
+    description,
+    username,
+  });
+  return response.data;
 }
 
 export async function addLocalRepository(
@@ -45,34 +32,24 @@ export async function addLocalRepository(
   description: string,
   username: string
 ): Promise<string> {
-  try {
-    const endpoint = `${BACKEND_API}/repositories/local`;
-    const response = await axios.post(endpoint, {
-      name,
-      dataUrl,
-      schemaUrl,
-      description,
-      username,
-    });
-    const repository_id = response.data;
-    return repository_id;
-  } catch (error) {}
-  return "";
+  const response = await api.post<string>("/repositories/local", {
+    name,
+    dataUrl,
+    schemaUrl,
+    description,
+    username,
+  });
+  return response.data;
 }
 
 export async function deleteRepository(
   repository: string,
   username: string
 ): Promise<string> {
-  try {
-    const endpoint = `${BACKEND_API}/repositories`;
-    const response = await axios.delete(endpoint, {
-      params: { repository, username },
-    });
-    const repository_id = response.data;
-    return repository_id;
-  } catch (error) {}
-  return "";
+  const response = await api.delete<string>("/repositories", {
+    params: { repository, username },
+  });
+  return response.data;
 }
 
 export async function runSparqlQuery(
@@ -80,17 +57,8 @@ export async function runSparqlQuery(
   query: string,
   username: string
 ): Promise<QueryResults> {
-  try {
-    const endpoint = `${BACKEND_API}/sparql`;
-    const response = await axios.get(
-      `${endpoint}?repository=${repository}&query=${encodeURIComponent(
-        query
-      )}&username=${encodeURIComponent(username)}`
-    );
-    const results = response.data;
-    return results;
-  } catch (error) {
-    console.log(error);
-  }
-  return { header: [], data: [] };
+  const response = await api.get<QueryResults>("/sparql", {
+    params: { repository, query, username },
+  });
+  return response.data;
 }

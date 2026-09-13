@@ -1,9 +1,10 @@
-import { makeAutoObservable } from "mobx";
+import { makeAutoObservable, runInAction } from "mobx";
 import { makePersistable } from "mobx-persist-store";
 import { QueryRecord, RepositoryInfo } from "../types";
 import RootStore from "./root-store";
 import { clearQueryHistory, getQueryHistory } from "../api/queries";
 import { allRepositories, deleteRepository } from "../api/sparql";
+import { message } from "antd";
 
 type RepositoryStoreState = {
   currentRepository: string | null;
@@ -35,68 +36,95 @@ class RepositoryStore {
     });
   }
 
-  currentRepository = () => (
-    this.state.currentRepository
-  )
+  currentRepository = () => this.state.currentRepository;
 
   queryHistory = () => {
     return this.state.queryHistory;
-  }
+  };
 
   repositories = () => {
     return this.state.repositories;
-  }
+  };
 
   getCurrentRepository = () => {
     return this.state.currentRepository;
-  }
+  };
 
   getQueryHistory = () => {
     return this.state.queryHistory;
-  }
+  };
 
   setCurrentRepository = (repositoryId: string) => {
     this.state.currentRepository = repositoryId;
-    this.updateQueryHistory();
-  }
+    this.state.queryHistory = [];
+    void this.updateQueryHistory();
+  };
 
-  updateQueryHistory = () => {
+  updateQueryHistory = async () => {
     if (this.state.currentRepository) {
       const username = this.rootStore.authStore.username!;
-      getQueryHistory(this.state.currentRepository, username).then(
-        (queries: QueryRecord[]) => {
+      try {
+        const queries = await getQueryHistory(
+          this.state.currentRepository,
+          username
+        );
+        runInAction(() => {
           this.state.queryHistory = queries;
-        }
-      );
+        });
+      } catch {
+        runInAction(() => {
+          this.state.queryHistory = [];
+        });
+        message.error("Could not load query history.");
+      }
     }
-  }
+  };
 
-  clearQueryHistory = () => {
+  clearQueryHistory = async () => {
     if (this.state.currentRepository) {
       const username = this.rootStore.authStore.username!;
-      clearQueryHistory(this.state.currentRepository, username).then(() => {
-        this.updateQueryHistory();
-      });
+      await clearQueryHistory(this.state.currentRepository, username);
+      await this.updateQueryHistory();
     }
-  }
+  };
 
-  updateRepositories = () => {
+  updateRepositories = async () => {
     const username = this.rootStore.authStore.username;
     if (username) {
-      allRepositories(username!).then((repositories: RepositoryInfo[]) => {
-        this.state.repositories = repositories;
-      });
+      try {
+        const repositories = await allRepositories(username);
+        runInAction(() => {
+          this.state.repositories = repositories;
+        });
+      } catch {
+        runInAction(() => {
+          this.state.repositories = [];
+        });
+        message.error("Could not load repositories.");
+      }
     }
-  }
+  };
 
-  deleteRepository = (repository: string) => {
+  deleteRepository = async (repository: string) => {
     const username = this.rootStore.authStore.username;
     if (username) {
-      deleteRepository(repository, username!).then(() => {
-        this.updateRepositories();
+      await deleteRepository(repository, username);
+      runInAction(() => {
+        if (this.state.currentRepository === repository) {
+          this.state.currentRepository = null;
+          this.state.queryHistory = [];
+        }
+        Object.entries(this.rootStore.queriesStore.openQueries()).forEach(
+          ([queryId, query]) => {
+            if (query.repository === repository) {
+              this.rootStore.queriesStore.setQueryRepository(queryId, null);
+            }
+          }
+        );
       });
+      await this.updateRepositories();
     }
-  }
+  };
 }
 
 export default RepositoryStore;

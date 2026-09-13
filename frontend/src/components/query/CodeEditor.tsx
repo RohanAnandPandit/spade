@@ -30,10 +30,9 @@ const CodeEditor = ({
   completions,
   darkTheme,
   width,
-  height,
 }: CodeEditorProps) => {
   const myCompletions = (context: CompletionContext) => {
-    let word = context.matchBefore(/(\w|[<>?])*/)!;
+    const word = context.matchBefore(/(\w|[<>?])*/)!;
     if (word.from === word.to && !context.explicit) return null;
     return {
       from: word.from,

@@ -27,7 +27,7 @@ type RadarChartProps = {
 };
 
 const SpiderChart = observer(
-  ({ results, width, height, variables }: RadarChartProps) => {
+  ({ results, height, variables }: RadarChartProps) => {
     const rootStore = useStore();
     const settings = rootStore.settingsStore;
 
@@ -41,7 +41,7 @@ const SpiderChart = observer(
       const data = Object.keys(spokeGroups).map((spoke: string) => {
         const values: any = { [header[spokeKeyIdx]]: spoke };
 
-        for (let row of spokeGroups[spoke]) {
+        for (const row of spokeGroups[spoke]) {
           values[row[ringKeyIdx]] = parseFloat(row[valueIdx]);
         }
         return values;

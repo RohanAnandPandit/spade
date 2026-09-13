@@ -1,15 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
-import { Spin, Tabs, TabsProps } from "antd";
-import {
-  ChartType,
-  QueryAnalysis,
-  QueryResults,
-  RepositoryId,
-} from "../../types";
-import BarChart from "../charts/BarChart";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { App as AntdApp, Spin, Tabs, TabsProps } from "antd";
+import { ChartType, QueryAnalysis, QueryResults } from "../../types";
 import { observer } from "mobx-react-lite";
 import { useStore } from "../../stores/store";
-import { AiOutlineAreaChart, AiOutlineBarChart, AiOutlineRadarChart } from "react-icons/ai";
+import {
+  AiOutlineAreaChart,
+  AiOutlineBarChart,
+  AiOutlineRadarChart,
+} from "react-icons/ai";
 import { HiOutlineGlobe } from "react-icons/hi";
 import {
   BsBodyText,
@@ -28,49 +26,68 @@ import { VscGraphScatter } from "react-icons/vsc";
 import { ImSphere, ImTree } from "react-icons/im";
 import { TiChartPieOutline } from "react-icons/ti";
 
-import PieChart from "../charts/PieChart";
-import LineChart from "../charts/LineChart";
-import TreeMap from "../charts/TreeMap";
-import SpiderChart from "../charts/SpiderChart";
-import SankeyChart from "../charts/SankeyChart";
-import ScatterChart from "../charts/ScatterChart";
 import "./Charts.css";
 import Fullscreen from "./Fullscreen";
-import ChordDiagram from "../charts/ChordDiagram";
-import { getQueryAnalysis } from "../../api/queries";
-import CalendarChart from "../charts/CalendarChart";
-import WordCloud from "../charts/WordCloud";
-import { CirclePacking } from "../charts/CirclePacking";
-import HierarchyTree from "../charts/HierarchyTree";
-import SunburstChart from "../charts/SunburstChart";
-import HeatMap from "../charts/HeatMap";
-import ChoroplethMap from "../charts/ChoroplethMap";
 import { getAllRelations, getRecommendedCharts } from "../../utils/charts";
 import { Suggested } from "../analysis/Suggested";
-import NetworkChart from "../charts/NetworkChart";
 import { IoMdGitNetwork } from "react-icons/io";
 import { MdOutlineStackedBarChart } from "react-icons/md";
-import StackedBarChart from "../charts/StackedBarChart";
-import GroupedBarChart from "../charts/GroupedBarChart";
 import { RiBarChartGroupedFill } from "react-icons/ri";
-import BubbleChart from "../charts/BubbleChart";
-import AreaChart from "../charts/AreaChart";
+
+const AreaChart = lazy(() => import("../charts/AreaChart"));
+const BarChart = lazy(() => import("../charts/BarChart"));
+const BubbleChart = lazy(() => import("../charts/BubbleChart"));
+const CalendarChart = lazy(() => import("../charts/CalendarChart"));
+const ChordDiagram = lazy(() => import("../charts/ChordDiagram"));
+const ChoroplethMap = lazy(() => import("../charts/ChoroplethMap"));
+const CirclePacking = lazy(() =>
+  import("../charts/CirclePacking").then((module) => ({
+    default: module.CirclePacking,
+  }))
+);
+const GroupedBarChart = lazy(() => import("../charts/GroupedBarChart"));
+const HeatMap = lazy(() => import("../charts/HeatMap"));
+const HierarchyTree = lazy(() => import("../charts/HierarchyTree"));
+const LineChart = lazy(() => import("../charts/LineChart"));
+const NetworkChart = lazy(() => import("../charts/NetworkChart"));
+const PieChart = lazy(() => import("../charts/PieChart"));
+const SankeyChart = lazy(() => import("../charts/SankeyChart"));
+const ScatterChart = lazy(() => import("../charts/ScatterChart"));
+const SpiderChart = lazy(() => import("../charts/SpiderChart"));
+const StackedBarChart = lazy(() => import("../charts/StackedBarChart"));
+const SunburstChart = lazy(() => import("../charts/SunburstChart"));
+const TreeMap = lazy(() => import("../charts/TreeMap"));
+const WordCloud = lazy(() => import("../charts/WordCloud"));
 
 type ChartsProps = {
-  query: string;
   results: QueryResults;
-  repository: RepositoryId | null;
   showAllCharts: boolean;
+  queryAnalysis: QueryAnalysis | null;
+};
+
+const EMPTY_ANALYSIS: QueryAnalysis = {
+  pattern: null,
+  visualisations: [],
+  variables: {
+    key: [],
+    scalar: [],
+    geographical: [],
+    temporal: [],
+    lexical: [],
+    date: [],
+    numeric: [],
+    object: [],
+  },
 };
 
 const Charts = observer(
-  ({ query, results, repository, showAllCharts }: ChartsProps) => {
+  ({ results, showAllCharts, queryAnalysis }: ChartsProps) => {
     const rootStore = useStore();
     const settings = rootStore.settingsStore;
-    const username = rootStore.authStore.username!;
     const [loading, setLoading] = useState<boolean>(false);
+    const { message } = AntdApp.useApp();
     const chartWidth = Math.floor(
-      (window.screen.width -
+      (window.innerWidth -
         (settings.fullScreen() ? 0 : settings.sidebarWidth())) *
         (settings.fullScreen() ? 0.95 : 0.88)
     );
@@ -79,25 +96,9 @@ const Charts = observer(
       ? settings.screenHeight()
       : settings.screenHeight() - 325;
 
-    const [queryAnalysis, setQueryAnalysis] = useState<QueryAnalysis>({
-      pattern: null,
-      visualisations: [],
-      variables: {
-        key: [],
-        scalar: [],
-        geographical: [],
-        temporal: [],
-        lexical: [],
-        date: [],
-        numeric: [],
-        object: [],
-      },
-    });
+    const analysis = queryAnalysis ?? EMPTY_ANALYSIS;
 
     const chartTabs: TabsProps["items"] = useMemo(() => {
-      if (!queryAnalysis) {
-        return [];
-      }
       return [
         {
           key: ChartType.BAR,
@@ -111,7 +112,7 @@ const Charts = observer(
               results={results}
               width={chartWidth}
               height={chartHeight}
-              variables={queryAnalysis!.variables}
+              variables={analysis.variables}
             />
           ),
         },
@@ -127,7 +128,7 @@ const Charts = observer(
               results={results}
               width={chartWidth}
               height={chartHeight}
-              variables={queryAnalysis.variables!}
+              variables={analysis.variables}
             />
           ),
         },
@@ -143,7 +144,7 @@ const Charts = observer(
               results={results}
               width={chartWidth}
               height={chartHeight}
-              variables={queryAnalysis!.variables}
+              variables={analysis.variables}
             />
           ),
         },
@@ -159,7 +160,7 @@ const Charts = observer(
               results={results}
               width={chartWidth}
               height={chartHeight}
-              variables={queryAnalysis!.variables}
+              variables={analysis.variables}
             />
           ),
         },
@@ -175,7 +176,7 @@ const Charts = observer(
               results={results}
               width={chartWidth}
               height={chartHeight}
-              variables={queryAnalysis!.variables}
+              variables={analysis.variables}
             />
           ),
         },
@@ -191,7 +192,7 @@ const Charts = observer(
               results={results}
               width={chartWidth}
               height={chartHeight}
-              variables={queryAnalysis!.variables}
+              variables={analysis.variables}
             />
           ),
         },
@@ -207,7 +208,7 @@ const Charts = observer(
               results={results}
               width={chartWidth}
               height={chartHeight}
-              variables={queryAnalysis!.variables}
+              variables={analysis.variables}
             />
           ),
         },
@@ -223,7 +224,7 @@ const Charts = observer(
               results={results}
               width={chartWidth}
               height={chartHeight}
-              variables={queryAnalysis!.variables}
+              variables={analysis.variables}
             />
           ),
         },
@@ -239,7 +240,7 @@ const Charts = observer(
               results={results}
               width={chartWidth}
               height={chartHeight}
-              variables={queryAnalysis.variables}
+              variables={analysis.variables}
             />
           ),
         },
@@ -255,7 +256,7 @@ const Charts = observer(
               results={results}
               width={chartWidth}
               height={chartHeight}
-              variables={queryAnalysis.variables}
+              variables={analysis.variables}
             />
           ),
         },
@@ -271,7 +272,7 @@ const Charts = observer(
               results={results}
               width={chartWidth}
               height={chartHeight}
-              variables={queryAnalysis.variables}
+              variables={analysis.variables}
             />
           ),
         },
@@ -287,7 +288,7 @@ const Charts = observer(
               results={results}
               width={chartWidth}
               height={chartHeight}
-              variables={queryAnalysis!.variables}
+              variables={analysis.variables}
             />
           ),
         },
@@ -303,7 +304,7 @@ const Charts = observer(
               results={results}
               width={chartWidth}
               height={chartHeight}
-              variables={queryAnalysis!.variables}
+              variables={analysis.variables}
             />
           ),
         },
@@ -319,7 +320,7 @@ const Charts = observer(
               results={results}
               width={chartWidth}
               height={chartHeight}
-              variables={queryAnalysis!.variables}
+              variables={analysis.variables}
             />
           ),
         },
@@ -335,7 +336,7 @@ const Charts = observer(
               results={results}
               width={chartWidth}
               height={chartHeight}
-              variables={queryAnalysis.variables}
+              variables={analysis.variables}
             />
           ),
         },
@@ -352,7 +353,7 @@ const Charts = observer(
                 results={results}
                 width={chartWidth}
                 height={chartHeight}
-                variables={queryAnalysis.variables}
+                variables={analysis.variables}
               />
             </>
           ),
@@ -369,7 +370,7 @@ const Charts = observer(
               results={results}
               width={chartWidth}
               height={chartHeight}
-              variables={queryAnalysis!.variables}
+              variables={analysis.variables}
             />
           ),
         },
@@ -385,7 +386,7 @@ const Charts = observer(
               results={results}
               width={chartWidth}
               height={chartHeight}
-              variables={queryAnalysis!.variables}
+              variables={analysis.variables}
             />
           ),
         },
@@ -401,7 +402,7 @@ const Charts = observer(
               results={results}
               width={chartWidth}
               height={chartHeight}
-              variables={queryAnalysis!.variables}
+              variables={analysis.variables}
             />
           ),
         },
@@ -417,83 +418,87 @@ const Charts = observer(
               results={results}
               width={chartWidth}
               height={chartHeight}
-              variables={queryAnalysis.variables}
+              variables={analysis.variables}
             />
           ),
         },
       ];
-    }, [chartHeight, chartWidth, queryAnalysis, results]);
+    }, [analysis.variables, chartHeight, chartWidth, results]);
 
     const [recommendedCharts, setRecommendedCharts] = useState<ChartType[]>([]);
 
     const possibleCharts = useMemo(() => {
-      setLoading(false);
       return showAllCharts
         ? chartTabs
-        : queryAnalysis.pattern
-        ? chartTabs.filter(({ key: chartKey }) => {
-            return (
-              queryAnalysis.visualisations.includes(chartKey as ChartType) &&
-              recommendedCharts.includes(chartKey as ChartType)
-            );
-          })
-        : chartTabs.filter(({ key }) => {
-            return recommendedCharts.includes(key as ChartType);
-          });
+        : analysis.pattern
+          ? chartTabs.filter(({ key: chartKey }) => {
+              return (
+                analysis.visualisations.includes(chartKey as ChartType) &&
+                recommendedCharts.includes(chartKey as ChartType)
+              );
+            })
+          : chartTabs.filter(({ key }) => {
+              return recommendedCharts.includes(key as ChartType);
+            });
     }, [
       chartTabs,
-      queryAnalysis.pattern,
-      queryAnalysis.visualisations,
+      analysis.pattern,
+      analysis.visualisations,
       recommendedCharts,
       showAllCharts,
     ]);
 
     const { allRelations, allIncomingLinks, allOutgoingLinks } = useMemo(() => {
-      setLoading(true);
-      const { allRelations, allIncomingLinks, allOutgoingLinks } =
-        getAllRelations(results, queryAnalysis.variables.key);
-
-      getRecommendedCharts(queryAnalysis.variables, allRelations, results).then(
-        (charts) => setRecommendedCharts(charts)
-      );
-      return { allRelations, allIncomingLinks, allOutgoingLinks };
-    }, [queryAnalysis.variables, results]);
+      return getAllRelations(results, analysis.variables.key);
+    }, [analysis.variables.key, results]);
 
     useEffect(() => {
-      if (repository) {
-        getQueryAnalysis(query, repository!, username).then((res) => {
-          setQueryAnalysis(res);
+      let active = true;
+      setLoading(true);
+      getRecommendedCharts(analysis.variables, allRelations, results)
+        .then((charts) => {
+          if (active) setRecommendedCharts(charts);
+        })
+        .catch(() => {
+          if (active) message.error("Could not determine recommended charts.");
+        })
+        .finally(() => {
+          if (active) setLoading(false);
         });
-      }
-    }, [query, repository, username]);
+      return () => {
+        active = false;
+      };
+    }, [allRelations, analysis.variables, message, results]);
 
     return (
       <Fullscreen>
         <Spin spinning={loading}>
-          <Tabs
-            defaultActiveKey="1"
-            items={[
-              {
-                key: "Suggested",
-                label: (
-                  <>
-                    <BsLightbulb size={15} /> Suggested
-                  </>
-                ),
-                children: (
-                  <Suggested
-                    results={results}
-                    variables={queryAnalysis.variables}
-                    allRelations={allRelations}
-                    allIncomingLinks={allIncomingLinks}
-                    allOutgoingLinks={allOutgoingLinks}
-                  />
-                ),
-              },
-              ...possibleCharts,
-            ]}
-            style={{ padding: 10 }}
-          />
+          <Suspense fallback={<Spin />}>
+            <Tabs
+              defaultActiveKey="1"
+              items={[
+                {
+                  key: "Suggested",
+                  label: (
+                    <>
+                      <BsLightbulb size={15} /> Suggested
+                    </>
+                  ),
+                  children: (
+                    <Suggested
+                      results={results}
+                      variables={analysis.variables}
+                      allRelations={allRelations}
+                      allIncomingLinks={allIncomingLinks}
+                      allOutgoingLinks={allOutgoingLinks}
+                    />
+                  ),
+                },
+                ...possibleCharts,
+              ]}
+              style={{ padding: 10 }}
+            />
+          </Suspense>
         </Spin>
       </Fullscreen>
     );

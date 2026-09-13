@@ -17,8 +17,8 @@ import { useStore } from "../../stores/store";
 import "./network.css";
 import { getPropertyValues } from "../../api/dataset";
 import randomColor from "randomcolor";
-import getUuidByString from "uuid-by-string";
-import { Button, Divider, Space, Typography } from "antd";
+import { v5 as uuidv5 } from "uuid";
+import { Button, Divider, message, Space, Typography } from "antd";
 
 type GraphVisProps = {
   links: Triplet[];
@@ -61,9 +61,9 @@ const GraphVis = observer(
 
     const addGraph = (graph: GraphInfo) => {
       setCurrentIdx((currentIdx: number) => {
-        setHistory((history) => [...history.slice(0, currentIdx + 1), graph])
+        setHistory((history) => [...history.slice(0, currentIdx + 1), graph]);
         return currentIdx + 1;
-      })
+      });
     };
 
     const edgeOptions = useMemo(() => {
@@ -92,18 +92,18 @@ const GraphVis = observer(
       });
     }, [links, edgeOptions]);
 
-    const idToNode: { [key: number]: Node } = useMemo(() => {
-      const dict: { [key: number]: Node } = {};
-      for (let node of graph.nodes) {
+    const idToNode: Record<string | number, Node> = useMemo(() => {
+      const dict: Record<string | number, Node> = {};
+      for (const node of graph.nodes) {
         dict[node.id as number] = node;
       }
 
       return dict;
     }, [graph]);
 
-    const idToEdge: { [key: string]: Edge } = useMemo(() => {
-      const dict: { [key: number]: Edge } = {};
-      for (let edge of graph.edges) {
+    const idToEdge: Record<string | number, Edge> = useMemo(() => {
+      const dict: Record<string | number, Edge> = {};
+      for (const edge of graph.edges) {
         dict[edge.id as number] = edge;
       }
 
@@ -160,50 +160,56 @@ const GraphVis = observer(
       doubleClick: function (event: any) {
         const { nodes, edges } = event;
         // Double clicking on a node adds all its data properties
-        for (let nodeId of nodes) {
+        for (const nodeId of nodes) {
           const node = idToNode[nodeId];
 
           const uri = node.title!;
           if (!isURL(uri)) continue; // Skip if node contains a literal value
+          if (!repository) {
+            message.warning("Select a repository to inspect node properties.");
+            return;
+          }
 
           getPropertyValues(
-            repository!,
+            repository,
             uri,
             PropertyType.DatatypeProperty,
             username
-          ).then((res: [URI, string][]) => {
-            const newLinks: Triplet[] = res.map(([prop, value]) => [
-              uri,
-              prop,
-              value,
-            ]);
-            addGraph({
-              key: `Data properties of ${node.title!}`,
-              title: `Data properties of ${node.label!}`,
-              data: getNodesAndEdges({
-                links: newLinks,
-                initialGraph: { nodes: [node], edges: [] },
-                nodeOptions: {
-                  color: randomColor({ luminosity: "light" }),
-                  shape: "ellipse",
-                  font: { size: 25 },
-                },
-                edgeOptions,
-              }),
-            });
-          });
+          )
+            .then((res: [URI, string][]) => {
+              const newLinks: Triplet[] = res.map(([prop, value]) => [
+                uri,
+                prop,
+                value,
+              ]);
+              addGraph({
+                key: `Data properties of ${node.title!}`,
+                title: `Data properties of ${node.label!}`,
+                data: getNodesAndEdges({
+                  links: newLinks,
+                  initialGraph: { nodes: [node], edges: [] },
+                  nodeOptions: {
+                    color: randomColor({ luminosity: "light" }),
+                    shape: "ellipse",
+                    font: { size: 25 },
+                  },
+                  edgeOptions,
+                }),
+              });
+            })
+            .catch(() => message.error("Could not load node properties."));
           return;
         }
         // Double clicking on an edge filters down to all edges with the same title
-        for (let edgeId of edges) {
+        for (const edgeId of edges) {
           const edge = idToEdge[edgeId];
           const fromNode = idToNode[edge.from!];
           const newEdges = graph.edges.filter(
             (e: Edge) => e.title === edge.title && e.from === edge.from!
           );
-          const newNodes: {[key: number]: Node} = {};
+          const newNodes: Record<string | number, Node> = {};
 
-          for (let e of newEdges) {
+          for (const e of newEdges) {
             if (e.from) {
               newNodes[e.from] = idToNode[e.from];
             }
@@ -230,41 +236,47 @@ const GraphVis = observer(
       hold: function (event: any) {
         // Click and hold on a node shows all object properties of current node
         const { nodes, edges } = event;
-        for (let nodeId of nodes) {
+        for (const nodeId of nodes) {
           const node = idToNode[nodeId];
           const uri = node.title!;
           if (!isURL(uri)) continue; // Skip if node contains a literal value
+          if (!repository) {
+            message.warning("Select a repository to inspect node properties.");
+            return;
+          }
 
           getPropertyValues(
-            repository!,
+            repository,
             uri,
             PropertyType.ObjectProperty,
             username
-          ).then((res: [URI, string][]) => {
-            const newLinks: Triplet[] = res.map(([prop, value]) => [
-              uri,
-              prop,
-              value,
-            ]);
-            // The initialGraph is not given so all other nodes, except for the current one, get removed
-            addGraph({
-              key: `Object properties of ${node.title}`,
-              title: `Object properties of ${node.label}`,
-              data: getNodesAndEdges({
-                links: newLinks,
-                nodeOptions: {
-                  shape: "box",
-                  color: randomColor({ luminosity: "light" }),
-                  font: { size: 30 },
-                },
-                edgeOptions,
-              }),
-            });
-          });
+          )
+            .then((res: [URI, string][]) => {
+              const newLinks: Triplet[] = res.map(([prop, value]) => [
+                uri,
+                prop,
+                value,
+              ]);
+              // The initialGraph is not given so all other nodes, except for the current one, get removed
+              addGraph({
+                key: `Object properties of ${node.title}`,
+                title: `Object properties of ${node.label}`,
+                data: getNodesAndEdges({
+                  links: newLinks,
+                  nodeOptions: {
+                    shape: "box",
+                    color: randomColor({ luminosity: "light" }),
+                    font: { size: 30 },
+                  },
+                  edgeOptions,
+                }),
+              });
+            })
+            .catch(() => message.error("Could not load node properties."));
           return;
         }
 
-        for (let edgeId of edges) {
+        for (const edgeId of edges) {
           const edge = idToEdge[edgeId];
           const fromNode = idToNode[edge.from!];
           const toNode = idToNode[edge.to!];
@@ -308,7 +320,7 @@ const GraphVis = observer(
           graph={graph}
           options={graphOptions}
           events={interactive ? events : {}}
-          getNetwork={(network: any) => {
+          getNetwork={() => {
             //  if you want access to vis.js network api you can set the state in a parent component using this property
           }}
         />
@@ -330,12 +342,12 @@ function getNodesAndEdges({
 }) {
   const literalNodes: Node[] = [];
   const objNodes: { [key: string]: Node } = {}; // Maps object URI to node
-  for (let node of initialGraph.nodes) {
+  for (const node of initialGraph.nodes) {
     objNodes[node.title!] = node;
   }
   // Ignore the id of the edges set by the graph as this causes issues for the new edges
-  const edgeIds: { [key: string]: Edge } = {};
-  for (let edge of initialGraph.edges) {
+  const edgeIds: Record<string | number, Edge> = {};
+  for (const edge of initialGraph.edges) {
     edgeIds[edge.id!] = edge;
   }
   const edgeCounts: { [key: string]: number } = {};
@@ -345,7 +357,7 @@ function getNodesAndEdges({
       ? 1
       : Math.max(...Object.values(objNodes).map(({ id }) => id as number)) + 1;
 
-  for (let [sub, pred, obj] of links) {
+  for (const [sub, pred, obj] of links) {
     let nodeA: Node;
     let nodeB: Node;
     if (!isNumber(sub) && objNodes[sub]) {
@@ -382,10 +394,10 @@ function getNodesAndEdges({
 
     const from = nodeA.id as number;
     const to = nodeB.id as number;
-    const edgeId = getUuidByString(`${from}-${pred}-${to}`);
+    const edgeId = uuidv5(`${from}-${pred}-${to}`, uuidv5.URL);
     const pairId = `${Math.min(from, to)}-${Math.max(from, to)}`;
     const edge = {
-      id: getUuidByString(`${from}-${pred}-${to}`),
+      id: edgeId,
       from,
       to,
       label: removePrefix(pred),

@@ -4,7 +4,7 @@ import { QueryResults, Row, VariableCategories } from "../../types";
 import randomColor from "randomcolor";
 import { Text } from "@visx/text";
 import { scaleLinear } from "@visx/scale";
-import Wordcloud from "@visx/wordcloud/lib/Wordcloud";
+import { Wordcloud } from "@visx/wordcloud";
 
 type WordCloudProps = {
   results: QueryResults;
@@ -31,7 +31,10 @@ export const WordCloud = observer(
     const textIndex = results.header.indexOf(variables.key[0]);
     const valueIndex = results.header.indexOf(variables.scalar[0]);
 
-    const { words, colors }: any = useMemo(() => {
+    const { words, colors } = useMemo<{
+      words: WordData[];
+      colors: Record<string, string>;
+    }>(() => {
       const colors: { [key: string]: string } = {};
       return {
         words: results.data.map((row: Row) => {
@@ -76,7 +79,7 @@ export const WordCloud = observer(
           random={fixedValueGenerator}
         >
           {(cloudWords) =>
-            cloudWords.map((w, i: number) => (
+            cloudWords.map((w) => (
               <Text
                 key={w.text}
                 fill={colors[w.text as string]}

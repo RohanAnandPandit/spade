@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Button,
   Space,
@@ -14,7 +14,6 @@ import { BsBarChartSteps, BsTable } from "react-icons/bs";
 import { useStore } from "../../stores/store";
 import {
   ChartType,
-  QueryAnalysis,
   QueryResults,
   RepositoryId,
   RepositoryInfo,
@@ -29,7 +28,8 @@ import { MdOutlineEditNote } from "react-icons/md";
 import { runSparqlQuery } from "../../api/sparql";
 import { FiPlay } from "react-icons/fi";
 import { RiGitRepositoryLine } from "react-icons/ri";
-import { getQueryAnalysis } from "../../api/queries";
+import { apiErrorMessage } from "../../api/client";
+import { useQueryAnalysis } from "../../hooks/useQueryAnalysis";
 
 type QueryProps = {
   qid: string;
@@ -61,18 +61,18 @@ const Query = observer(({ qid }: QueryProps) => {
   };
 
   const [graphKey, setGraphKey] = useState<number>(0);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [queryLoading, setQueryLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("editor");
 
   const width = Math.floor(
-    window.screen.width -
+    window.innerWidth -
       (settings.fullScreen() ? 0 : settings.sidebarWidth() + 200)
   );
   const height = Math.floor(
-    window.screen.height - (settings.fullScreen() ? 250 : 50)
+    window.innerHeight - (settings.fullScreen() ? 250 : 50)
   );
 
-  const { notification } = AntdApp.useApp();
+  const { message, notification } = AntdApp.useApp();
 
   const showNotification = (time: number) => {
     notification.info({
@@ -83,19 +83,33 @@ const Query = observer(({ qid }: QueryProps) => {
     });
   };
 
-  const [queryAnalysis, setQueryAnalysis] = useState<QueryAnalysis | null>(
-    null
-  );
+  const {
+    analysis: queryAnalysis,
+    loading: analysisLoading,
+    error: analysisError,
+  } = useQueryAnalysis(query, repository, username);
 
   useEffect(() => {
-    setLoading(true);
-    if (repository) {
-      getQueryAnalysis(query, repository, username).then((res) => {
-        setQueryAnalysis(res);
-        setLoading(false);
-      });
+    if (analysisError) message.error(analysisError);
+  }, [analysisError, message]);
+
+  const executeQuery = async () => {
+    if (!repository) return;
+    setQueryLoading(true);
+    const start = performance.now();
+    try {
+      const nextResults = await runSparqlQuery(repository, query, username);
+      setResults(nextResults);
+      setGraphKey((key) => key + 1);
+      await repositoryStore.updateQueryHistory();
+      setActiveTab("results");
+      showNotification(Math.round(performance.now() - start));
+    } catch (error) {
+      message.error(apiErrorMessage(error, "Could not run the query."));
+    } finally {
+      setQueryLoading(false);
     }
-  }, [query, repository, username]);
+  };
 
   const items: TabsProps["items"] = [
     {
@@ -115,6 +129,7 @@ const Query = observer(({ qid }: QueryProps) => {
           height={height}
           repository={repository}
           queryAnalysis={queryAnalysis}
+          analysisLoading={analysisLoading}
         />
       ),
     },
@@ -126,7 +141,7 @@ const Query = observer(({ qid }: QueryProps) => {
           Results
         </Space.Compact>
       ),
-      children: <Results results={results} loading={loading} />,
+      children: <Results results={results} loading={queryLoading} />,
     },
     {
       key: "graph",
@@ -162,10 +177,9 @@ const Query = observer(({ qid }: QueryProps) => {
         queryAnalysis?.visualisations.includes(ChartType.GRAPH),
       children: (
         <Charts
-          query={query}
           results={results}
-          repository={repository}
           showAllCharts={settings.state.showAllCharts}
+          queryAnalysis={queryAnalysis}
         />
       ),
     },
@@ -183,23 +197,8 @@ const Query = observer(({ qid }: QueryProps) => {
             icon={<FiPlay size={20} />}
             title={repository ? "Run query" : "Select repository to run query"}
             disabled={repository === null}
-            loading={loading}
-            onClick={() => {
-              // setLoading(true);
-              const start = new Date().getTime();
-              runSparqlQuery(
-                repository!,
-                queriesStore.currentQuery().sparql,
-                authStore.username!
-              ).then((results) => {
-                showNotification(new Date().getTime() - start);
-                setResults(results);
-                setGraphKey((key) => key + 1);
-                repositoryStore.updateQueryHistory();
-                setLoading(false);
-                setActiveTab("results");
-              });
-            }}
+            loading={queryLoading}
+            onClick={() => void executeQuery()}
           >
             Run
           </Button>

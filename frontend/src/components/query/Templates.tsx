@@ -47,7 +47,7 @@ const Templates = ({ templates }: TemplatesProps) => {
         footer={null}
         onCancel={() => setIsModalOpen(false)}
         maskClosable
-        width={Math.floor(window.screen.width * 0.75)}
+        width={Math.floor(window.innerWidth * 0.75)}
       >
         <Tabs
           tabPosition="left"
@@ -68,7 +68,9 @@ type QueryTemplateProps = {
 const QueryTemplate = ({ query, onApply }: QueryTemplateProps) => {
   return (
     <Space direction="vertical">
-      <Typography.Text style={{ whiteSpace: "pre-wrap", fontFamily: 'consolas' }}>
+      <Typography.Text
+        style={{ whiteSpace: "pre-wrap", fontFamily: "consolas" }}
+      >
         {query}
       </Typography.Text>
       <Space>

@@ -22,9 +22,9 @@ const App = () => {
       <>
         <Login />
       </>
-    )
+    );
   }
-  
+
   return (
     <ConfigProvider
       theme={{

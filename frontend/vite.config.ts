@@ -6,6 +6,10 @@ export default defineConfig({
   server: {
     port: 5173,
   },
+  build: {
+    // SPADE keeps a broad chart catalogue; heavy chart modules are lazy-loaded.
+    chunkSizeWarningLimit: 2_000,
+  },
   test: {
     globals: true,
     environment: "jsdom",

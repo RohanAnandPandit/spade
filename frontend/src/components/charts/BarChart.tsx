@@ -20,7 +20,7 @@ type BarChartProps = {
   height: number;
 };
 
-const BarChart = ({ results, width, height, variables }: BarChartProps) => {
+const BarChart = ({ results, height, variables }: BarChartProps) => {
   const tabHeight = 60;
   const barColumn = useMemo(
     () => variables.key[0] || variables.lexical[0],
@@ -77,7 +77,13 @@ const BarChart = ({ results, width, height, variables }: BarChartProps) => {
 
 const INSTANCES_LIMIT = 100;
 
-const Constraints = ({ results, barColumn }) => {
+const Constraints = ({
+  results,
+  barColumn,
+}: {
+  results: QueryResults;
+  barColumn: string;
+}) => {
   const instances = useMemo(() => {
     const barIndex = results.header.indexOf(barColumn);
     return uniqueValues(results.data, barIndex);

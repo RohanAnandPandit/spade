@@ -21,98 +21,107 @@ type PieChartProps = {
   variables: VariableCategories;
 };
 
-const PieChart = observer(
-  ({ results, width, height, variables }: PieChartProps) => {
-    const rootStore = useStore();
-    const settings = rootStore.settingsStore;
-    const keyIndex = results.header.indexOf(
-      variables.key[0] || variables.lexical[0]
-    );
-    if (variables.numeric.length === 0) {
-      return <Alert banner message="There are no numeric columns available" />;
-    }
-    if (!keyIndex && variables.lexical.length === 0) {
-      return <Alert banner message="There is no key column available" />;
-    }
-
-    return (
-      <>
-        <Constraints results={results} keyColumn={results.header[keyIndex]} />
-        <Tabs
-          defaultActiveKey={variables.numeric[0]}
-          items={variables.numeric.map((column) => {
-            const columnIndex = results.header.indexOf(column);
-            const data = results.data.map((row) => {
-              return {
-                [results.header[keyIndex]]: removePrefix(row[keyIndex]),
-                [results.header[columnIndex]]: parseInt(row[columnIndex]),
-              };
-            });
-
-            const totalSum = results.data
-              .map((row) => parseInt(row[columnIndex]))
-              .reduce((a, b) => a + b, 0);
-
-            const CustomTooltip = ({ active, payload, label }: any) => {
-              if (active) {
-                return (
-                  <div
-                    className="custom-tooltip"
-                    style={{
-                      backgroundColor: settings.darkMode() ? "black" : "#ffff",
-                      padding: "5px",
-                      border: "columnIndexpx solid #cccc",
-                    }}
-                  >
-                    {`${payload[0].name} : ${(
-                      (100 * payload[0].value) /
-                      totalSum
-                    ).toFixed(2)}%`}
-                  </div>
-                );
-              }
-              return null;
-            };
-            return {
-              key: column,
-              label: column,
-              children: (
-                <ResponsiveContainer width="100%" height={height}>
-                  <PieRechart>
-                    <Pie
-                      data={data}
-                      nameKey={results.header[0]}
-                      dataKey={results.header[columnIndex]}
-                      cx="50%"
-                      cy="50%"
-                      // outerRadius={50}
-                      fill="#8884d8"
-                      label
-                    >
-                      {data.map((entry, index: number) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={randomColor({
-                            luminosity: settings.darkMode() ? "light" : "dark",
-                          })}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip content={CustomTooltip} />
-                    <Legend />
-                  </PieRechart>
-                </ResponsiveContainer>
-              ),
-            };
-          })}
-        />
-      </>
-    );
+const PieChart = observer(({ results, height, variables }: PieChartProps) => {
+  const rootStore = useStore();
+  const settings = rootStore.settingsStore;
+  const keyIndex = getKeyColumnIndex(results, variables);
+  if (variables.numeric.length === 0) {
+    return <Alert banner message="There are no numeric columns available" />;
   }
-);
+  if (keyIndex === -1) {
+    return <Alert banner message="There is no key column available" />;
+  }
+
+  return (
+    <>
+      <Constraints results={results} keyColumn={results.header[keyIndex]} />
+      <Tabs
+        defaultActiveKey={variables.numeric[0]}
+        items={variables.numeric.map((column) => {
+          const columnIndex = results.header.indexOf(column);
+          const data = results.data.map((row) => {
+            return {
+              [results.header[keyIndex]]: removePrefix(row[keyIndex]),
+              [results.header[columnIndex]]: parseInt(row[columnIndex]),
+            };
+          });
+
+          const totalSum = results.data
+            .map((row) => parseInt(row[columnIndex]))
+            .reduce((a, b) => a + b, 0);
+
+          const CustomTooltip = ({ active, payload }: any) => {
+            if (active) {
+              return (
+                <div
+                  className="custom-tooltip"
+                  style={{
+                    backgroundColor: settings.darkMode() ? "black" : "#ffff",
+                    padding: "5px",
+                    border: "columnIndexpx solid #cccc",
+                  }}
+                >
+                  {`${payload[0].name} : ${(
+                    (100 * payload[0].value) /
+                    totalSum
+                  ).toFixed(2)}%`}
+                </div>
+              );
+            }
+            return null;
+          };
+          return {
+            key: column,
+            label: column,
+            children: (
+              <ResponsiveContainer width="100%" height={height}>
+                <PieRechart>
+                  <Pie
+                    data={data}
+                    nameKey={results.header[0]}
+                    dataKey={results.header[columnIndex]}
+                    cx="50%"
+                    cy="50%"
+                    // outerRadius={50}
+                    fill="#8884d8"
+                    label
+                  >
+                    {data.map((entry, index: number) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={randomColor({
+                          luminosity: settings.darkMode() ? "light" : "dark",
+                        })}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip content={CustomTooltip} />
+                  <Legend />
+                </PieRechart>
+              </ResponsiveContainer>
+            ),
+          };
+        })}
+      />
+    </>
+  );
+});
+
+export function getKeyColumnIndex(
+  results: QueryResults,
+  variables: VariableCategories
+) {
+  return results.header.indexOf(variables.key[0] || variables.lexical[0]);
+}
 
 const INSTANCES_LIMIT = 10;
-const Constraints = ({ results, keyColumn }) => {
+const Constraints = ({
+  results,
+  keyColumn,
+}: {
+  results: QueryResults;
+  keyColumn: string;
+}) => {
   const instances = useMemo(() => {
     const keyIndex = results.header.indexOf(keyColumn);
     return uniqueValues(results.data, keyIndex);

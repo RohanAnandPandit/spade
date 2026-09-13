@@ -4,15 +4,15 @@ import { AiOutlineFullscreen, AiOutlineFullscreenExit } from "react-icons/ai";
 import "./Fullscreen.css";
 import { FloatButton } from "antd";
 import { useStore } from "../../stores/store";
-import { useEffect } from "react";
+import { ReactNode, useEffect } from "react";
 
-const Fullscreen = observer(({ children }: any) => {
+const Fullscreen = observer(({ children }: { children: ReactNode }) => {
   const rootStore = useStore();
   const settings = rootStore.settingsStore;
   const handle = useFullScreenHandle();
 
   useEffect(() => {
-    const exitHandler = (e: any) => {
+    const exitHandler = () => {
       if (!document.fullscreenElement) {
         settings.setFullScreen(false);
       }
@@ -32,7 +32,7 @@ const Fullscreen = observer(({ children }: any) => {
       document.removeEventListener("MSFullscreenChange", exitHandler, false);
     };
   }, [settings]);
-  
+
   return (
     <>
       <FullScreen

@@ -12,7 +12,7 @@ type ScatterChartProps = {
 };
 
 const ScatterChart = observer(
-  ({ results, width, height, variables }: ScatterChartProps) => {
+  ({ results, height, variables }: ScatterChartProps) => {
     const { header, data } = results;
     const keyIdx = header.indexOf(variables.key[0]);
     const xIdx = header.indexOf(variables.scalar[0]);
