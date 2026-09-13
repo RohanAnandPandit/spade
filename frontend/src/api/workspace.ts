@@ -8,3 +8,7 @@ export function getWorkspaceId(): string {
   window.localStorage.setItem(WORKSPACE_ID_KEY, workspaceId);
   return workspaceId;
 }
+
+export function clearWorkspaceId(): void {
+  window.localStorage.removeItem(WORKSPACE_ID_KEY);
+}

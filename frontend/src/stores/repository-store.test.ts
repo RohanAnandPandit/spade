@@ -19,7 +19,7 @@ test("deleting a repository clears stale selections and query history", async ()
   root.repositoryStore.state.currentRepository = "repo";
   root.repositoryStore.state.queryHistory = [
     {
-      id: 1,
+      id: "1",
       name: "Saved query",
       sparql: "SELECT * WHERE {}",
       repository: "repo",

@@ -1,11 +1,10 @@
 import { Metadata, PropertyType, RDFGraph, RepositoryId, URI } from "../types";
 import { api } from "./client";
-import { getWorkspaceId } from "./workspace";
 
 const get = async <T>(path: string, params: Record<string, unknown>) =>
   (
     await api.get<T>(path, {
-      params: { ...params, workspace: getWorkspaceId() },
+      params,
     })
   ).data;
 

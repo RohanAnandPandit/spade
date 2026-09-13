@@ -1,12 +1,11 @@
 import { GeoData, QueryAnalysis, QueryRecord } from "../types";
 import { api } from "./client";
-import { getWorkspaceId } from "./workspace";
 
 export async function getQueryHistory(
   repository: string
 ): Promise<QueryRecord[]> {
   const response = await api.get<QueryRecord[]>("/saved-queries", {
-    params: { repository, workspace: getWorkspaceId() },
+    params: { repository },
   });
   return response.data;
 }
@@ -20,13 +19,12 @@ export async function addQueryToHistory(
     name,
     sparql: query,
     repository,
-    workspace: getWorkspaceId(),
   });
 }
 
 export async function clearQueryHistory(repository: string) {
   return api.delete("/saved-queries", {
-    params: { repository, workspace: getWorkspaceId() },
+    params: { repository },
   });
 }
 
@@ -36,7 +34,7 @@ export async function getQueryAnalysis(
   signal?: AbortSignal
 ): Promise<QueryAnalysis> {
   const response = await api.get<QueryAnalysis>("/analysis", {
-    params: { repository, query, workspace: getWorkspaceId() },
+    params: { repository, query },
     signal,
   });
   return response.data;

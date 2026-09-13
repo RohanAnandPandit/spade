@@ -119,6 +119,17 @@ class QueriesStore {
       this.setCurrentQueryId(remainingIds.at(-1)!);
     }
   };
+
+  reset = () => {
+    this.state = {
+      totalQueries: 1,
+      openQueries: {
+        "1": { name: "Query 1", sparql: "", repository: null },
+      },
+      currentQueryId: "1",
+    };
+    window.localStorage.removeItem("Queries");
+  };
 }
 
 export default QueriesStore;

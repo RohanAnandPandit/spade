@@ -1,5 +1,10 @@
 export type RepositoryId = string;
 
+export type User = {
+  id: string;
+  email: string;
+};
+
 export type URI = string;
 
 export interface RepositoryInfo {
@@ -25,7 +30,7 @@ export type RDFGraph = {
 };
 
 export type QueryRecord = {
-  id: number;
+  id: string;
   name: string;
   sparql: string;
   repository: string;
