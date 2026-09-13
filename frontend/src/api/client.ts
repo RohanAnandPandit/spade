@@ -1,8 +1,22 @@
 import axios from "axios";
 
+const apiOrigin = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:5000",
+  baseURL: `${apiOrigin}/api/v1`,
   timeout: 30_000,
+  withCredentials: true,
+  withXSRFToken: true,
+  xsrfCookieName: "spade_csrf",
+  xsrfHeaderName: "X-CSRF-Token",
+});
+
+api.interceptors.response.use(undefined, (error) => {
+  const url = String(error.config?.url ?? "");
+  if (error.response?.status === 401 && !url.includes("/auth/login")) {
+    window.dispatchEvent(new Event("spade:unauthorized"));
+  }
+  return Promise.reject(error);
 });
 
 export function apiErrorMessage(error: unknown, fallback: string): string {

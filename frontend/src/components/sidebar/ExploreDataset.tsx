@@ -1,4 +1,4 @@
-import { Button, Modal, Space, Tabs, TabsProps } from "antd";
+import { Button, Modal, Space, Tabs, TabsProps, Tooltip } from "antd";
 import { RepositoryId } from "../../types";
 import { Summary } from "../dataset/Summary";
 import ClassHierarchy from "../dataset/ClassHierarchy";
@@ -12,9 +12,13 @@ import Details from "../dataset/Details";
 
 export type ExploreDatasetProps = {
   repository: RepositoryId | null;
+  compact?: boolean;
 };
 
-const ExploreDataset = ({ repository }: ExploreDatasetProps) => {
+const ExploreDataset = ({
+  repository,
+  compact = false,
+}: ExploreDatasetProps) => {
   const rootStore = useStore();
   const repositoryStore = rootStore.repositoryStore;
 
@@ -60,19 +64,29 @@ const ExploreDataset = ({ repository }: ExploreDatasetProps) => {
       children: <Details repository={repository!} />,
     },
   ];
-  return (
-    <>
-      <Button
-        type="primary"
-        disabled={repositoryStore.currentRepository() === null}
-        onClick={() => setIsModalOpen(true)}
-        style={{ width: "95%", margin: 5 }}
-      >
+  const button = (
+    <Button
+      aria-label={compact ? "Explore dataset" : undefined}
+      type="primary"
+      disabled={repositoryStore.currentRepository() === null}
+      onClick={() => setIsModalOpen(true)}
+      shape={compact ? "circle" : undefined}
+      style={compact ? undefined : { width: "95%", margin: 5 }}
+    >
+      {compact ? (
+        <MdOutlineExplore size={20} />
+      ) : (
         <Space>
           <MdOutlineExplore size={20} />
           Explore dataset
         </Space>
-      </Button>
+      )}
+    </Button>
+  );
+
+  return (
+    <>
+      {compact ? <Tooltip title="Explore dataset">{button}</Tooltip> : button}
       {repository && (
         <Modal
           title={`${repository}`}

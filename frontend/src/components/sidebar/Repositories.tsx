@@ -12,6 +12,7 @@ import {
   Popconfirm,
   Segmented,
   Spin,
+  Tooltip,
   App as AntdApp,
 } from "antd";
 import { addLocalRepository, addRemoteRepository } from "../../api/sparql";
@@ -22,7 +23,11 @@ import { RepositoryInfo } from "../../types";
 import { AiFillApi } from "react-icons/ai";
 import { MdDelete } from "react-icons/md";
 
-const Repositories = observer(() => {
+type RepositoriesProps = {
+  compact?: boolean;
+};
+
+const Repositories = observer(({ compact = false }: RepositoriesProps) => {
   const [open, setOpen] = useState<boolean>(false);
   const items = [
     {
@@ -36,14 +41,27 @@ const Repositories = observer(() => {
       children: <AddRepository />,
     },
   ];
-  return (
-    <div style={{ margin: 5 }}>
-      <Button onClick={() => setOpen(true)} style={{ width: "100%" }}>
+  const button = (
+    <Button
+      aria-label={compact ? "View repositories" : undefined}
+      onClick={() => setOpen(true)}
+      shape={compact ? "circle" : undefined}
+      style={compact ? undefined : { width: "100%" }}
+    >
+      {compact ? (
+        <SlMagnifier size={18} />
+      ) : (
         <Space>
           <SlMagnifier />
           View repositories
         </Space>
-      </Button>
+      )}
+    </Button>
+  );
+
+  return (
+    <div style={compact ? undefined : { margin: 5 }}>
+      {compact ? <Tooltip title="View repositories">{button}</Tooltip> : button}
       <Modal open={open} footer={null} onCancel={() => setOpen(false)}>
         <Tabs items={items} />
       </Modal>
@@ -58,6 +76,8 @@ const AddRepository = () => {
   const [type, setType] = useState<string>("remote");
   const [success, setSuccess] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const [dataFile, setDataFile] = useState<File>();
+  const [schemaFile, setSchemaFile] = useState<File>();
   const { message } = AntdApp.useApp();
 
   if (success) {
@@ -68,16 +88,18 @@ const AddRepository = () => {
     name: string;
     endpoint?: string;
     description: string;
-    dataUrl?: string;
-    schemaUrl?: string;
   }) => {
-    const { name, endpoint, description, dataUrl, schemaUrl } = values;
+    const { name, endpoint, description } = values;
     setLoading(true);
     try {
       if (endpoint) {
         await addRemoteRepository(name, endpoint, description);
       } else {
-        await addLocalRepository(name, dataUrl!, schemaUrl!, description);
+        if (!dataFile) {
+          message.warning("Choose an RDF data file.");
+          return;
+        }
+        await addLocalRepository(name, dataFile, schemaFile, description);
       }
       await repositoryStore.updateRepositories();
       setSuccess(true);
@@ -142,19 +164,21 @@ const AddRepository = () => {
       )}
       {type === "local" && (
         <>
-          <Form.Item
-            label="Data URL"
-            name="dataUrl"
-            rules={[{ required: true, message: "Please input a valid URL!" }]}
-          >
-            <Input />
+          <Form.Item label="RDF data file" required>
+            <input
+              type="file"
+              accept=".rdf,.xml,.nt,.nt11,.n3,.ttl,.txt"
+              onChange={(event) => setDataFile(event.currentTarget.files?.[0])}
+            />
           </Form.Item>
-          <Form.Item
-            label="Schema URL"
-            name="schemaUrl"
-            rules={[{ required: true, message: "Please input a valid URL!" }]}
-          >
-            <Input />
+          <Form.Item label="Schema file (optional)">
+            <input
+              type="file"
+              accept=".rdf,.xml,.nt,.nt11,.n3,.ttl,.txt"
+              onChange={(event) =>
+                setSchemaFile(event.currentTarget.files?.[0])
+              }
+            />
           </Form.Item>
         </>
       )}

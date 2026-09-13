@@ -7,15 +7,20 @@ import {
   Popover,
   Space,
   Timeline,
+  Tooltip,
   Typography,
   App as AntdApp,
 } from "antd";
 import { useStore } from "../../stores/store";
-import { MdDelete } from "react-icons/md";
+import { MdDelete, MdHistory } from "react-icons/md";
 
 const { Title } = Typography;
 
-const QueryHistory = observer(() => {
+type QueryHistoryProps = {
+  compact?: boolean;
+};
+
+const QueryHistory = observer(({ compact = false }: QueryHistoryProps) => {
   const rootStore = useStore();
   const settings = rootStore.settingsStore;
   const queriesStore = rootStore.queriesStore;
@@ -25,10 +30,14 @@ const QueryHistory = observer(() => {
     void repositoryStore.updateQueryHistory();
   }, [repositoryStore]);
 
-  return (
+  const content = (
     <Space
       direction="vertical"
-      style={{ width: "100%", justifyContent: "center" }}
+      style={{
+        width: compact ? 320 : "100%",
+        maxWidth: compact ? "calc(100vw - 110px)" : undefined,
+        justifyContent: "center",
+      }}
     >
       <Space
         style={{
@@ -55,7 +64,9 @@ const QueryHistory = observer(() => {
         <div
           style={{
             width: "100%",
-            height: settings.screenHeight() - 450,
+            height: compact
+              ? Math.min(360, Math.max(180, settings.screenHeight() - 250))
+              : settings.screenHeight() - 450,
             overflowY: "auto",
           }}
         >
@@ -110,6 +121,20 @@ const QueryHistory = observer(() => {
       )}
     </Space>
   );
+
+  if (compact) {
+    return (
+      <Popover content={content} placement="rightTop" trigger="click">
+        <Tooltip title="Query history" placement="right">
+          <Button aria-label="Query history" shape="circle">
+            <MdHistory size={20} />
+          </Button>
+        </Tooltip>
+      </Popover>
+    );
+  }
+
+  return content;
 });
 
 const DeleteHistory = observer(() => {

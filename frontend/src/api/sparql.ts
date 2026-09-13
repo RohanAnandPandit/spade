@@ -1,11 +1,8 @@
 import { QueryResults, RepositoryId, RepositoryInfo } from "../types";
 import { api } from "./client";
-import { getWorkspaceId } from "./workspace";
 
 export async function allRepositories(): Promise<RepositoryInfo[]> {
-  const response = await api.get<RepositoryInfo[]>("/repositories", {
-    params: { workspace: getWorkspaceId() },
-  });
+  const response = await api.get<RepositoryInfo[]>("/repositories");
   return response.data;
 }
 
@@ -14,36 +11,37 @@ export async function addRemoteRepository(
   sparqlEndpoint: string,
   description: string
 ): Promise<string> {
-  const response = await api.post<string>("/repositories/remote", {
+  const response = await api.post<{ name: string }>("/repositories/remote", {
     name,
     endpoint: sparqlEndpoint,
     description,
-    workspace: getWorkspaceId(),
   });
-  return response.data;
+  return response.data.name;
 }
 
 export async function addLocalRepository(
   name: string,
-  dataUrl: string,
-  schemaUrl: string,
+  dataFile: File,
+  schemaFile: File | undefined,
   description: string
 ): Promise<string> {
-  const response = await api.post<string>("/repositories/local", {
-    name,
-    dataUrl,
-    schemaUrl,
-    description,
-    workspace: getWorkspaceId(),
-  });
-  return response.data;
+  const body = new FormData();
+  body.append("name", name);
+  body.append("description", description);
+  body.append("dataFile", dataFile);
+  if (schemaFile) body.append("schemaFile", schemaFile);
+  const response = await api.post<{ name: string }>(
+    "/repositories/local",
+    body
+  );
+  return response.data.name;
 }
 
 export async function deleteRepository(repository: string): Promise<string> {
-  const response = await api.delete<string>("/repositories", {
-    params: { repository, workspace: getWorkspaceId() },
-  });
-  return response.data;
+  const response = await api.delete<{ name: string }>(
+    `/repositories/${encodeURIComponent(repository)}`
+  );
+  return response.data.name;
 }
 
 export async function runSparqlQuery(
@@ -51,7 +49,7 @@ export async function runSparqlQuery(
   query: string
 ): Promise<QueryResults> {
   const response = await api.get<QueryResults>("/sparql", {
-    params: { repository, query, workspace: getWorkspaceId() },
+    params: { repository, query },
   });
   return response.data;
 }

@@ -7,11 +7,9 @@
       "command": "uv",
       "args": [
         "run",
-        "flask",
-        "--app",
-        "app",
-        "run",
-        "--debug",
+        "uvicorn",
+        "app:app",
+        "--reload",
         "--port",
         "5000"
       ],

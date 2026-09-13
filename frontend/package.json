@@ -17,7 +17,9 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --max-warnings 0",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "api:generate": "cd .. && uv run python -m backend.export_openapi > /tmp/spade-openapi.json && cd frontend && openapi-typescript /tmp/spade-openapi.json -o src/api/schema.d.ts",
+    "api:check": "cd .. && uv run python -m backend.export_openapi > /tmp/spade-openapi.json && cd frontend && openapi-typescript /tmp/spade-openapi.json -o /tmp/spade-schema.d.ts && prettier --write /tmp/spade-schema.d.ts && cmp /tmp/spade-schema.d.ts src/api/schema.d.ts"
   },
   "dependencies": {
     "@ant-design/icons": "^6.3.4",
@@ -79,6 +81,7 @@
     "eslint-plugin-react-refresh": "^0.5.6",
     "globals": "^17.3.0",
     "jsdom": "^30.0.1",
+    "openapi-typescript": "7.10.1",
     "prettier": "^3.9.6",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.70.0",

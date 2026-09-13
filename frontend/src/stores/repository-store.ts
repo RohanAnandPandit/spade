@@ -114,6 +114,15 @@ class RepositoryStore {
     });
     await this.updateRepositories();
   };
+
+  reset = () => {
+    this.state = {
+      currentRepository: null,
+      queryHistory: [],
+      repositories: [],
+    };
+    window.localStorage.removeItem("Repository");
+  };
 }
 
 export default RepositoryStore;
