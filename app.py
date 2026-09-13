@@ -90,8 +90,8 @@ def required_json(*names: str) -> dict:
 
 def requested_repository():
     repository_id = required_arg("repository")
-    username = required_arg("username")
-    repository = get_repository(repository_id=repository_id, username=username)
+    workspace_id = required_arg("workspace")
+    repository = get_repository(repository_id=repository_id, workspace_id=workspace_id)
     if repository is None:
         abort(404, description=f"Repository '{repository_id}' was not found")
     return repository
@@ -123,24 +123,14 @@ def upload_file():
     return jsonify(filename=filename), 201
 
 
-@app.post("/login")
-def login():
-    return required_arg("username")
-
-
-@app.post("/logout")
-def logout():
-    return "", 204
-
-
 @app.route("/repositories", methods=["GET", "DELETE"])
 def repositories():
-    username = required_arg("username")
+    workspace_id = required_arg("workspace")
     if request.method == "GET":
-        return jsonify(get_repository_info(username=username))
+        return jsonify(get_repository_info(workspace_id=workspace_id))
 
     repository_id = required_arg("repository")
-    result = delete_repository(repository_id=repository_id, username=username)
+    result = delete_repository(repository_id=repository_id, workspace_id=workspace_id)
     if result.deleted_count == 0:
         abort(404, description=f"Repository '{repository_id}' was not found")
     return repository_id
@@ -148,11 +138,11 @@ def repositories():
 
 @app.post("/repositories/local")
 def add_local_repo():
-    payload = required_json("name", "description", "dataUrl", "schemaUrl", "username")
+    payload = required_json("name", "description", "dataUrl", "schemaUrl", "workspace")
     graph = import_data(data_url=payload["dataUrl"], schema_url=payload["schemaUrl"])
     add_repository(
         repository_id=payload["name"],
-        username=payload["username"],
+        workspace_id=payload["workspace"],
         graph=graph,
         description=payload["description"],
     )
@@ -161,10 +151,10 @@ def add_local_repo():
 
 @app.post("/repositories/remote")
 def add_remote_repo():
-    payload = required_json("name", "endpoint", "username", "description")
+    payload = required_json("name", "endpoint", "workspace", "description")
     add_repository(
         repository_id=payload["name"],
-        username=payload["username"],
+        workspace_id=payload["workspace"],
         endpoint=payload["endpoint"],
         description=payload["description"],
     )
@@ -181,21 +171,23 @@ def run_query():
 @app.route("/saved-queries", methods=["GET", "POST", "DELETE"])
 def history():
     if request.method == "POST":
-        payload = required_json("username", "repository", "sparql", "name")
+        payload = required_json("workspace", "repository", "sparql", "name")
         save_query(
             repository_id=payload["repository"],
             sparql=payload["sparql"],
             name=payload["name"],
-            username=payload["username"],
+            workspace_id=payload["workspace"],
         )
         return payload["name"], 201
 
     repository_id = required_arg("repository")
-    username = required_arg("username")
+    workspace_id = required_arg("workspace")
     if request.method == "GET":
-        return jsonify(get_queries(repository_id=repository_id, username=username))
+        return jsonify(
+            get_queries(repository_id=repository_id, workspace_id=workspace_id)
+        )
 
-    delete_all_queries(repository_id=repository_id, username=username)
+    delete_all_queries(repository_id=repository_id, workspace_id=workspace_id)
     return "", 204
 
 

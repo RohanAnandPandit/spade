@@ -11,6 +11,13 @@ and a React 18 single-page application built with Vite.
 - MongoDB-backed saved repositories and query history (transitional)
 - Local RDF files and remote SPARQL endpoints
 
+SPADE has no login or authentication layer. It generates an anonymous workspace
+ID in browser storage and uses it to keep repositories and query history
+separate. Clearing browser storage creates a new workspace and makes the old
+workspace inaccessible from that browser. Do not expose this transitional
+version directly to the public internet; server-managed workspace sessions
+belong in the versioned PostgreSQL API.
+
 MongoDB is not needed to install the project, import the backend, run tests, or
 build the frontend. Repository and saved-query endpoints currently need a
 MongoDB connection; this storage layer will be replaced by PostgreSQL in a

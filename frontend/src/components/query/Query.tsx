@@ -40,8 +40,6 @@ const Query = observer(({ qid }: QueryProps) => {
   const settings = rootStore.settingsStore;
   const repositoryStore = rootStore.repositoryStore;
   const queriesStore = rootStore.queriesStore;
-  const authStore = rootStore.authStore;
-  const username = authStore.username!;
   const [results, setResults] = useState<QueryResults>({
     header: [],
     data: [],
@@ -87,7 +85,7 @@ const Query = observer(({ qid }: QueryProps) => {
     analysis: queryAnalysis,
     loading: analysisLoading,
     error: analysisError,
-  } = useQueryAnalysis(query, repository, username);
+  } = useQueryAnalysis(query, repository);
 
   useEffect(() => {
     if (analysisError) message.error(analysisError);
@@ -98,7 +96,7 @@ const Query = observer(({ qid }: QueryProps) => {
     setQueryLoading(true);
     const start = performance.now();
     try {
-      const nextResults = await runSparqlQuery(repository, query, username);
+      const nextResults = await runSparqlQuery(repository, query);
       setResults(nextResults);
       setGraphKey((key) => key + 1);
       await repositoryStore.updateQueryHistory();

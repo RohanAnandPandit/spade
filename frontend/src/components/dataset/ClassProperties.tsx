@@ -4,22 +4,19 @@ import { RepositoryId, URI } from "../../types";
 import { removePrefix } from "../../utils/queryResults";
 import { getTypeProperties, getAllTypes } from "../../api/dataset";
 import { MetaInfo } from "./MetaInfo";
-import { useStore } from "../../stores/store";
 
 type TypesProps = {
   repository: RepositoryId;
 };
 
 const ClassProperties = ({ repository }: TypesProps) => {
-  const username = useStore().authStore.username!;
-
   const [allTypes, setAllTypes] = useState<URI[]>([]);
   const [type, setType] = useState<URI | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     let active = true;
-    getAllTypes(repository, username)
+    getAllTypes(repository)
       .then((res: URI[]) => {
         if (active) setAllTypes(res);
       })
@@ -32,7 +29,7 @@ const ClassProperties = ({ repository }: TypesProps) => {
     return () => {
       active = false;
     };
-  }, [repository, username]);
+  }, [repository]);
 
   return (
     <Skeleton active loading={loading}>
@@ -59,8 +56,6 @@ type PropertiesProps = {
   type: URI;
 };
 const Properties = ({ repository, type }: PropertiesProps) => {
-  const username = useStore().authStore.username!;
-
   const [allProperties, setAllProperties] = useState<URI[]>([]);
   const [property, setProperty] = useState<URI | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -69,7 +64,7 @@ const Properties = ({ repository, type }: PropertiesProps) => {
     setLoading(true);
     setProperty(null);
     let active = true;
-    getTypeProperties(repository, type, username)
+    getTypeProperties(repository, type)
       .then((res: URI[]) => {
         if (active) setAllProperties(res);
       })
@@ -85,7 +80,7 @@ const Properties = ({ repository, type }: PropertiesProps) => {
     return () => {
       active = false;
     };
-  }, [repository, type, username]);
+  }, [repository, type]);
 
   return (
     <Skeleton loading={loading}>

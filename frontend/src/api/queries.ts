@@ -1,12 +1,12 @@
 import { GeoData, QueryAnalysis, QueryRecord } from "../types";
 import { api } from "./client";
+import { getWorkspaceId } from "./workspace";
 
 export async function getQueryHistory(
-  repository: string,
-  username: string
+  repository: string
 ): Promise<QueryRecord[]> {
   const response = await api.get<QueryRecord[]>("/saved-queries", {
-    params: { repository, username },
+    params: { repository, workspace: getWorkspaceId() },
   });
   return response.data;
 }
@@ -14,29 +14,29 @@ export async function getQueryHistory(
 export async function addQueryToHistory(
   repository: string,
   query: string,
-  name: string,
-  username: string
+  name: string
 ) {
   return api.post("/saved-queries", {
     name,
     sparql: query,
     repository,
-    username,
+    workspace: getWorkspaceId(),
   });
 }
 
-export async function clearQueryHistory(repository: string, username: string) {
-  return api.delete("/saved-queries", { params: { repository, username } });
+export async function clearQueryHistory(repository: string) {
+  return api.delete("/saved-queries", {
+    params: { repository, workspace: getWorkspaceId() },
+  });
 }
 
 export async function getQueryAnalysis(
   query: string,
   repository: string,
-  username: string,
   signal?: AbortSignal
 ): Promise<QueryAnalysis> {
   const response = await api.get<QueryAnalysis>("/analysis", {
-    params: { repository, query, username },
+    params: { repository, query, workspace: getWorkspaceId() },
     signal,
   });
   return response.data;

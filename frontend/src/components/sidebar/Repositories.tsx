@@ -54,7 +54,6 @@ const Repositories = observer(() => {
 const AddRepository = () => {
   const rootStore = useStore();
   const repositoryStore = rootStore.repositoryStore;
-  const authStore = rootStore.authStore;
 
   const [type, setType] = useState<string>("remote");
   const [success, setSuccess] = useState<boolean>(false);
@@ -76,20 +75,9 @@ const AddRepository = () => {
     setLoading(true);
     try {
       if (endpoint) {
-        await addRemoteRepository(
-          name,
-          endpoint,
-          description,
-          authStore.username!
-        );
+        await addRemoteRepository(name, endpoint, description);
       } else {
-        await addLocalRepository(
-          name,
-          dataUrl!,
-          schemaUrl!,
-          description,
-          authStore.username!
-        );
+        await addLocalRepository(name, dataUrl!, schemaUrl!, description);
       }
       await repositoryStore.updateRepositories();
       setSuccess(true);

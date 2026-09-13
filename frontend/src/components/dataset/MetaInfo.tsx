@@ -3,15 +3,12 @@ import { Descriptions, message, Skeleton, Tag } from "antd";
 import { Metadata, RepositoryId, URI } from "../../types";
 import { getMetaInformation, getType } from "../../api/dataset";
 import { removePrefix } from "../../utils/queryResults";
-import { useStore } from "../../stores/store";
 
 type MetaInfoProps = {
   repository: RepositoryId;
   uri: URI;
 };
 export const MetaInfo = ({ repository, uri }: MetaInfoProps) => {
-  const username = useStore().authStore.username!;
-
   const [metadata, setMetadata] = useState<Metadata>({
     comment: "",
     label: "",
@@ -24,10 +21,7 @@ export const MetaInfo = ({ repository, uri }: MetaInfoProps) => {
 
   useEffect(() => {
     let active = true;
-    Promise.all([
-      getMetaInformation(repository, uri, username),
-      getType(repository, uri, username),
-    ])
+    Promise.all([getMetaInformation(repository, uri), getType(repository, uri)])
       .then(([nextMetadata, nextTypes]) => {
         if (active) {
           setMetadata(nextMetadata);
@@ -43,7 +37,7 @@ export const MetaInfo = ({ repository, uri }: MetaInfoProps) => {
     return () => {
       active = false;
     };
-  }, [repository, uri, username]);
+  }, [repository, uri]);
 
   return (
     <Skeleton loading={loading}>

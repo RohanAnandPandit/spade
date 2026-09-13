@@ -24,7 +24,7 @@ def test_missing_repository_returns_404(monkeypatch: pytest.MonkeyPatch) -> None
         "/sparql",
         query_string={
             "repository": "missing",
-            "username": "tester",
+            "workspace": "workspace-id",
             "query": "SELECT * WHERE { ?s ?p ?o }",
         },
     )
@@ -36,10 +36,32 @@ def test_missing_repository_returns_404(monkeypatch: pytest.MonkeyPatch) -> None
 def test_missing_query_parameter_returns_400() -> None:
     app_module = importlib.import_module("app")
 
-    response = app_module.app.test_client().post("/login")
+    response = app_module.app.test_client().get("/geo/valid")
 
     assert response.status_code == 400
-    assert response.get_json() == {"error": "Missing query parameter: username"}
+    assert response.get_json() == {"error": "Missing query parameter: text"}
+
+
+def test_login_routes_are_not_registered() -> None:
+    app_module = importlib.import_module("app")
+    routes = {rule.rule for rule in app_module.app.url_map.iter_rules()}
+
+    assert "/login" not in routes
+    assert "/logout" not in routes
+
+
+def test_repositories_use_anonymous_workspace_identifier(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    app_module = importlib.import_module("app")
+    monkeypatch.setattr(app_module, "get_repository_info", lambda **_: [])
+
+    response = app_module.app.test_client().get(
+        "/repositories", query_string={"workspace": "workspace-id"}
+    )
+
+    assert response.status_code == 200
+    assert response.get_json() == []
 
 
 def test_production_routes_fall_back_to_spa(

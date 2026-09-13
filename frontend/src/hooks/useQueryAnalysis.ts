@@ -7,7 +7,6 @@ import { QueryAnalysis, RepositoryId } from "../types";
 export function useQueryAnalysis(
   query: string,
   repository: RepositoryId | null,
-  username: string,
   delay = 350
 ) {
   const [analysis, setAnalysis] = useState<QueryAnalysis | null>(null);
@@ -31,7 +30,6 @@ export function useQueryAnalysis(
         const result = await getQueryAnalysis(
           query,
           repository,
-          username,
           controller.signal
         );
         if (active) setAnalysis(result);
@@ -52,7 +50,7 @@ export function useQueryAnalysis(
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [delay, query, repository, username]);
+  }, [delay, query, repository]);
 
   return { analysis, loading, error };
 }

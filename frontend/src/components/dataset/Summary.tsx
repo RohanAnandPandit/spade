@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Divider, message, Space, Statistic } from "antd";
 import { RepositoryId, URI } from "../../types";
 import { getClasses, getNoOfTriplets } from "../../api/dataset";
-import { useStore } from "../../stores/store";
 
 type SummaryProps = {
   repository: RepositoryId;
@@ -23,14 +22,12 @@ type TripletsProps = {
 };
 
 const Triplets = ({ repository }: TripletsProps) => {
-  const username = useStore().authStore.username!;
-
   const [triplets, setTriplets] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     let active = true;
-    getNoOfTriplets(repository, username)
+    getNoOfTriplets(repository)
       .then((res) => {
         if (active) setTriplets(res);
       })
@@ -43,7 +40,7 @@ const Triplets = ({ repository }: TripletsProps) => {
     return () => {
       active = false;
     };
-  }, [repository, username]);
+  }, [repository]);
 
   return <Statistic title="Triplets" value={triplets} loading={loading} />;
 };
@@ -53,14 +50,12 @@ type ClassesProps = {
 };
 
 const Classes = ({ repository }: ClassesProps) => {
-  const username = useStore().authStore.username!;
-
   const [classes, setClasses] = useState<URI[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     let active = true;
-    getClasses(repository, username)
+    getClasses(repository)
       .then((res) => {
         if (active) setClasses(res);
       })
@@ -73,7 +68,7 @@ const Classes = ({ repository }: ClassesProps) => {
     return () => {
       active = false;
     };
-  }, [repository, username]);
+  }, [repository]);
 
   return <Statistic title="Classes" value={classes.length} loading={loading} />;
 };

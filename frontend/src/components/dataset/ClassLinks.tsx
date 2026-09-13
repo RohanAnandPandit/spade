@@ -7,7 +7,6 @@ import {
   getIncomingLinks,
   getOutgoingLinks,
 } from "../../api/dataset";
-import { useStore } from "../../stores/store";
 import { RepositoryId, URI } from "../../types";
 import { removePrefix } from "../../utils/queryResults";
 
@@ -25,7 +24,6 @@ type LinkMatrix = {
 const EMPTY_LINKS: LinkMatrix = { labels: [], incoming: [], outgoing: [] };
 
 const ClassLinks = ({ repository, width }: ClassLinksProps) => {
-  const username = useStore().authStore.username!;
   const [links, setLinks] = useState<LinkMatrix>(EMPTY_LINKS);
 
   useEffect(() => {
@@ -33,17 +31,13 @@ const ClassLinks = ({ repository, width }: ClassLinksProps) => {
 
     const loadLinks = async () => {
       try {
-        const labels = await getAllTypes(repository, username);
+        const labels = await getAllTypes(repository);
         const [outgoingMaps, incomingMaps] = await Promise.all([
           Promise.all(
-            labels.map((source) =>
-              getOutgoingLinks(repository, source, username)
-            )
+            labels.map((source) => getOutgoingLinks(repository, source))
           ),
           Promise.all(
-            labels.map((source) =>
-              getIncomingLinks(repository, source, username)
-            )
+            labels.map((source) => getIncomingLinks(repository, source))
           ),
         ]);
         if (!active) return;
@@ -68,7 +62,7 @@ const ClassLinks = ({ repository, width }: ClassLinksProps) => {
     return () => {
       active = false;
     };
-  }, [repository, username]);
+  }, [repository]);
 
   const height = Math.max(420, Math.min(window.innerHeight - 160, width));
   const labels = links.labels.map(removePrefix);

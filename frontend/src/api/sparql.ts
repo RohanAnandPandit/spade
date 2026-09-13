@@ -1,11 +1,10 @@
 import { QueryResults, RepositoryId, RepositoryInfo } from "../types";
 import { api } from "./client";
+import { getWorkspaceId } from "./workspace";
 
-export async function allRepositories(
-  username: string
-): Promise<RepositoryInfo[]> {
+export async function allRepositories(): Promise<RepositoryInfo[]> {
   const response = await api.get<RepositoryInfo[]>("/repositories", {
-    params: { username },
+    params: { workspace: getWorkspaceId() },
   });
   return response.data;
 }
@@ -13,14 +12,13 @@ export async function allRepositories(
 export async function addRemoteRepository(
   name: string,
   sparqlEndpoint: string,
-  description: string,
-  username: string
+  description: string
 ): Promise<string> {
   const response = await api.post<string>("/repositories/remote", {
     name,
     endpoint: sparqlEndpoint,
     description,
-    username,
+    workspace: getWorkspaceId(),
   });
   return response.data;
 }
@@ -29,36 +27,31 @@ export async function addLocalRepository(
   name: string,
   dataUrl: string,
   schemaUrl: string,
-  description: string,
-  username: string
+  description: string
 ): Promise<string> {
   const response = await api.post<string>("/repositories/local", {
     name,
     dataUrl,
     schemaUrl,
     description,
-    username,
+    workspace: getWorkspaceId(),
   });
   return response.data;
 }
 
-export async function deleteRepository(
-  repository: string,
-  username: string
-): Promise<string> {
+export async function deleteRepository(repository: string): Promise<string> {
   const response = await api.delete<string>("/repositories", {
-    params: { repository, username },
+    params: { repository, workspace: getWorkspaceId() },
   });
   return response.data;
 }
 
 export async function runSparqlQuery(
   repository: RepositoryId,
-  query: string,
-  username: string
+  query: string
 ): Promise<QueryResults> {
   const response = await api.get<QueryResults>("/sparql", {
-    params: { repository, query, username },
+    params: { repository, query, workspace: getWorkspaceId() },
   });
   return response.data;
 }

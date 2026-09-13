@@ -35,21 +35,17 @@ def get_database() -> Database:
     return client[DATABASE_NAME]
 
 
-def add_user(*, username: str):
-    return get_database()["users"].insert_one({"username": username})
-
-
-def get_queries(*, repository_id: str, username: str):
+def get_queries(*, repository_id: str, workspace_id: str):
     return list(
         get_database()["queries"]
-        .find({"repository": repository_id, "user": username}, {"_id": 0})
+        .find({"repository": repository_id, "workspace": workspace_id}, {"_id": 0})
         .sort([("date", pymongo.DESCENDING)])
     )
 
 
-def get_repository(*, repository_id: str, username: str) -> RDFRepository | None:
+def get_repository(*, repository_id: str, workspace_id: str) -> RDFRepository | None:
     repo = get_database()["repositories"].find_one(
-        {"name": repository_id, "user": username}
+        {"name": repository_id, "workspace": workspace_id}
     )
     if not repo:
         return None
@@ -62,23 +58,33 @@ def get_repository(*, repository_id: str, username: str) -> RDFRepository | None
     return None
 
 
-def delete_repository(*, repository_id: str, username: str):
+def delete_repository(*, repository_id: str, workspace_id: str):
     return get_database()["repositories"].delete_one(
-        {"name": repository_id, "user": username}
+        {"name": repository_id, "workspace": workspace_id}
     )
 
 
-def get_repository_info(*, username: str):
+def get_repository_info(*, workspace_id: str):
     details = get_database()["repositories"].find(
-        {"user": username}, {"_id": 0, "name": 1, "description": 1, "endpoint": 1}
+        {"workspace": workspace_id},
+        {"_id": 0, "name": 1, "description": 1, "endpoint": 1},
     )
     return list(details)
 
 
 def add_repository(
-    *, repository_id: str, username: str, description: str, graph=None, endpoint=None
+    *,
+    repository_id: str,
+    workspace_id: str,
+    description: str,
+    graph=None,
+    endpoint=None,
 ):
-    repo = {"name": repository_id, "user": username, "description": description}
+    repo = {
+        "name": repository_id,
+        "workspace": workspace_id,
+        "description": description,
+    }
     if graph is not None:
         repo["graph"] = compress_pickle.dumps(graph, COMPRESSION)
     elif endpoint:
@@ -88,7 +94,9 @@ def add_repository(
     return get_database()["repositories"].insert_one(repo)
 
 
-def update_repository(*, username: str, repository_id: str, graph=None, endpoint=None):
+def update_repository(
+    *, workspace_id: str, repository_id: str, graph=None, endpoint=None
+):
     values = None
     if graph is not None:
         values = {"graph": compress_pickle.dumps(graph, COMPRESSION)}
@@ -97,25 +105,25 @@ def update_repository(*, username: str, repository_id: str, graph=None, endpoint
     if values is None:
         raise ValueError("A graph or remote endpoint is required")
     return get_database()["repositories"].update_one(
-        {"name": repository_id, "user": username}, {"$set": values}
+        {"name": repository_id, "workspace": workspace_id}, {"$set": values}
     )
 
 
-def save_query(*, name: str, sparql: str, repository_id: str, username: str):
+def save_query(*, name: str, sparql: str, repository_id: str, workspace_id: str):
     return get_database()["queries"].insert_one(
         {
             "name": name,
             "sparql": sparql,
             "repository": repository_id,
-            "user": username,
+            "workspace": workspace_id,
             "date": datetime.now(UTC),
         }
     )
 
 
-def delete_all_queries(*, repository_id: str, username: str) -> None:
+def delete_all_queries(*, repository_id: str, workspace_id: str) -> None:
     get_database()["queries"].delete_many(
-        {"repository": repository_id, "user": username}
+        {"repository": repository_id, "workspace": workspace_id}
     )
 
 

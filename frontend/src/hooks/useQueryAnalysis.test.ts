@@ -46,12 +46,12 @@ describe("useQueryAnalysis", () => {
       .mockReturnValueOnce(second.promise);
 
     const { result: hook, rerender } = renderHook(
-      ({ query }) => useQueryAnalysis(query, "repo", "user", 10),
+      ({ query }) => useQueryAnalysis(query, "repo", 10),
       { initialProps: { query: "first" } }
     );
 
     act(() => vi.advanceTimersByTime(10));
-    const firstSignal = mockedAnalysis.mock.calls[0][3]!;
+    const firstSignal = mockedAnalysis.mock.calls[0][2]!;
     rerender({ query: "second" });
     expect(firstSignal.aborted).toBe(true);
 

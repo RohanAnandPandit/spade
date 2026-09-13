@@ -36,8 +36,6 @@ const Editor = ({
 }: QueryEditorProps) => {
   const rootStore = useStore();
   const settings = rootStore.settingsStore;
-  const authStore = rootStore.authStore;
-  const username = authStore.username!;
   const [properties, setProperties] = useState<URI[]>([]);
   const [types, setTypes] = useState<URI[]>([]);
   const { message } = AntdApp.useApp();
@@ -49,10 +47,7 @@ const Editor = ({
       setTypes([]);
       return;
     }
-    Promise.all([
-      getAllProperties(repository, username),
-      getAllTypes(repository, username),
-    ])
+    Promise.all([getAllProperties(repository), getAllTypes(repository)])
       .then(([nextProperties, nextTypes]) => {
         if (active) {
           setProperties(nextProperties);
@@ -65,7 +60,7 @@ const Editor = ({
     return () => {
       active = false;
     };
-  }, [message, repository, username]);
+  }, [message, repository]);
 
   return (
     <Row>
@@ -127,8 +122,6 @@ const SaveQuery = observer(
     repository: RepositoryId | null;
   }) => {
     const rootStore = useStore();
-    const username = rootStore.authStore.username!;
-
     const repositoryStore = rootStore.repositoryStore;
     const { message } = AntdApp.useApp();
     return (
@@ -137,7 +130,7 @@ const SaveQuery = observer(
         disabled={repository === null}
         onClick={async () => {
           try {
-            await addQueryToHistory(repository!, query, name, username);
+            await addQueryToHistory(repository!, query, name);
             await repositoryStore.updateQueryHistory();
             message.success("Query saved.");
           } catch {

@@ -41,7 +41,6 @@ const GraphVis = observer(
     interactive = true,
   }: GraphVisProps) => {
     const rootStore = useStore();
-    const username = rootStore.authStore.username!;
     const settings = rootStore.settingsStore;
     const [currentIdx, setCurrentIdx] = useState<number>(-1);
     const [history, setHistory] = useState<GraphInfo[]>([]);
@@ -170,12 +169,7 @@ const GraphVis = observer(
             return;
           }
 
-          getPropertyValues(
-            repository,
-            uri,
-            PropertyType.DatatypeProperty,
-            username
-          )
+          getPropertyValues(repository, uri, PropertyType.DatatypeProperty)
             .then((res: [URI, string][]) => {
               const newLinks: Triplet[] = res.map(([prop, value]) => [
                 uri,
@@ -245,12 +239,7 @@ const GraphVis = observer(
             return;
           }
 
-          getPropertyValues(
-            repository,
-            uri,
-            PropertyType.ObjectProperty,
-            username
-          )
+          getPropertyValues(repository, uri, PropertyType.ObjectProperty)
             .then((res: [URI, string][]) => {
               const newLinks: Triplet[] = res.map(([prop, value]) => [
                 uri,

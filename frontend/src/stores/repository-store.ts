@@ -62,12 +62,8 @@ class RepositoryStore {
 
   updateQueryHistory = async () => {
     if (this.state.currentRepository) {
-      const username = this.rootStore.authStore.username!;
       try {
-        const queries = await getQueryHistory(
-          this.state.currentRepository,
-          username
-        );
+        const queries = await getQueryHistory(this.state.currentRepository);
         runInAction(() => {
           this.state.queryHistory = queries;
         });
@@ -82,48 +78,41 @@ class RepositoryStore {
 
   clearQueryHistory = async () => {
     if (this.state.currentRepository) {
-      const username = this.rootStore.authStore.username!;
-      await clearQueryHistory(this.state.currentRepository, username);
+      await clearQueryHistory(this.state.currentRepository);
       await this.updateQueryHistory();
     }
   };
 
   updateRepositories = async () => {
-    const username = this.rootStore.authStore.username;
-    if (username) {
-      try {
-        const repositories = await allRepositories(username);
-        runInAction(() => {
-          this.state.repositories = repositories;
-        });
-      } catch {
-        runInAction(() => {
-          this.state.repositories = [];
-        });
-        message.error("Could not load repositories.");
-      }
+    try {
+      const repositories = await allRepositories();
+      runInAction(() => {
+        this.state.repositories = repositories;
+      });
+    } catch {
+      runInAction(() => {
+        this.state.repositories = [];
+      });
+      message.error("Could not load repositories.");
     }
   };
 
   deleteRepository = async (repository: string) => {
-    const username = this.rootStore.authStore.username;
-    if (username) {
-      await deleteRepository(repository, username);
-      runInAction(() => {
-        if (this.state.currentRepository === repository) {
-          this.state.currentRepository = null;
-          this.state.queryHistory = [];
-        }
-        Object.entries(this.rootStore.queriesStore.openQueries()).forEach(
-          ([queryId, query]) => {
-            if (query.repository === repository) {
-              this.rootStore.queriesStore.setQueryRepository(queryId, null);
-            }
+    await deleteRepository(repository);
+    runInAction(() => {
+      if (this.state.currentRepository === repository) {
+        this.state.currentRepository = null;
+        this.state.queryHistory = [];
+      }
+      Object.entries(this.rootStore.queriesStore.openQueries()).forEach(
+        ([queryId, query]) => {
+          if (query.repository === repository) {
+            this.rootStore.queriesStore.setQueryRepository(queryId, null);
           }
-        );
-      });
-      await this.updateRepositories();
-    }
+        }
+      );
+    });
+    await this.updateRepositories();
   };
 }
 

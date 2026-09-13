@@ -3,7 +3,6 @@ import { getPropertyValues } from "../../api/dataset";
 import { Descriptions, message, Skeleton } from "antd";
 import { displayText, removePrefix } from "../../utils/queryResults";
 import { PropertyType, RepositoryId, URI } from "../../types";
-import { useStore } from "../../stores/store";
 
 type PropertyValuesProps = {
   repository: RepositoryId;
@@ -16,15 +15,13 @@ export const PropertyValues = ({
   uri,
   propType,
 }: PropertyValuesProps) => {
-  const username = useStore().authStore.username!;
-
   const [data, setData] = useState<[URI, string][]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     let active = true;
     setLoading(true);
-    getPropertyValues(repository, uri, propType, username)
+    getPropertyValues(repository, uri, propType)
       .then((res) => {
         if (active) setData(res);
       })
@@ -40,7 +37,7 @@ export const PropertyValues = ({
     return () => {
       active = false;
     };
-  }, [repository, uri, propType, username]);
+  }, [repository, uri, propType]);
 
   return (
     <Skeleton loading={loading}>

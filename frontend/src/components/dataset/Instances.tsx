@@ -13,11 +13,8 @@ import {
 } from "antd";
 import { removePrefix } from "../../utils/queryResults";
 import { PropertyValues } from "./DataProperties";
-import { useStore } from "../../stores/store";
 
 const Instances = ({ repository }: { repository: RepositoryId }) => {
-  const username = useStore().authStore.username!;
-
   const [allTypes, setAllTypes] = useState<URI[]>([]);
   const [type, setType] = useState<URI | null>(null);
   const [instances, setInstances] = useState<URI[]>([]);
@@ -25,7 +22,7 @@ const Instances = ({ repository }: { repository: RepositoryId }) => {
 
   useEffect(() => {
     let active = true;
-    getAllTypes(repository, username)
+    getAllTypes(repository)
       .then((res) => {
         if (active) setAllTypes(res);
       })
@@ -35,7 +32,7 @@ const Instances = ({ repository }: { repository: RepositoryId }) => {
     return () => {
       active = false;
     };
-  }, [repository, username]);
+  }, [repository]);
 
   return (
     <>
@@ -52,7 +49,7 @@ const Instances = ({ repository }: { repository: RepositoryId }) => {
             setLoading(true);
             setType(value);
             try {
-              const res = await getInstances(repository, value, username);
+              const res = await getInstances(repository, value);
               setInstances(res);
             } catch {
               setInstances([]);

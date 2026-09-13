@@ -16,7 +16,6 @@ beforeEach(() => {
 
 test("deleting a repository clears stale selections and query history", async () => {
   const root = new RootStore();
-  root.authStore.setUsername("user");
   root.repositoryStore.state.currentRepository = "repo";
   root.repositoryStore.state.queryHistory = [
     {
