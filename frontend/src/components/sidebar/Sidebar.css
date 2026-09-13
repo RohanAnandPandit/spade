@@ -9,12 +9,34 @@
 
 .sidebar-content-expanded {
   overflow: hidden;
-  padding-top: 4px;
+  padding-top: 10px;
+}
+
+.sidebar-section-label {
+  padding: 0 10px 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .sidebar-content-expanded > .ant-divider {
   flex: 0 0 auto;
   margin-block: 16px;
+}
+
+.repository-list {
+  width: 100%;
+}
+
+.repository-empty-value {
+  color: rgba(0, 0, 0, 0.45);
+  font-style: italic;
+}
+
+.repository-description {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .sidebar-content-collapsed {
@@ -23,30 +45,48 @@
   padding-top: 12px;
 }
 
-.query-history-panel {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-height: 0;
-  padding: 0 8px 8px;
+.repository-selector {
+  width: calc(100% - 10px);
+  margin: 5px;
 }
 
-.query-history-panel > .ant-space-item:last-child {
+.sidebar-content-collapsed .repository-selector {
+  width: auto;
+  margin: 0;
+}
+
+.repository-selector-label {
+  width: 100%;
+  min-width: 0;
+}
+
+.repository-selector-label span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.query-history-panel {
   display: flex;
-  flex: 1;
-  min-height: 0;
+  flex-direction: column;
+  width: 100%;
+  padding-top: 4px;
+}
+
+.query-history-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.query-history-toolbar h4.ant-typography {
+  margin: 0 0 2px;
 }
 
 .query-history-scroll {
   width: 100%;
-  min-height: 0;
+  max-height: min(560px, 60vh);
   overflow-y: auto;
   overscroll-behavior: contain;
-}
-
-.query-history-panel-compact {
-  width: 320px;
-  max-width: calc(100vw - 110px);
-  max-height: min(360px, calc(100dvh - 180px));
-  padding: 0;
 }

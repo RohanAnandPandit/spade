@@ -14,7 +14,6 @@ import "./LandingPage.css";
 const LandingPage = observer(() => {
   const { authStore } = useStore();
   const { token } = theme.useToken();
-  const workspacePath = authStore.user ? "/workspace" : "/register";
 
   const landingStyle = {
     "--landing-bg": token.colorBgLayout,
@@ -29,85 +28,94 @@ const LandingPage = observer(() => {
     <main className="landing-page" style={landingStyle}>
       <section className="landing-hero">
         <div className="hero-copy">
-          <p className="eyebrow">SPARQL Analyser &amp; Data Explorer</p>
-          <h1>Understand linked data without losing the thread.</h1>
+          <p className="eyebrow">Explore connected data</p>
+          <h1>Find answers in complex data, then see the connections.</h1>
           <p className="hero-summary">
-            SPADE brings RDF exploration, SPARQL querying, and visual analysis
-            into one focused workspace. Inspect a dataset, shape a query, and
-            turn the results into a view that makes the relationships clear.
+            SPADE stands for SPARQL Analysis and Data Explorer. It helps you
+            understand what a dataset contains, ask precise questions, and turn
+            the answers into tables, charts, maps, or relationship diagrams. Try
+            it with our sample world dataset. No setup required.
           </p>
           <div className="hero-actions">
-            <Link to={workspacePath}>
+            <Link to="/try">
               <Button type="primary" size="large" icon={<PlayCircleOutlined />}>
-                {authStore.user ? "Open workspace" : "Start exploring"}
+                Try sample dataset
               </Button>
             </Link>
-            {!authStore.user && (
-              <Link className="secondary-action" to="/login">
-                Already have an account? Sign in
+            {authStore.user ? (
+              <Link className="secondary-action" to="/workspace">
+                Open workspace
+              </Link>
+            ) : (
+              <Link className="secondary-action" to="/register">
+                Or create an account
               </Link>
             )}
           </div>
         </div>
 
-        <div className="query-preview" aria-label="Example SPARQL query">
+        <div className="query-preview" aria-label="Sample data question">
           <div className="preview-bar">
-            <span>Query workspace</span>
+            <span>Sample question</span>
             <span className="preview-status">Ready</span>
           </div>
           <pre>
             <code>
-              <span className="query-keyword">SELECT</span> ?person ?name{"\n"}
+              <span className="query-comment">
+                # Which countries have the largest populations?
+              </span>
+              {"\n\n"}
+              <span className="query-keyword">SELECT</span> ?country ?population
+              {"\n"}
               <span className="query-keyword">WHERE</span> {" {"}
               {"\n"}
-              {"  "}?person a schema:Person ;{"\n"}
-              {"          "}schema:name ?name .{"\n"}
+              {"  "}?place a mondial:Country ;{"\n"}
+              {"         "}mondial:name ?country ;{"\n"}
+              {"         "}mondial:population ?population .{"\n"}
               {"}"}
               {"\n"}
-              <span className="query-keyword">LIMIT</span> 100
+              <span className="query-keyword">ORDER BY</span> DESC(?population)
+              {"\n"}
+              <span className="query-keyword">LIMIT</span> 10
             </code>
           </pre>
           <div className="preview-result">
-            <span>100 results</span>
-            <div className="result-bars" aria-hidden>
-              <i />
-              <i />
-              <i />
-              <i />
-              <i />
-            </div>
+            <span>10 countries</span>
+            <Link className="preview-try-link" to="/try">
+              Open sample dataset →
+            </Link>
           </div>
         </div>
       </section>
 
       <section className="landing-features" aria-labelledby="features-title">
         <div className="section-heading">
-          <p className="eyebrow">One connected workflow</p>
-          <h2 id="features-title">From unfamiliar graph to useful answer</h2>
+          <p className="eyebrow">One clear workflow</p>
+          <h2 id="features-title">From unfamiliar data to a useful answer</h2>
         </div>
         <div className="feature-grid">
           <article className="feature-card">
             <DatabaseOutlined aria-hidden />
-            <h3>Explore the dataset</h3>
+            <h3>See what is inside</h3>
             <p>
-              Inspect classes, properties, instances, and links before writing a
-              query, so the shape of the data is never a guessing game.
+              Browse the kinds of information available, inspect examples, and
+              understand how different records relate before asking questions.
             </p>
           </article>
           <article className="feature-card">
             <NodeIndexOutlined aria-hidden />
-            <h3>Build and analyse queries</h3>
+            <h3>Ask a precise question</h3>
             <p>
-              Work with SPARQL in a dedicated editor, revisit query history, and
-              examine how result columns relate to one another.
+              Start from a ready-made example or write your own query. Save
+              useful questions so you can return to them later.
             </p>
           </article>
           <article className="feature-card">
             <BarChartOutlined aria-hidden />
-            <h3>See the result clearly</h3>
+            <h3>Choose the clearest view</h3>
             <p>
-              Move beyond rows and columns with charts, maps, hierarchies, and
-              network views suited to the structure of each result.
+              Read the answer as a table, chart, map, hierarchy, or network,
+              depending on what makes the result easiest to understand.
             </p>
           </article>
         </div>
@@ -115,10 +123,10 @@ const LandingPage = observer(() => {
 
       <section className="landing-cta">
         <div>
-          <p className="eyebrow">Ready when your data is</p>
-          <h2>Bring your RDF data into focus.</h2>
+          <p className="eyebrow">Bring your own data</p>
+          <h2>Explore it in one focused workspace.</h2>
         </div>
-        <Link to={workspacePath}>
+        <Link to={authStore.user ? "/workspace" : "/register"}>
           <Button type="primary" size="large">
             {authStore.user ? "Return to workspace" : "Create an account"}
           </Button>

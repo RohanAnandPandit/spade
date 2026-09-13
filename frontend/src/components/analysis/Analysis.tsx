@@ -81,9 +81,10 @@ export const chartIcons = {
 type AnalysisProps = {
   queryAnalysis: QueryAnalysis | null;
   loading: boolean;
+  emptyMessage?: string;
 };
 
-const Analysis = ({ queryAnalysis, loading }: AnalysisProps) => {
+const Analysis = ({ queryAnalysis, loading, emptyMessage }: AnalysisProps) => {
   return (
     <Card
       title={
@@ -111,7 +112,12 @@ const Analysis = ({ queryAnalysis, loading }: AnalysisProps) => {
           )}
         </Space>
       ) : (
-        <Alert message="Select a repository and enter a query to see its analysis." />
+        <Alert
+          message={
+            emptyMessage ??
+            "Select a repository and enter a query to see its analysis."
+          }
+        />
       )}
     </Card>
   );

@@ -8,6 +8,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from backend.database import get_db
+from backend.demo import demo_rate_limiter
 from backend.main import app
 from backend.models import Base, RepositoryRecord, User, Workspace
 
@@ -36,6 +37,7 @@ def client(session_factory) -> Generator[TestClient]:
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
+    demo_rate_limiter.reset()
 
 
 def register(client: TestClient, email: str = "person@example.com"):
@@ -55,6 +57,43 @@ def test_health_and_protected_route(client: TestClient) -> None:
     response = client.get("/api/v1/repositories")
     assert response.status_code == 401
     assert response.json() == {"error": "Not authenticated"}
+
+
+def test_public_demo_runs_bounded_mondial_queries(
+    client: TestClient, monkeypatch
+) -> None:
+    def run_query(repository, *, query):
+        assert repository.endpoint.endswith("/mondial/sparql")
+        assert "LIMIT 10" in query
+        return {"header": ["country"], "data": [["France"]]}
+
+    monkeypatch.setattr("backend.api.RemoteRepository.run_query", run_query)
+    response = client.get(
+        "/api/v1/demo/sparql",
+        params={"query": "SELECT ?country WHERE { ?s ?p ?country } LIMIT 10"},
+    )
+    assert response.status_code == 200
+    assert response.json()["data"] == [["France"]]
+
+
+@pytest.mark.parametrize(
+    ("query", "message"),
+    [
+        ("SELECT * WHERE { ?s ?p ?o }", "must include LIMIT"),
+        ("SELECT * WHERE { ?s ?p ?o } LIMIT 251", "limited to 250"),
+        ("CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }", "SELECT and ASK"),
+        (
+            "SELECT * WHERE { SERVICE <https://example.com> { ?s ?p ?o } } LIMIT 10",
+            "SERVICE clauses",
+        ),
+    ],
+)
+def test_public_demo_rejects_unbounded_or_unsafe_queries(
+    client: TestClient, query: str, message: str
+) -> None:
+    response = client.get("/api/v1/demo/sparql", params={"query": query})
+    assert response.status_code == 400
+    assert message in response.json()["error"]
 
 
 def test_register_restore_and_logout(client: TestClient) -> None:
@@ -132,6 +171,48 @@ def test_repository_ownership_and_local_rdf_round_trip(client: TestClient) -> No
     )
     assert result.status_code == 200
     assert result.json()["data"] == [["urn:s"]]
+    properties = client.get(
+        "/api/v1/dataset/all-properties", params={"repository": "example"}
+    )
+    assert properties.status_code == 200
+    assert properties.json() == ["urn:p"]
+    types = client.get(
+        "/api/v1/dataset/all-types", params={"repository": "example"}
+    )
+    assert types.status_code == 200
+    assert types.json() == []
+
+
+def test_repository_connection_can_be_viewed_and_edited(client: TestClient) -> None:
+    assert register(client).status_code == 201
+    response = client.post(
+        "/api/v1/repositories/remote",
+        json={
+            "name": "original",
+            "description": "Original description",
+            "endpoint": "https://example.com/old",
+        },
+        headers=csrf_headers(client),
+    )
+    assert response.status_code == 201
+
+    response = client.put(
+        "/api/v1/repositories/original",
+        json={
+            "name": "updated",
+            "description": "A clearer description",
+            "endpoint": "https://example.com/sparql",
+        },
+        headers=csrf_headers(client),
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "name": "updated",
+        "description": "A clearer description",
+        "endpoint": "https://example.com/sparql",
+    }
+    assert client.get("/api/v1/repositories").json() == [response.json()]
 
 
 def test_one_user_cannot_access_another_users_repository(session_factory) -> None:

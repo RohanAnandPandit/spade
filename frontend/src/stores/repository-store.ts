@@ -3,7 +3,11 @@ import { makePersistable } from "mobx-persist-store";
 import { QueryRecord, RepositoryInfo } from "../types";
 import RootStore from "./root-store";
 import { clearQueryHistory, getQueryHistory } from "../api/queries";
-import { allRepositories, deleteRepository } from "../api/sparql";
+import {
+  allRepositories,
+  deleteRepository,
+  updateRepository,
+} from "../api/sparql";
 import { message } from "antd";
 
 type RepositoryStoreState = {
@@ -13,15 +17,13 @@ type RepositoryStoreState = {
 };
 
 class RepositoryStore {
-  rootStore: RootStore;
   state: RepositoryStoreState = {
     currentRepository: null,
     queryHistory: [],
     repositories: [],
   };
 
-  constructor(rootStore: RootStore) {
-    this.rootStore = rootStore;
+  constructor(_rootStore: RootStore) {
     makeAutoObservable(this);
     makePersistable(this, {
       name: "Repository",
@@ -32,7 +34,7 @@ class RepositoryStore {
           deserialize: (value) => JSON.parse(value),
         },
       ],
-      storage: window.localStorage,
+      storage: window.sessionStorage,
     });
   }
 
@@ -54,10 +56,11 @@ class RepositoryStore {
     return this.state.queryHistory;
   };
 
-  setCurrentRepository = (repositoryId: string) => {
+  setCurrentRepository = (repositoryId: string | null) => {
+    if (this.state.currentRepository === repositoryId) return;
     this.state.currentRepository = repositoryId;
     this.state.queryHistory = [];
-    void this.updateQueryHistory();
+    if (repositoryId) void this.updateQueryHistory();
   };
 
   updateQueryHistory = async () => {
@@ -71,7 +74,7 @@ class RepositoryStore {
         runInAction(() => {
           this.state.queryHistory = [];
         });
-        message.error("Could not load query history.");
+        message.error("Could not load saved queries.");
       }
     }
   };
@@ -104,15 +107,19 @@ class RepositoryStore {
         this.state.currentRepository = null;
         this.state.queryHistory = [];
       }
-      Object.entries(this.rootStore.queriesStore.openQueries()).forEach(
-        ([queryId, query]) => {
-          if (query.repository === repository) {
-            this.rootStore.queriesStore.setQueryRepository(queryId, null);
-          }
-        }
-      );
     });
     await this.updateRepositories();
+  };
+
+  updateRepository = async (repository: string, updates: RepositoryInfo) => {
+    const updated = await updateRepository(repository, updates);
+    runInAction(() => {
+      if (this.state.currentRepository === repository) {
+        this.state.currentRepository = updated.name;
+      }
+    });
+    await this.updateRepositories();
+    return updated;
   };
 
   reset = () => {
@@ -121,6 +128,7 @@ class RepositoryStore {
       queryHistory: [],
       repositories: [],
     };
+    window.sessionStorage.removeItem("Repository");
     window.localStorage.removeItem("Repository");
   };
 }

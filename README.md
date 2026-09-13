@@ -8,14 +8,18 @@ Vite.
 ## Stack
 
 - Python 3.13, FastAPI, SQLAlchemy 2.0, Alembic, psycopg 3, RDFLib, and pytest
-- PostgreSQL for users, sessions, workspaces, repositories, query history, and
+- PostgreSQL for users, sessions, workspaces, repositories, saved queries, and
   geographic fallback data
 - Argon2 password hashing and revocable database-backed browser sessions
 - React 18, TypeScript, Vite, pnpm, Vitest, MobX, and Ant Design
 
-An account is required to use the explorer. Browser sessions use secure,
+An account is required for a persistent workspace. Browser sessions use secure,
 HTTP-only cookies and CSRF protection. The public API is versioned under
 `/api/v1`; interactive OpenAPI documentation is available at `/docs`.
+
+Visitors can use the read-only Mondial trial at `/try` without an account. The
+trial is fixed to a public Mondial SPARQL endpoint, accepts only `SELECT` and
+`ASK`, and bounds query length, result size, and request rate.
 
 ## Development
 
@@ -30,9 +34,9 @@ uv run python -m backend.seed
 uv run uvicorn app:app --reload --port 5000
 ```
 
-The seed command creates an idempotent local test account and its workspace. It
-refuses to run when `BUILD=production`; optional `--email` and `--password`
-arguments can override the development defaults.
+The seed command creates an idempotent local test account, its workspace, and a
+Mondial remote repository. It refuses to run when `BUILD=production`; optional
+`--email` and `--password` arguments can override the development defaults.
 
 In another terminal:
 

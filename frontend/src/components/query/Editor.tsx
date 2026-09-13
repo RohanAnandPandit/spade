@@ -20,6 +20,7 @@ type QueryEditorProps = {
   repository: RepositoryId | null;
   queryAnalysis: QueryAnalysis | null;
   analysisLoading: boolean;
+  demo?: boolean;
 };
 
 const Editor = ({
@@ -29,41 +30,44 @@ const Editor = ({
   repository,
   queryAnalysis,
   analysisLoading,
+  demo = false,
 }: QueryEditorProps) => {
   const rootStore = useStore();
   const settings = rootStore.settingsStore;
   const [properties, setProperties] = useState<URI[]>([]);
   const [types, setTypes] = useState<URI[]>([]);
-  const { message } = AntdApp.useApp();
 
   useEffect(() => {
     let active = true;
-    if (!repository) {
+    if (!repository || demo) {
       setProperties([]);
       setTypes([]);
       return;
     }
-    Promise.all([getAllProperties(repository), getAllTypes(repository)])
-      .then(([nextProperties, nextTypes]) => {
-        if (active) {
-          setProperties(nextProperties);
-          setTypes(nextTypes);
-        }
-      })
-      .catch(() => {
-        if (active) message.error("Could not load repository completions.");
-      });
+    Promise.allSettled([
+      getAllProperties(repository),
+      getAllTypes(repository),
+    ]).then(([nextProperties, nextTypes]) => {
+      if (active) {
+        setProperties(
+          nextProperties.status === "fulfilled" ? nextProperties.value : []
+        );
+        setTypes(nextTypes.status === "fulfilled" ? nextTypes.value : []);
+      }
+    });
     return () => {
       active = false;
     };
-  }, [message, repository]);
+  }, [demo, repository]);
 
   return (
     <div className="query-editor-grid">
       <section className="query-editor-panel" aria-label="SPARQL query editor">
         <Space wrap className="query-editor-toolbar">
           <CopyToClipboard text={query} />
-          <SaveQuery repository={repository} query={query} name={queryName} />
+          {!demo && (
+            <SaveQuery repository={repository} query={query} name={queryName} />
+          )}
           <Templates templates={sparqlTemplates} />
         </Space>
         <CodeEditor
@@ -80,7 +84,15 @@ const Editor = ({
         />
       </section>
       <aside className="query-analysis-panel" aria-label="Query analysis">
-        <Analysis queryAnalysis={queryAnalysis} loading={analysisLoading} />
+        <Analysis
+          queryAnalysis={queryAnalysis}
+          loading={analysisLoading}
+          emptyMessage={
+            demo
+              ? "Query analysis and repository exploration are available when you create an account."
+              : undefined
+          }
+        />
       </aside>
     </div>
   );
@@ -126,13 +138,13 @@ const SaveQuery = observer(
           try {
             await addQueryToHistory(repository!, query, name);
             await repositoryStore.updateQueryHistory();
-            message.success("Query saved.");
+            message.success("Added to Saved queries.");
           } catch {
             message.error("Could not save the query.");
           }
         }}
       >
-        Save
+        Save query
       </Button>
     );
   }

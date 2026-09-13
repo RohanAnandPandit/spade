@@ -18,6 +18,13 @@ from sqlalchemy.orm import Session
 from backend.analysis import QUERY_PATH, query_analysis
 from backend.config import Settings, get_settings
 from backend.database import get_db
+from backend.demo import (
+    DEMO_MAX_QUERY_LENGTH,
+    MONDIAL_ENDPOINT,
+    MONDIAL_NAME,
+    demo_rate_limiter,
+    validate_demo_query,
+)
 from backend.graph_storage import deserialize_graph, parse_rdf_upload, serialize_graph
 from backend.models import (
     GeoBoundary,
@@ -38,6 +45,7 @@ from backend.schemas import (
     RegisterRequest,
     RemoteRepositoryRequest,
     RepositoryInfo,
+    RepositoryUpdateRequest,
     SavedQueryRequest,
     SavedQueryResponse,
     UserResponse,
@@ -97,6 +105,21 @@ def checked_result(result: dict):
 def health(db: Session = Depends(get_db)):
     db.execute(text("SELECT 1"))
     return {"status": "ok"}
+
+
+@router.get("/demo/sparql")
+def run_demo_query(
+    request: Request,
+    query: str = Query(min_length=1, max_length=DEMO_MAX_QUERY_LENGTH),
+):
+    client_id = request.client.host if request.client else "unknown"
+    demo_rate_limiter.check(client_id)
+    validate_demo_query(query)
+    return checked_result(
+        RemoteRepository(name=MONDIAL_NAME, endpoint=MONDIAL_ENDPOINT).run_query(
+            query=query
+        )
+    )
 
 
 @router.post("/auth/register", response_model=UserResponse, status_code=201)
@@ -214,6 +237,40 @@ def delete_repository(
     db.delete(record)
     db.commit()
     return {"name": repository_name}
+
+
+@router.put("/repositories/{repository_name}", response_model=RepositoryInfo)
+def update_repository(
+    repository_name: str,
+    payload: RepositoryUpdateRequest,
+    auth: AuthContext = Depends(require_csrf),
+    db: Session = Depends(get_db),
+):
+    record = get_repository_record(db, auth.workspace.id, repository_name)
+    name = payload.name.strip()
+    if not name:
+        raise HTTPException(status_code=422, detail="Repository name cannot be blank")
+    if record.kind == "remote":
+        if payload.endpoint is None or not payload.endpoint.strip():
+            raise HTTPException(
+                status_code=422, detail="A remote repository requires an endpoint"
+            )
+        record.endpoint = payload.endpoint.strip()
+    elif payload.endpoint is not None:
+        raise HTTPException(
+            status_code=422, detail="Uploaded repositories do not have an endpoint"
+        )
+    record.name = name
+    record.description = payload.description
+    try:
+        db.commit()
+    except IntegrityError as error:
+        db.rollback()
+        raise HTTPException(
+            status_code=409, detail="A repository with this name already exists"
+        ) from error
+    db.refresh(record)
+    return record
 
 
 @router.post("/repositories/remote", status_code=201)

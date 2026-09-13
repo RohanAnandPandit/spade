@@ -1,8 +1,9 @@
 import { observer } from "mobx-react-lite";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   Button,
+  Modal,
   Popconfirm,
   Popover,
   Space,
@@ -12,9 +13,7 @@ import {
   App as AntdApp,
 } from "antd";
 import { useStore } from "../../stores/store";
-import { MdDelete, MdHistory } from "react-icons/md";
-
-const { Title } = Typography;
+import { MdBookmark, MdDelete } from "react-icons/md";
 
 type QueryHistoryProps = {
   compact?: boolean;
@@ -24,51 +23,35 @@ const QueryHistory = observer(({ compact = false }: QueryHistoryProps) => {
   const rootStore = useStore();
   const queriesStore = rootStore.queriesStore;
   const repositoryStore = rootStore.repositoryStore;
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     void repositoryStore.updateQueryHistory();
   }, [repositoryStore]);
 
   const content = (
-    <Space
-      className={`query-history-panel ${
-        compact ? "query-history-panel-compact" : ""
-      }`}
-      direction="vertical"
-      style={{
-        width: compact ? 320 : "100%",
-        maxWidth: compact ? "calc(100vw - 110px)" : undefined,
-        justifyContent: "center",
-      }}
-    >
-      <Space
-        style={{
-          padding: 5,
-          margin: "auto",
-          width: "100%",
-          justifyContent: "center",
-        }}
-      >
-        <Title level={4}>Query History</Title>
+    <Space className="query-history-panel" direction="vertical">
+      <Space className="query-history-toolbar">
+        <Typography.Text type="secondary">
+          {repositoryStore.getCurrentRepository()
+            ? `Saved for ${repositoryStore.getCurrentRepository()}`
+            : "No repository selected"}
+        </Typography.Text>
         <DeleteHistory />
       </Space>
       {repositoryStore.getCurrentRepository() === null && (
-        <div style={{ padding: 5 }}>
-          <Alert message="Select a repository to see the queries you have run in the past" />
-        </div>
+        <Alert message="Choose a repository in the sidebar to view its saved queries." />
       )}
       {repositoryStore.getCurrentRepository() &&
       repositoryStore.getQueryHistory().length === 0 ? (
-        <div style={{ padding: 5 }}>
-          <Alert message="There are no saved queries for this repository" />
-        </div>
+        <Alert message="There are no saved queries for this repository." />
       ) : (
         <div className="query-history-scroll">
           <Timeline
             style={{ padding: 5, paddingTop: 10, maxWidth: "100%" }}
             items={repositoryStore
               .getQueryHistory()
-              .map(({ id, sparql, date, name, repository }) => {
+              .map(({ id, sparql, date, name }) => {
                 return {
                   children: (
                     <Popover
@@ -94,9 +77,9 @@ const QueryHistory = observer(({ compact = false }: QueryHistoryProps) => {
                           const qid = queriesStore.addQuery({
                             sparql,
                             name,
-                            repository,
                           });
                           queriesStore.setCurrentQueryId(qid);
+                          setOpen(false);
                         }}
                         style={{
                           height: "auto",
@@ -116,19 +99,46 @@ const QueryHistory = observer(({ compact = false }: QueryHistoryProps) => {
     </Space>
   );
 
-  if (compact) {
-    return (
-      <Popover content={content} placement="rightTop" trigger="click">
-        <Tooltip title="Query history" placement="right">
-          <Button aria-label="Query history" shape="circle">
-            <MdHistory size={20} />
-          </Button>
-        </Tooltip>
-      </Popover>
-    );
-  }
+  const button = (
+    <Button
+      aria-label={compact ? "Saved queries" : undefined}
+      shape={compact ? "circle" : undefined}
+      onClick={() => setOpen(true)}
+      style={compact ? undefined : { width: "100%" }}
+    >
+      {compact ? (
+        <MdBookmark size={20} />
+      ) : (
+        <Space>
+          <MdBookmark size={20} />
+          Saved queries
+        </Space>
+      )}
+    </Button>
+  );
 
-  return content;
+  return (
+    <>
+      <div style={compact ? undefined : { margin: 5 }}>
+        {compact ? (
+          <Tooltip title="Saved queries" placement="right">
+            {button}
+          </Tooltip>
+        ) : (
+          button
+        )}
+      </div>
+      <Modal
+        title="Saved queries"
+        open={open}
+        footer={null}
+        onCancel={() => setOpen(false)}
+        width={640}
+      >
+        {content}
+      </Modal>
+    </>
+  );
 });
 
 const DeleteHistory = observer(() => {
@@ -139,17 +149,17 @@ const DeleteHistory = observer(() => {
   const deleteHistory = async () => {
     try {
       await repositoryStore.clearQueryHistory();
-      message.success("Query history cleared.");
+      message.success("Saved queries deleted.");
     } catch {
-      message.error("Could not clear query history.");
+      message.error("Could not delete the saved queries.");
     }
   };
 
   return (
     <Popconfirm
-      title={"Clear entire history"}
-      description={`Are you sure?`}
-      okText="Yes"
+      title="Delete all saved queries?"
+      description="This cannot be undone."
+      okText="Delete all"
       cancelText="No"
       onConfirm={() => void deleteHistory()}
       style={{ justifyContent: "center" }}
@@ -157,9 +167,10 @@ const DeleteHistory = observer(() => {
       disabled={repositoryStore.queryHistory().length === 0}
     >
       <Button
+        aria-label="Delete all saved queries"
         danger
         disabled={repositoryStore.queryHistory().length === 0}
-        name="Clear history"
+        name="Delete all saved queries"
       >
         <MdDelete size={20} />
       </Button>
