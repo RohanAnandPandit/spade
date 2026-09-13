@@ -50,6 +50,8 @@ jobs:
           version: 12.4.1
           runtime: node@24
           cache: true
+          cache-dependency-path: frontend/pnpm-lock.yaml
+          package-json-file: frontend/package.json
           install: false
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
