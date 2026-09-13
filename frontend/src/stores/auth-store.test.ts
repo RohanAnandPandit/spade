@@ -14,6 +14,7 @@ const user = { id: "user-id", email: "person@example.com" };
 
 beforeEach(() => {
   window.localStorage.clear();
+  window.sessionStorage.clear();
   vi.clearAllMocks();
   vi.mocked(currentUser).mockRejectedValue(new Error("unauthenticated"));
   vi.mocked(login).mockResolvedValue(user);

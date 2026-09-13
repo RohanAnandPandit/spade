@@ -44,12 +44,30 @@ export async function deleteRepository(repository: string): Promise<string> {
   return response.data.name;
 }
 
+export async function updateRepository(
+  repository: string,
+  updates: RepositoryInfo
+): Promise<RepositoryInfo> {
+  const response = await api.put<RepositoryInfo>(
+    `/repositories/${encodeURIComponent(repository)}`,
+    updates
+  );
+  return response.data;
+}
+
 export async function runSparqlQuery(
   repository: RepositoryId,
   query: string
 ): Promise<QueryResults> {
   const response = await api.get<QueryResults>("/sparql", {
     params: { repository, query },
+  });
+  return response.data;
+}
+
+export async function runDemoSparqlQuery(query: string): Promise<QueryResults> {
+  const response = await api.get<QueryResults>("/demo/sparql", {
+    params: { query },
   });
   return response.data;
 }

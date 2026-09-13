@@ -1,9 +1,32 @@
+.spade-fullscreen {
+  min-width: 0;
+}
+
+.spade-fullscreen.fullscreen-enabled {
+  box-sizing: border-box;
+  height: 100%;
+  padding: 20px;
+  overflow: auto;
+}
+
+.fullscreen-control-row {
+  position: sticky;
+  z-index: 10;
+  top: 0;
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+  pointer-events: none;
+}
+
+.fullscreen-control-row .ant-btn {
+  pointer-events: auto;
+}
+
 .fullscreen-light {
   background-color: white;
-  padding: 50 !important;
 }
 
 .fullscreen-dark {
   background-color: black;
-  padding: 50 !important;
 }

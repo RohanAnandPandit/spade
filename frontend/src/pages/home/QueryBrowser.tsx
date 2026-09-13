@@ -4,27 +4,92 @@ import Query from "../../components/query/Query";
 import { useStore } from "../../stores/store";
 import { observer } from "mobx-react-lite";
 import "./QueryBrowser.css";
+import { QueryInfo } from "../../types";
 
 type TargetKey = React.MouseEvent | React.KeyboardEvent | string;
 
-const QueryBrowser = observer(() => {
+const TRIAL_QUERY = `PREFIX mondial: <http://www.semwebtech.org/mondial/10/meta#>
+
+SELECT ?country ?capital ?population
+WHERE {
+  ?countryResource a mondial:Country ;
+    mondial:name ?country ;
+    mondial:capital ?capitalResource ;
+    mondial:population ?population .
+  ?capitalResource mondial:name ?capital .
+}
+ORDER BY DESC(?population)
+LIMIT 25`;
+
+type QueryBrowserProps = {
+  demo?: boolean;
+};
+
+const QueryBrowser = observer(({ demo = false }: QueryBrowserProps) => {
   const rootStore = useStore();
-  const repositoryStore = rootStore.repositoryStore;
   const queriesStore = rootStore.queriesStore;
+  const [demoTotal, setDemoTotal] = React.useState(1);
+  const [demoCurrentQueryId, setDemoCurrentQueryId] = React.useState("1");
+  const [demoQueries, setDemoQueries] = React.useState<
+    Record<string, QueryInfo>
+  >({
+    "1": { name: "World countries", sparql: TRIAL_QUERY },
+  });
+  const openQueries = demo ? demoQueries : queriesStore.openQueries();
+  const currentQueryId = demo
+    ? demoCurrentQueryId
+    : queriesStore.currentQueryId();
 
   const onTabChange = (newActiveKey: string) => {
-    queriesStore.setCurrentQueryId(newActiveKey);
+    if (demo) setDemoCurrentQueryId(newActiveKey);
+    else queriesStore.setCurrentQueryId(newActiveKey);
   };
 
   const add = () => {
-    // So this changes the tab to the id of the new query
-    onTabChange(
-      queriesStore.addQuery({ repository: repositoryStore.currentRepository() })
-    );
+    if (demo) {
+      const nextTotal = demoTotal + 1;
+      const id = `${nextTotal}`;
+      setDemoTotal(nextTotal);
+      setDemoQueries((queries) => ({
+        ...queries,
+        [id]: { name: `Query ${id}`, sparql: "" },
+      }));
+      setDemoCurrentQueryId(id);
+    } else {
+      onTabChange(queriesStore.addQuery());
+    }
   };
 
   const remove = (targetKey: TargetKey) => {
-    queriesStore.removeQuery(targetKey as string);
+    const id = targetKey as string;
+    if (!demo) {
+      queriesStore.removeQuery(id);
+      return;
+    }
+    setDemoQueries((queries) => {
+      const remaining = Object.fromEntries(
+        Object.entries(queries).filter(([queryId]) => queryId !== id)
+      );
+      if (Object.keys(remaining).length === 0) {
+        const replacementId = `${demoTotal + 1}`;
+        setDemoTotal((total) => total + 1);
+        setDemoCurrentQueryId(replacementId);
+        return {
+          [replacementId]: { name: `Query ${replacementId}`, sparql: "" },
+        };
+      }
+      if (demoCurrentQueryId === id) {
+        setDemoCurrentQueryId(Object.keys(remaining).at(-1)!);
+      }
+      return remaining;
+    });
+  };
+
+  const updateDemoQuery = (id: string, updates: Partial<QueryInfo>) => {
+    setDemoQueries((queries) => ({
+      ...queries,
+      [id]: { ...queries[id]!, ...updates },
+    }));
   };
 
   const onEdit = (
@@ -43,13 +108,13 @@ const QueryBrowser = observer(() => {
       className="query-browser"
       type="editable-card"
       onChange={onTabChange}
-      activeKey={queriesStore.currentQueryId()}
+      activeKey={currentQueryId}
       onEdit={onEdit}
-      items={Object.keys(queriesStore.openQueries()).map((qid: string) => {
+      items={Object.keys(openQueries).map((qid: string) => {
         return {
           label: (
             <Input
-              title={queriesStore.openQueries()[qid].name}
+              title={openQueries[qid].name}
               onKeyDown={(e) => e.stopPropagation()}
               style={{
                 margin: 0,
@@ -59,16 +124,25 @@ const QueryBrowser = observer(() => {
                 borderLeft: "none",
                 borderRight: "none",
               }}
-              defaultValue={queriesStore.getQueryName(qid)}
-              onPressEnter={(e) =>
-                queriesStore.setQueryTitle(qid, e.currentTarget.value)
-              }
-              onBlur={(e) =>
-                queriesStore.setQueryTitle(qid, e.currentTarget.value)
-              }
+              defaultValue={openQueries[qid].name}
+              onPressEnter={(e) => {
+                if (demo) updateDemoQuery(qid, { name: e.currentTarget.value });
+                else queriesStore.setQueryTitle(qid, e.currentTarget.value);
+              }}
+              onBlur={(e) => {
+                if (demo) updateDemoQuery(qid, { name: e.currentTarget.value });
+                else queriesStore.setQueryTitle(qid, e.currentTarget.value);
+              }}
             />
           ),
-          children: <Query qid={qid} />,
+          children: (
+            <Query
+              qid={qid}
+              demo={demo}
+              demoQuery={demo ? openQueries[qid] : undefined}
+              onDemoQueryChange={(sparql) => updateDemoQuery(qid, { sparql })}
+            />
+          ),
           key: qid,
         };
       })}

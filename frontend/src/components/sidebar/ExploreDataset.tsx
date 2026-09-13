@@ -66,7 +66,7 @@ const ExploreDataset = ({
   ];
   const button = (
     <Button
-      aria-label={compact ? "Explore dataset" : undefined}
+      aria-label={compact ? "Explore selected repository" : undefined}
       type="primary"
       disabled={repositoryStore.currentRepository() === null}
       onClick={() => setIsModalOpen(true)}
@@ -78,7 +78,7 @@ const ExploreDataset = ({
       ) : (
         <Space>
           <MdOutlineExplore size={20} />
-          Explore dataset
+          Explore selected repository
         </Space>
       )}
     </Button>
@@ -86,7 +86,11 @@ const ExploreDataset = ({
 
   return (
     <>
-      {compact ? <Tooltip title="Explore dataset">{button}</Tooltip> : button}
+      {compact ? (
+        <Tooltip title="Explore selected repository">{button}</Tooltip>
+      ) : (
+        button
+      )}
       {repository && (
         <Modal
           title={`${repository}`}

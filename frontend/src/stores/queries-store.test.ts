@@ -2,7 +2,10 @@ import { beforeEach, expect, test } from "vitest";
 
 import RootStore from "./root-store";
 
-beforeEach(() => window.localStorage.clear());
+beforeEach(() => {
+  window.localStorage.clear();
+  window.sessionStorage.clear();
+});
 
 test("removing the final query creates a valid replacement tab", () => {
   const store = new RootStore().queriesStore;

@@ -41,7 +41,6 @@ export type QueryId = string;
 export type QueryInfo = {
   name: string;
   sparql: string;
-  repository: RepositoryId | null;
 };
 
 export type Metadata = {
