@@ -42,6 +42,20 @@ def test_missing_query_parameter_returns_400() -> None:
     assert response.get_json() == {"error": "Missing query parameter: username"}
 
 
+def test_production_routes_fall_back_to_spa(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    app_module = importlib.import_module("app")
+    (tmp_path / "index.html").write_text('<div id="root"></div>')
+    monkeypatch.setattr(app_module, "BUILD", "production")
+    monkeypatch.setattr(app_module, "FRONTEND_DIST", tmp_path)
+
+    response = app_module.app.test_client().get("/contact")
+
+    assert response.status_code == 200
+    assert response.data == b'<div id="root"></div>'
+
+
 def test_failed_rdf_import_does_not_return_an_empty_graph(tmp_path) -> None:
     invalid = tmp_path / "missing.rdf"
 

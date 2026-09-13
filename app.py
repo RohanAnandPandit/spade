@@ -26,12 +26,15 @@ from backend.util import import_data, run_query_file
 
 BUILD = os.environ.get("BUILD", "development")
 UPLOAD_FOLDER = Path(os.environ.get("UPLOAD_FOLDER", "imports"))
+FRONTEND_DIST = Path(__file__).resolve().parent / "frontend" / "dist"
 ALLOWED_EXTENSIONS = {"rdf", "xml", "nt", "n3", "ttl", "nt11", "txt"}
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 GEOGRAPHICAL_TYPES = {"city", "country", "continent", "administrative", "town"}
 
 if BUILD == "production":
-    app = Flask(__name__, static_url_path="", static_folder="frontend/dist")
+    # The catch-all route below serves both assets and browser routes. Registering
+    # Flask's static handler at `/` would intercept nested SPA routes with a 404.
+    app = Flask(__name__, static_folder=None)
 else:
     app = Flask(__name__)
     CORS(app, origins=["http://localhost:5173"])
@@ -352,12 +355,12 @@ def geographical_name():
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
 def serve(path: str):
-    if BUILD != "production" or app.static_folder is None:
+    if BUILD != "production":
         return jsonify(service="SPADE API", frontend="Run pnpm dev on port 5173")
-    static_path = Path(app.static_folder) / path
+    static_path = FRONTEND_DIST / path
     if path and static_path.is_file():
-        return send_from_directory(app.static_folder, path)
-    return send_from_directory(app.static_folder, "index.html")
+        return send_from_directory(FRONTEND_DIST, path)
+    return send_from_directory(FRONTEND_DIST, "index.html")
 
 
 if __name__ == "__main__":
