@@ -59,6 +59,11 @@ def test_health_and_protected_route(client: TestClient) -> None:
     assert response.json() == {"error": "Not authenticated"}
 
 
+def test_backend_does_not_serve_frontend_routes(client: TestClient) -> None:
+    assert client.get("/").status_code == 404
+    assert client.get("/workspace").status_code == 404
+
+
 def test_public_demo_runs_bounded_mondial_queries(
     client: TestClient, monkeypatch
 ) -> None:
@@ -176,9 +181,7 @@ def test_repository_ownership_and_local_rdf_round_trip(client: TestClient) -> No
     )
     assert properties.status_code == 200
     assert properties.json() == ["urn:p"]
-    types = client.get(
-        "/api/v1/dataset/all-types", params={"repository": "example"}
-    )
+    types = client.get("/api/v1/dataset/all-types", params={"repository": "example"})
     assert types.status_code == 200
     assert types.json() == []
 

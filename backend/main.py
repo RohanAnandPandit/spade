@@ -1,11 +1,10 @@
 from contextlib import asynccontextmanager
-from pathlib import Path
 
 import requests
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -15,7 +14,6 @@ from backend.database import get_db
 from backend.repository import RemoteRepositoryError
 
 settings = get_settings()
-FRONTEND_DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
 
 
 @asynccontextmanager
@@ -97,14 +95,3 @@ async def database_error(request: Request, error: SQLAlchemyError):
     return JSONResponse(
         status_code=503, content={"error": "Database service is unavailable"}
     )
-
-
-@app.get("/{path:path}", include_in_schema=False)
-def serve_frontend(path: str):
-    if settings.build != "production":
-        return {"service": "SPADE API", "frontend": "Run pnpm dev on port 5173"}
-    frontend_root = FRONTEND_DIST.resolve()
-    target = (frontend_root / path).resolve()
-    if path and target.is_relative_to(frontend_root) and target.is_file():
-        return FileResponse(target)
-    return FileResponse(frontend_root / "index.html")

@@ -53,12 +53,12 @@ server at `http://localhost:5000`.
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `BUILD` | `development` | Enables production cookies and built-frontend serving when set to `production`. |
+| `BUILD` | `development` | Enables secure production cookies when set to `production`. |
 | `DATABASE_URL` | local PostgreSQL | SQLAlchemy psycopg connection URL. |
 | `ALLOWED_ORIGINS` | `http://localhost:5173` | Exact comma-separated credentialed CORS origins. |
 | `SESSION_DAYS` | `7` | Fixed browser-session lifetime. |
 | `MAX_UPLOAD_BYTES` | `33554432` | Combined RDF data and schema upload limit. |
-| `VITE_API_URL` | empty | Optional API origin for split-origin deployments; local and production defaults are same-origin. |
+| `VITE_API_URL` | empty | API origin for the independently deployed frontend; leave empty only when a development proxy fronts the API. |
 
 ## Quality checks
 
@@ -95,14 +95,23 @@ IDs are retained and claimed when their browser creates an account.
 
 ## Production
 
-Build `frontend/dist`, apply migrations, and run the ASGI application:
+Deploy the API and frontend independently. Apply migrations and run the API:
 
 ```bash
-cd frontend && pnpm install --frozen-lockfile && pnpm build
-cd ..
 uv run alembic upgrade head
 BUILD=production uv run uvicorn app:app --host 0.0.0.0 --port 8000
 ```
 
-Use HTTPS in production so authentication cookies are transmitted. Snapshot and
-stop writes to the legacy MongoDB deployment before running the one-time import.
+Set `ALLOWED_ORIGINS` to the frontend's exact HTTPS origin. Build the frontend
+with the public API origin and publish `frontend/dist` to a static host:
+
+```bash
+cd frontend
+pnpm install --frozen-lockfile
+VITE_API_URL=https://api.example.com pnpm build
+```
+
+FastAPI serves only the API and its generated documentation; it does not serve
+the frontend build or provide a client-side routing fallback. Use HTTPS in
+production so authentication cookies are transmitted. Snapshot and stop writes
+to the legacy MongoDB deployment before running the one-time import.
