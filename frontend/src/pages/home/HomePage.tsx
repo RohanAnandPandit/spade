@@ -15,21 +15,23 @@ const HomePage = observer(() => {
   } = theme.useToken();
 
   return (
-    <Layout>
+    <Layout className="workspace-shell">
       <Sider
+        className="workspace-sidebar"
         collapsible
         collapsed={settings.sidebarCollapsed()}
         onCollapse={(value: boolean) => settings.setSidebarCollapsed(value)}
+        breakpoint="lg"
+        collapsedWidth={64}
         width={settings.sidebarWidth()}
         style={{ background: colorBgContainer }}
       >
         <Sidebar />
       </Sider>
-      <Layout style={{ padding: "0 10px " }}>
+      <Layout className="workspace-main">
         <Content
+          className="workspace-content"
           style={{
-            padding: 20,
-            margin: 0,
             background: colorBgContainer,
           }}
         >

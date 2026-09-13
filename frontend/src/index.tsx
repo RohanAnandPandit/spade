@@ -12,7 +12,7 @@ const root = ReactDOM.createRoot(
 root.render(
   <BrowserRouter>
     <Helmet>
-      <title>SPARQL Analyser & Data Explorer</title>
+      <title>SPADE</title>
     </Helmet>
     <App />
   </BrowserRouter>

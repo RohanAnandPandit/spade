@@ -62,14 +62,6 @@ const Query = observer(({ qid }: QueryProps) => {
   const [queryLoading, setQueryLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("editor");
 
-  const width = Math.floor(
-    window.innerWidth -
-      (settings.fullScreen() ? 0 : settings.sidebarWidth() + 200)
-  );
-  const height = Math.floor(
-    window.innerHeight - (settings.fullScreen() ? 250 : 50)
-  );
-
   const { message, notification } = AntdApp.useApp();
 
   const showNotification = (time: number) => {
@@ -115,7 +107,7 @@ const Query = observer(({ qid }: QueryProps) => {
       label: (
         <Space.Compact>
           <MdOutlineEditNote size={25} />
-          Query
+          <span className="query-tab-label-text">Query</span>
         </Space.Compact>
       ),
       children: (
@@ -123,8 +115,6 @@ const Query = observer(({ qid }: QueryProps) => {
           query={query}
           queryName={name}
           onChange={setQueryText}
-          width={width}
-          height={height}
           repository={repository}
           queryAnalysis={queryAnalysis}
           analysisLoading={analysisLoading}
@@ -136,7 +126,7 @@ const Query = observer(({ qid }: QueryProps) => {
       label: (
         <Space.Compact>
           <BsTable size={15} style={{ margin: 5 }} />
-          Results
+          <span className="query-tab-label-text">Results</span>
         </Space.Compact>
       ),
       children: <Results results={results} loading={queryLoading} />,
@@ -146,7 +136,7 @@ const Query = observer(({ qid }: QueryProps) => {
       label: (
         <Space.Compact title="Use CONSTRUCT for a graph">
           <BiNetworkChart size={20} style={{ margin: 5 }} />
-          Graph
+          <span className="query-tab-label-text">Graph</span>
         </Space.Compact>
       ),
       disabled:
@@ -166,7 +156,7 @@ const Query = observer(({ qid }: QueryProps) => {
         <Tooltip title="View recommended charts">
           <Space.Compact>
             <BsBarChartSteps size={15} style={{ margin: 5 }} />
-            Charts
+            <span className="query-tab-label-text">Charts</span>
           </Space.Compact>
         </Tooltip>
       ),
@@ -185,6 +175,7 @@ const Query = observer(({ qid }: QueryProps) => {
 
   return (
     <Tabs
+      className="query-view"
       activeKey={activeTab}
       items={items}
       onChange={(activeKey) => setActiveTab(activeKey)}
@@ -198,7 +189,7 @@ const Query = observer(({ qid }: QueryProps) => {
             loading={queryLoading}
             onClick={() => void executeQuery()}
           >
-            Run
+            <span className="run-button-label">Run</span>
           </Button>
         ),
         right: (
@@ -246,7 +237,9 @@ const SelectRepository = observer(
         <Button name="Choose repository">
           <Space>
             <RiGitRepositoryLine size={20} />
-            {repository || "Choose repository"}
+            <span className="repository-button-label">
+              {repository || "Choose repository"}
+            </span>
           </Space>
         </Button>
       </Dropdown>

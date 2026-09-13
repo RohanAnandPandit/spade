@@ -40,11 +40,11 @@ const QueryBrowser = observer(() => {
 
   return (
     <Tabs
+      className="query-browser"
       type="editable-card"
       onChange={onTabChange}
       activeKey={queriesStore.currentQueryId()}
       onEdit={onEdit}
-      style={{ padding: 0 }}
       items={Object.keys(queriesStore.openQueries()).map((qid: string) => {
         return {
           label: (

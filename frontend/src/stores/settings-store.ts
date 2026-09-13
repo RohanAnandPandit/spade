@@ -13,7 +13,7 @@ class SettingsStore {
   rootStore: RootStore;
   state: SettingsState = {
     darkMode: false,
-    sidebarWidth: 200,
+    sidebarWidth: 240,
     fullScreen: false,
     sidebarCollapsed: false,
     showAllCharts: false,

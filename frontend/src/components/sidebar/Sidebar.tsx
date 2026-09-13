@@ -7,6 +7,7 @@ import { RiGitRepositoryLine } from "react-icons/ri";
 import QueryHistory from "./QueryHistory";
 import ExploreDataset from "./ExploreDataset";
 import Repositories from "./Repositories";
+import "./Sidebar.css";
 
 const Sidebar = observer(() => {
   const rootStore = useStore();
@@ -16,17 +17,9 @@ const Sidebar = observer(() => {
 
   return (
     <div
-      style={
-        collapsed
-          ? {
-              alignItems: "center",
-              display: "flex",
-              flexDirection: "column",
-              gap: 8,
-              paddingTop: 12,
-            }
-          : { justifyContent: "center" }
-      }
+      className={`sidebar-content ${
+        collapsed ? "sidebar-content-collapsed" : "sidebar-content-expanded"
+      }`}
     >
       <SelectRepository compact={collapsed} />
       <ExploreDataset

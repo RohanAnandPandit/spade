@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useStore } from "../../stores/store";
 import CodeEditor from "./CodeEditor";
 import { QueryAnalysis, RepositoryId, URI } from "../../types";
-import { App as AntdApp, Button, Space, Row, Col } from "antd";
+import { App as AntdApp, Button, Space } from "antd";
 import { BiCopy, BiSave } from "react-icons/bi";
 import { getAllProperties, getAllTypes } from "../../api/dataset";
 import { removePrefix } from "../../utils/queryResults";
@@ -16,8 +16,6 @@ import { addQueryToHistory } from "../../api/queries";
 type QueryEditorProps = {
   query: string;
   onChange: (text: string) => void;
-  width: number;
-  height: number;
   queryName: string;
   repository: RepositoryId | null;
   queryAnalysis: QueryAnalysis | null;
@@ -27,8 +25,6 @@ type QueryEditorProps = {
 const Editor = ({
   query,
   onChange,
-  width,
-  height,
   queryName,
   repository,
   queryAnalysis,
@@ -63,9 +59,9 @@ const Editor = ({
   }, [message, repository]);
 
   return (
-    <Row>
-      <Col style={{ width: Math.floor(width / 2) }}>
-        <Space wrap>
+    <div className="query-editor-grid">
+      <section className="query-editor-panel" aria-label="SPARQL query editor">
+        <Space wrap className="query-editor-toolbar">
           <CopyToClipboard text={query} />
           <SaveQuery repository={repository} query={query} name={queryName} />
           <Templates templates={sparqlTemplates} />
@@ -81,14 +77,12 @@ const Editor = ({
             variables: getTokens(query).filter((token) => isVariable(token)),
           }}
           darkTheme={settings.darkMode()}
-          width={Math.floor(width / 2) - 10}
-          height={height}
         />
-      </Col>
-      <Col style={{ width: Math.floor(width / 2) }}>
+      </section>
+      <aside className="query-analysis-panel" aria-label="Query analysis">
         <Analysis queryAnalysis={queryAnalysis} loading={analysisLoading} />
-      </Col>
-    </Row>
+      </aside>
+    </div>
   );
 };
 
