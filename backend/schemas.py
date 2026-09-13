@@ -53,6 +53,12 @@ class RemoteRepositoryRequest(BaseModel):
     description: str = Field(max_length=5000)
 
 
+class RepositoryUpdateRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    description: str = Field(max_length=5000)
+    endpoint: str | None = Field(default=None, min_length=1, max_length=2048)
+
+
 class SavedQueryRequest(BaseModel):
     repository: str = Field(min_length=1, max_length=200)
     sparql: str = Field(min_length=1)

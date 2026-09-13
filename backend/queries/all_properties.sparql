@@ -1,4 +1,7 @@
 SELECT DISTINCT ?property
-WHERE {{
-    ?property a rdf:Property .
-}}
+WHERE {
+    ?subject ?property ?object .
+    FILTER(isIRI(?property))
+}
+ORDER BY ?property
+LIMIT 1000

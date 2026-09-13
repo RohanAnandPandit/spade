@@ -5,7 +5,8 @@ from sqlalchemy.orm import Session
 
 from backend.config import get_settings
 from backend.database import get_session_factory
-from backend.models import User, Workspace, utcnow
+from backend.demo import MONDIAL_DESCRIPTION, MONDIAL_ENDPOINT, MONDIAL_NAME
+from backend.models import RepositoryRecord, User, Workspace, utcnow
 from backend.schemas import RegisterRequest
 from backend.security import password_hash
 
@@ -23,6 +24,13 @@ def seed_initial_user(
     normalized_email = str(payload.email)
     user = db.scalar(select(User).where(User.email == normalized_email))
     if user is not None:
+        workspace = db.scalar(select(Workspace).where(Workspace.owner_id == user.id))
+        if workspace is None:
+            workspace = Workspace(owner_id=user.id, claimed_at=utcnow())
+            db.add(workspace)
+            db.flush()
+        seed_mondial_repository(db, workspace)
+        db.commit()
         return user, False
 
     user = User(
@@ -31,10 +39,36 @@ def seed_initial_user(
     )
     db.add(user)
     db.flush()
-    db.add(Workspace(owner_id=user.id, claimed_at=utcnow()))
+    workspace = Workspace(owner_id=user.id, claimed_at=utcnow())
+    db.add(workspace)
+    db.flush()
+    seed_mondial_repository(db, workspace)
     db.commit()
     db.refresh(user)
     return user, True
+
+
+def seed_mondial_repository(db: Session, workspace: Workspace) -> bool:
+    existing = db.scalar(
+        select(RepositoryRecord.id).where(
+            RepositoryRecord.workspace_id == workspace.id,
+            RepositoryRecord.name == MONDIAL_NAME,
+        )
+    )
+    if existing is not None:
+        return False
+    db.add(
+        RepositoryRecord(
+            workspace_id=workspace.id,
+            name=MONDIAL_NAME,
+            description=MONDIAL_DESCRIPTION,
+            kind="remote",
+            endpoint=MONDIAL_ENDPOINT,
+            rdf_data=None,
+            rdf_format=None,
+        )
+    )
+    return True
 
 
 def parse_args() -> argparse.Namespace:
@@ -57,7 +91,7 @@ def main() -> None:
         print(f"Created test user {user.email}")
         print(f"Password: {args.password}")
     else:
-        print(f"Test user {user.email} already exists; no changes made")
+        print(f"Test user {user.email} and Mondial repository are ready")
 
 
 if __name__ == "__main__":
