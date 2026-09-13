@@ -1,9 +1,4 @@
-// import { UnControlled as CodeMirror } from "react-codemirror2";
 import CodeMirror from "@uiw/react-codemirror";
-import "codemirror/addon/edit/closebrackets";
-import "codemirror/mode/sparql/sparql";
-import "codemirror/addon/hint/show-hint";
-import "codemirror/addon/hint/anyword-hint";
 import { StreamLanguage } from "@codemirror/language";
 import { sparql } from "@codemirror/legacy-modes/mode/sparql";
 import { duotoneLight, duotoneDark } from "@uiw/codemirror-theme-duotone";
@@ -35,10 +30,9 @@ const CodeEditor = ({
   completions,
   darkTheme,
   width,
-  height,
 }: CodeEditorProps) => {
   const myCompletions = (context: CompletionContext) => {
-    let word = context.matchBefore(/(\w|[<>?])*/)!;
+    const word = context.matchBefore(/(\w|[<>?])*/)!;
     if (word.from === word.to && !context.explicit) return null;
     return {
       from: word.from,
@@ -60,7 +54,7 @@ const CodeEditor = ({
         StreamLanguage.define(languageParsers[language]),
         autocompletion({ override: [myCompletions] }),
       ]}
-      onChange={(value: string, viewUpdate: any) => {
+      onChange={(value: string) => {
         setCode(value);
       }}
       theme={darkTheme ? duotoneDark : duotoneLight}

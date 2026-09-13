@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { PropertyType, URI } from "../../types";
+import { PropertyType, RepositoryId, URI } from "../../types";
 import { getInstances, getAllTypes } from "../../api/dataset";
 import {
   Collapse,
@@ -9,24 +9,30 @@ import {
   Spin,
   Tooltip,
   Typography,
+  message,
 } from "antd";
 import { removePrefix } from "../../utils/queryResults";
 import { PropertyValues } from "./DataProperties";
-import { useStore } from "../../stores/store";
 
-const Instances = ({ repository }) => {
-  const username = useStore().authStore.username!;
-
+const Instances = ({ repository }: { repository: RepositoryId }) => {
   const [allTypes, setAllTypes] = useState<URI[]>([]);
   const [type, setType] = useState<URI | null>(null);
   const [instances, setInstances] = useState<URI[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    getAllTypes(repository, username).then((res) => {
-      setAllTypes(res);
-    });
-  }, [repository, username]);
+    let active = true;
+    getAllTypes(repository)
+      .then((res) => {
+        if (active) setAllTypes(res);
+      })
+      .catch(() => {
+        if (active) message.error("Could not load repository classes.");
+      });
+    return () => {
+      active = false;
+    };
+  }, [repository]);
 
   return (
     <>
@@ -39,13 +45,18 @@ const Instances = ({ repository }) => {
           filterOption={(input, option) =>
             (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
           }
-          onChange={(value) => {
+          onChange={async (value) => {
             setLoading(true);
             setType(value);
-            getInstances(repository, value, username).then((res) => {
+            try {
+              const res = await getInstances(repository, value);
               setInstances(res);
+            } catch {
+              setInstances([]);
+              message.error("Could not load class instances.");
+            } finally {
               setLoading(false);
-            });
+            }
           }}
           options={allTypes.map((t) => {
             return {

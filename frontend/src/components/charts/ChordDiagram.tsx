@@ -1,10 +1,7 @@
 import { ResponsiveChord } from "@nivo/chord";
 import { QueryResults, URI, VariableCategories } from "../../types";
-import { useStore } from "../../stores/store";
-import { useMemo, useState } from "react";
-import randomColor from "randomcolor";
+import { useMemo } from "react";
 import { removePrefix } from "../../utils/queryResults";
-import { Space } from "antd";
 
 type ChordDiagramProps = {
   results: QueryResults;
@@ -19,20 +16,16 @@ const ChordDiagram = ({
   height,
   variables,
 }: ChordDiagramProps) => {
-  const rootStore = useStore();
-  const settings = rootStore.settingsStore;
   const { header, data } = results;
   const col1Idx = header.indexOf(variables.key[0] ?? variables.lexical[0]);
   const col2Idx = header.indexOf(variables.key[1] ?? variables.lexical[1]);
 
   const valueColumn = variables.scalar[0];
-  const [labels, setLabels] = useState<URI[]>([]);
-
-  const matrix: number[][] = useMemo(() => {
+  const { labels, matrix } = useMemo(() => {
     const uniqueLabels = new Set<URI>();
     const links: { [key: string]: { [key: string]: number } } = {};
     const valueIdx = results.header.indexOf(valueColumn);
-    for (let row of data) {
+    for (const row of data) {
       uniqueLabels.add(row[col1Idx]);
       uniqueLabels.add(row[col2Idx]);
 
@@ -50,15 +43,12 @@ const ChordDiagram = ({
     }
     const allLabels = Array.from(uniqueLabels);
 
-    setLabels(allLabels);
-
     const m = allLabels.map((label1) =>
       allLabels.map((label2) =>
-        links[label1] ? links[label1][label2] ?? 0 : 0
+        links[label1] ? (links[label1][label2] ?? 0) : 0
       )
     );
-    console.log(m);
-    return m;
+    return { labels: allLabels, matrix: m };
   }, [results.header, valueColumn, data, col1Idx, col2Idx]);
 
   return (

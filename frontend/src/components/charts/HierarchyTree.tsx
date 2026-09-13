@@ -43,7 +43,7 @@ export function getHierarchicalData(
 ): any {
   let dataFromTitle: any = {};
 
-  for (let row of results.data) {
+  for (const row of results.data) {
     const column = keyColumns.at(-1)!;
     const nameIndex = results.header.indexOf(column);
     const name = row[nameIndex];
@@ -52,7 +52,7 @@ export function getHierarchicalData(
     dataFromTitle[row[nameIndex]] = {
       name,
       color,
-      attributes: scalarColumns.reduce((ac, column) => {
+      attributes: scalarColumns.reduce<Record<string, string>>((ac, column) => {
         const columnIndex = results.header.indexOf(column);
         return {
           ...ac,
@@ -72,16 +72,16 @@ export function getHierarchicalData(
     const childTitle = keyColumns[i];
     const childTitleIndex = results.header.indexOf(childTitle);
 
-    const newDataFromTitle = {}; // Data with previous column as key
-    const parentChildren = {};
-    for (let row of results.data) {
+    const newDataFromTitle: Record<string, any> = {}; // Data with previous column as key
+    const parentChildren: Record<string, Set<string>> = {};
+    for (const row of results.data) {
       const parentValue = row[parentTitleIndex];
       const childValue = row[childTitleIndex];
       parentChildren[parentValue] = parentChildren[parentValue] ?? new Set();
       parentChildren[parentValue].add(childValue);
     }
 
-    for (let parentValue of Object.keys(parentChildren)) {
+    for (const parentValue of Object.keys(parentChildren)) {
       newDataFromTitle[parentValue] = newDataFromTitle[parentValue] ?? {
         name: parentValue,
         children: [],
@@ -92,7 +92,7 @@ export function getHierarchicalData(
       };
       const parentData = newDataFromTitle[parentValue];
       let groupColour = "";
-      for (let childValue of parentChildren[parentValue]) {
+      for (const childValue of parentChildren[parentValue]) {
         const childData = dataFromTitle[childValue];
 
         if (parentData.children.length > 0) {

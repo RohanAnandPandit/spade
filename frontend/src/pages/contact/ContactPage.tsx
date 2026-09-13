@@ -62,24 +62,24 @@ const ContactPage: React.FC = () => {
 const Links = ({ links }: any) => {
   return (
     <>
-        <Row gutter={16}>
-          {links.map(({ value, icon }: any, index: number) => (
-            <Col key={`col-${index}`} className="gutter-row" span={8}>
-              <a
-                key={`link-${index}`}
-                href={value}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <QRCode
-                  style={{ margin: "auto", marginTop: 5 }}
-                  value={value}
-                  icon={icon}
-                />
-              </a>
-            </Col>
-          ))}
-        </Row>
+      <Row gutter={16}>
+        {links.map(({ value, icon }: any, index: number) => (
+          <Col key={`col-${index}`} className="gutter-row" span={8}>
+            <a
+              key={`link-${index}`}
+              href={value}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <QRCode
+                style={{ margin: "auto", marginTop: 5 }}
+                value={value}
+                icon={icon}
+              />
+            </a>
+          </Col>
+        ))}
+      </Row>
     </>
   );
 };

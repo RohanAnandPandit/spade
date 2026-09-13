@@ -19,8 +19,8 @@ const ExploreDataset = ({ repository }: ExploreDatasetProps) => {
   const repositoryStore = rootStore.repositoryStore;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const width = Math.floor(window.screen.width * 0.8);
-  const height = Math.floor(window.screen.height * 0.75);
+  const width = Math.floor(window.innerWidth * 0.8);
+  const height = Math.floor(window.innerHeight * 0.75);
 
   const infoTabs: TabsProps["items"] = [
     {
@@ -82,11 +82,7 @@ const ExploreDataset = ({ repository }: ExploreDatasetProps) => {
           width={width}
           maskClosable
         >
-          <Tabs
-            defaultActiveKey="1"
-            items={infoTabs}
-            style={{ padding: 10 }}
-          />
+          <Tabs defaultActiveKey="1" items={infoTabs} style={{ padding: 10 }} />
         </Modal>
       )}
     </>

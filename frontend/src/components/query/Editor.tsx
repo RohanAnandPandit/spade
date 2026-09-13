@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useStore } from "../../stores/store";
 import CodeEditor from "./CodeEditor";
 import { QueryAnalysis, RepositoryId, URI } from "../../types";
-import { Button, Space, Row, Col } from "antd";
+import { App as AntdApp, Button, Space, Row, Col } from "antd";
 import { BiCopy, BiSave } from "react-icons/bi";
 import { getAllProperties, getAllTypes } from "../../api/dataset";
 import { removePrefix } from "../../utils/queryResults";
@@ -21,6 +21,7 @@ type QueryEditorProps = {
   queryName: string;
   repository: RepositoryId | null;
   queryAnalysis: QueryAnalysis | null;
+  analysisLoading: boolean;
 };
 
 const Editor = ({
@@ -31,25 +32,35 @@ const Editor = ({
   queryName,
   repository,
   queryAnalysis,
+  analysisLoading,
 }: QueryEditorProps) => {
   const rootStore = useStore();
   const settings = rootStore.settingsStore;
-  const authStore = rootStore.authStore;
-  const username = authStore.username!;
   const [properties, setProperties] = useState<URI[]>([]);
   const [types, setTypes] = useState<URI[]>([]);
+  const { message } = AntdApp.useApp();
 
   useEffect(() => {
-    if (repository) {
-      getAllProperties(repository, username).then((res) => {
-        setProperties(res);
-      });
-      getAllTypes(repository, username).then((res) => {
-        setTypes(res);
-      });
+    let active = true;
+    if (!repository) {
+      setProperties([]);
+      setTypes([]);
+      return;
     }
-  }, [repository, username]);
-
+    Promise.all([getAllProperties(repository), getAllTypes(repository)])
+      .then(([nextProperties, nextTypes]) => {
+        if (active) {
+          setProperties(nextProperties);
+          setTypes(nextTypes);
+        }
+      })
+      .catch(() => {
+        if (active) message.error("Could not load repository completions.");
+      });
+    return () => {
+      active = false;
+    };
+  }, [message, repository]);
 
   return (
     <Row>
@@ -75,7 +86,7 @@ const Editor = ({
         />
       </Col>
       <Col style={{ width: Math.floor(width / 2) }}>
-        <Analysis queryAnalysis={queryAnalysis} />
+        <Analysis queryAnalysis={queryAnalysis} loading={analysisLoading} />
       </Col>
     </Row>
   );
@@ -111,17 +122,20 @@ const SaveQuery = observer(
     repository: RepositoryId | null;
   }) => {
     const rootStore = useStore();
-    const username = rootStore.authStore.username!;
-
     const repositoryStore = rootStore.repositoryStore;
+    const { message } = AntdApp.useApp();
     return (
       <Button
         icon={<BiSave size={20} />}
         disabled={repository === null}
-        onClick={() => {
-          addQueryToHistory(repository!, query, name, username).then(() => {
-            repositoryStore.updateQueryHistory();
-          });
+        onClick={async () => {
+          try {
+            await addQueryToHistory(repository!, query, name);
+            await repositoryStore.updateQueryHistory();
+            message.success("Query saved.");
+          } catch {
+            message.error("Could not save the query.");
+          }
         }}
       >
         Save

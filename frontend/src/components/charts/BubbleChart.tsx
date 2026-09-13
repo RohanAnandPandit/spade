@@ -12,7 +12,7 @@ type BubbleChartProps = {
 };
 
 const BubbleChart = observer(
-  ({ results, width, height, variables }: BubbleChartProps) => {
+  ({ results, height, variables }: BubbleChartProps) => {
     const { header, data } = results;
     const keyIdx = header.indexOf(variables.key[0]);
     const xIdx = header.indexOf(variables.scalar[0]);

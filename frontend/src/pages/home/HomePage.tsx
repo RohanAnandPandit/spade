@@ -14,7 +14,6 @@ const HomePage = observer(() => {
     token: { colorBgContainer },
   } = theme.useToken();
 
-
   return (
     <Layout>
       <Sider

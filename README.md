@@ -1,150 +1,156 @@
-# SPADE (SPARQL Analysis and Data Explorer)
+# SPADE
 
-SPADE is a powerful tool for visualizing semantic data using RDF/OWL schemas. It provides an intuitive interface to explore and analyze semantic web data through a modern web application.
+SPADE (SPARQL Analysis and Data Explorer) is a web application for querying,
+analysing, and visualising RDF data. The current foundation uses a Flask API
+and a React 18 single-page application built with Vite.
 
-## Features
+## Current stack
 
-- Interactive visualization of RDF/OWL schemas
-- SPARQL query interface
-- Real-time data exploration
-- Support for multiple data sources including GraphDB
-- Geographic data visualization
+- Python 3.13, Flask, RDFLib, uv, pytest, and Ruff
+- React 18, TypeScript, Vite, pnpm, Vitest, and Testing Library
+- MongoDB-backed saved repositories and query history (transitional)
+- Local RDF files and remote SPARQL endpoints
 
-## Tech Stack
+SPADE has no login or authentication layer. It generates an anonymous workspace
+ID in browser storage and uses it to keep repositories and query history
+separate. Clearing browser storage creates a new workspace and makes the old
+workspace inaccessible from that browser. Do not expose this transitional
+version directly to the public internet; server-managed workspace sessions
+belong in the versioned PostgreSQL API.
 
-### Frontend
-- React with TypeScript
-- Modern UI components
-- Interactive data visualization
+MongoDB is not needed to install the project, import the backend, run tests, or
+build the frontend. Repository and saved-query endpoints currently need a
+MongoDB connection; this storage layer will be replaced by PostgreSQL in a
+separate modernization branch. No S3 or provider-specific deployment service is
+required.
 
-### Backend
-- Python with Flask
-- MongoDB for data storage
-- SPARQL endpoint integration
-- RESTful API
+## Prerequisites
 
-## Getting Started
+- Python 3.13
+- [uv](https://docs.astral.sh/uv/)
+- Node.js 22.12 or newer
+- pnpm 12.4.1 (the version is pinned in `frontend/package.json`)
+- MongoDB only when exercising persistence endpoints
 
-### Prerequisites
+## Development setup
 
-- Node.js (v14 or later)
-- Python 3.8+
-- MongoDB
-- Yarn package manager
-- GraphDB (optional, for specific datasets)
+Install the locked backend dependencies from the repository root:
 
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone [repository-url]
-   cd schema-and-data-visualiser
-   ```
-
-2. **Set up the backend**
-   ```bash
-   # Create and activate a virtual environment
-   python -m venv venv
-   source venv/bin/activate  # On Windows: .\venv\Scripts\activate
-   
-   # Install Python dependencies
-   pip install -r requirements.txt
-   ```
-
-3. **Set up the frontend**
-   ```bash
-   cd frontend
-   yarn install
-   ```
-
-### Configuration
-
-1. **Backend Configuration**
-   Create a `.env` file in the root directory with the following variables:
-   ```env
-   BUILD=development  # or 'production'
-   MONGODB_USERNAME=your_username
-   MONGODB_PASSWORD=your_password
-   MONGODB_URL=your_mongodb_connection_string
-   TEST_ENDPOINT=  # Optional: leave empty if not using Mondial database locally
-   FLASK_SECRET_KEY=your_secret_key
-   ```
-
-2. **Frontend Configuration**
-   Create a `.env` file in the `frontend` directory:
-   ```env
-   REACT_APP_BACKEND_API=http://localhost:5000
-   ```
-
-### Database Setup
-
-The application uses MongoDB with the following collections:
-- `queries`: Stores saved SPARQL queries
-- `repositories`: Manages data repositories
-- `geoData`: Contains GeoJSON data for countries and cities
-
-For GraphDB integration (optional):
-1. Download and install GraphDB
-2. Create a new repository
-3. Import `mondial.n3` and `mondial-meta.n3` files (available at [Mondial Database](https://www.dbis.informatik.uni-goettingen.de/Mondial/))
-
-## Running the Application
-
-### Development Mode
-
-1. **Start the backend**
-   ```bash
-   # In the root directory
-   python app.py
-   ```
-
-2. **Start the frontend**
-   ```bash
-   # In the frontend directory
-   yarn start
-   ```
-   The application will be available at `http://localhost:3000`
-
-### Production Build
-
-1. Build the frontend:
-   ```bash
-   cd frontend
-   rm -rf build  # Remove existing build if any
-   yarn build
-   ```
-
-2. The Flask server will serve the frontend build when running `app.py`
-
-## Project Structure
-
-```
-schema-and-data-visualiser/
-├── backend/               # Backend Python code
-│   ├── queries/          # SPARQL query templates
-│   ├── tests/            # Backend tests
-│   ├── __init__.py
-│   ├── analysis.py       # Data analysis logic
-│   ├── db.py            # Database operations
-│   └── ...
-├── frontend/             # Frontend React application
-│   ├── public/           # Static files
-│   └── src/              # Source code
-├── .env                  # Environment variables
-├── app.py               # Main Flask application
-└── requirements.txt     # Python dependencies
+```bash
+uv sync --locked
 ```
 
-## Deployment
+Install the locked frontend dependencies:
 
-The application can be deployed to Heroku or similar platforms. A Heroku configuration is already set up in the repository.
+```bash
+cd frontend
+pnpm install --frozen-lockfile
+```
 
+Copy the example environment files if you need to customise the defaults:
 
-## Contributing
+```bash
+cp .env.example .env
+cp frontend/.env.example frontend/.env
+```
 
-Contributions are welcome! Please feel free to submit issues or pull requests.
+Start the API from the repository root:
 
-## Contact
+```bash
+uv run flask --app app run --debug --port 5000
+```
 
-For any questions or suggestions, please contact the project maintainer.
+In another terminal, start Vite:
 
+```bash
+cd frontend
+pnpm dev
+```
+
+The frontend runs at `http://localhost:5173` and calls the API at
+`http://localhost:5000` by default.
+
+In VS Code, run the `SPADE: Start App` task to start both development servers in
+parallel. The `SPADE: Backend` and `SPADE: Frontend` tasks are also available
+when only one service is needed.
+
+## Environment variables
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `BUILD` | `development` | Set to `production` to serve `frontend/dist` from Flask. |
+| `MONGODB_URL` | unset | Transitional MongoDB connection string for repository and query persistence. |
+| `UPLOAD_FOLDER` | `imports` | Local directory used by the upload endpoint. |
+| `VITE_API_URL` | `http://localhost:5000` | Frontend API origin; set in `frontend/.env`. |
+
+If `MONGODB_URL` is unset, persistence endpoints return a controlled `503`
+response instead of preventing the application from starting.
+
+## Quality checks
+
+Run the backend checks from the repository root:
+
+```bash
+uv run ruff format --check backend app.py
+uv run ruff check backend app.py
+uv run pytest --cov=backend --cov-report=term-missing
+```
+
+Run the frontend checks from `frontend/`:
+
+```bash
+pnpm format:check
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+```
+
+GitHub Actions runs these checks and audits production dependencies on pull
+requests and pushes to `main`.
+
+## Production build
+
+Build the frontend:
+
+```bash
+cd frontend
+pnpm install --frozen-lockfile
+pnpm build
+```
+
+Then run Flask with any WSGI-compatible host:
+
+```bash
+BUILD=production uv run gunicorn app:app
+```
+
+Flask serves the generated `frontend/dist` directory, including client-side
+routes. Deployment configuration is intentionally provider-neutral.
+
+## Repository layout
+
+```text
+.
+├── app.py                  # Flask application and API routes
+├── backend/                # Analysis, repositories, persistence, and tests
+├── frontend/               # React, TypeScript, Vite, and frontend tests
+├── pyproject.toml          # Direct Python dependencies and tool settings
+├── uv.lock                 # Locked Python dependency graph
+└── .github/workflows/ci.yml
+```
+
+## Modernization roadmap
+
+This foundation deliberately keeps the existing Flask API, MongoDB persistence,
+MobX stores, and chart catalogue to keep the first migration reviewable. Planned
+follow-up branches are:
+
+1. `codex/postgres-fastapi`: PostgreSQL, SQLAlchemy, Alembic, FastAPI, and a
+   versioned API that works with local PostgreSQL, Neon, or Supabase.
+2. `codex/frontend-architecture`: React 19, generated API contracts, TanStack
+   Query, Zustand, and an accessibility-focused interface refresh.
+3. `codex/visualization-consolidation`: typed chart transformations and a
+   smaller set of maintained visualisation libraries.
+4. `codex/security-and-deployment`: SSRF protection, quotas, rate limits,
+   cleanup policies, provider-neutral containers, and end-to-end tests.

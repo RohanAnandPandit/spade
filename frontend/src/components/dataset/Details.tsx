@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { Input, Space, Typography } from "antd";
 import { PropertyValues } from "./DataProperties";
-import { PropertyType, URI } from "../../types";
+import { PropertyType, RepositoryId, URI } from "../../types";
 import { isURL } from "../../utils/queryResults";
 
-const Details = ({ repository }) => {
+const Details = ({ repository }: { repository: RepositoryId }) => {
   const [uri, setUri] = useState<URI>("");
   return (
     <Space direction="vertical" style={{ width: "100%" }}>
-      <Space.Compact direction="vertical"  style={{ width: "100%" }}>
+      <Space.Compact direction="vertical" style={{ width: "100%" }}>
         <Typography.Text>
           Enter a URI to view its data properties
         </Typography.Text>

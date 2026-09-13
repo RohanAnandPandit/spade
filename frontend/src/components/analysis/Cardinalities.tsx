@@ -1,7 +1,7 @@
-import { Card, Skeleton, Space, Statistic } from "antd";
+import { Card, Space, Statistic } from "antd";
 import { QueryResults, VariableCategories } from "../../types";
 import { uniqueValues } from "../../utils/queryResults";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
 type CardinatlitiesProps = {
   results: QueryResults;
@@ -25,21 +25,14 @@ type ColumnCardinalityProps = {
   column: string;
 };
 const ColumnCardinality = ({ results, column }: ColumnCardinalityProps) => {
-  const [loading, setLoading] = useState<boolean>(false);
-
   const values = useMemo(() => {
     const index = results.header.indexOf(column);
-    setLoading(true);
-    const values = uniqueValues(results.data, index).length;
-    setLoading(false);
-    return values;
+    return uniqueValues(results.data, index).length;
   }, [results, column]);
 
   return (
     <Card bordered={false} hoverable>
-      <Skeleton loading={loading}>
-        <Statistic key={column} title={column} value={values} />
-      </Skeleton>
+      <Statistic key={column} title={column} value={values} />
     </Card>
   );
 };

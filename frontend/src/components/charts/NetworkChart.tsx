@@ -23,18 +23,26 @@ const NetworkChart = ({
   );
   const valueIndex = header.indexOf(variables.scalar[0]);
 
-  const links: Triplet[] = useMemo(
-    () =>
-      data.map((row) => [
-        row[fromIndex],
-        valueIndex > 0 ? row[valueIndex] : "",
-        row[toIndex],
-      ]),
+  const links = useMemo(
+    () => toNetworkLinks(data, fromIndex, toIndex, valueIndex),
     [data, fromIndex, toIndex, valueIndex]
   );
   return (
     <GraphVis links={links} width={width} height={height} interactive={false} />
   );
 };
+
+export function toNetworkLinks(
+  data: string[][],
+  fromIndex: number,
+  toIndex: number,
+  valueIndex: number
+): Triplet[] {
+  return data.map((row) => [
+    row[fromIndex],
+    valueIndex >= 0 ? row[valueIndex] : "",
+    row[toIndex],
+  ]);
+}
 
 export default NetworkChart;

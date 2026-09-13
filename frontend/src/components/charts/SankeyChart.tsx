@@ -15,7 +15,7 @@ function getNodesAndLinks(
   const valueColIndex = results.header.indexOf(valueCol);
   const idToNode: { [key: string]: { id: string; nodeColor: string } } = {};
   const links: { source: string; target: string; value: number }[] = [];
-  for (let row of results.data) {
+  for (const row of results.data) {
     const nodeA = removePrefix(row[colAIndex]);
     const nodeB = removePrefix(row[colBIndex]);
     if (!idToNode[nodeA]) {
@@ -56,7 +56,7 @@ const SankeyChart = ({
     <div style={{ width, height: 2 * height }}>
       <ResponsiveSankey
         data={data}
-        margin={{right: 160, left: 50 }}
+        margin={{ right: 160, left: 50 }}
         align="justify"
         colors={{ scheme: "category10" }}
         nodeOpacity={1}

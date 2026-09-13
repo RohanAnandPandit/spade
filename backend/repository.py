@@ -1,93 +1,82 @@
-from rdflib import Graph
+from abc import ABC, abstractmethod
+
 import requests
-import urllib
+from rdflib import Graph
 
-from backend.util import import_data, convert_sparql_json_result
+from backend.util import convert_sparql_json_result
 
-BAD_REQUEST = 400
+REMOTE_TIMEOUT = (5, 30)
+USER_AGENT = "SPADE/0.1 (+https://github.com/rohanp/spade)"
 
 
-class RDFRepository:
-    def __init__(self, *, name):
+class RemoteRepositoryError(RuntimeError):
+    """Raised when a remote SPARQL endpoint returns an unusable response."""
+
+
+class RDFRepository(ABC):
+    def __init__(self, *, name: str):
         self.name = name
 
+    @abstractmethod
     def run_query(self, *, query: str):
-        pass
+        raise NotImplementedError
 
 
 class LocalRepository(RDFRepository):
-    def __init__(self, *, name, graph: Graph):
+    def __init__(self, *, name: str, graph: Graph):
         super().__init__(name=name)
         self.graph = graph
 
     def run_query(self, *, query: str):
         try:
             result = self.graph.query(query)
+        except Exception as error:  # rdflib exposes parser-specific exception types
+            return {"header": [], "data": [], "error": str(error)}
 
-            if result.type == 'SELECT':
-                header = [str(column) for column in result.vars]
-                data = [[str(value) for value in row] for row in result]
-            elif result.type == 'BOOL':
-                return {'header': [], 'data': [], 'boolean': bool(result)}
-            else:
-                header = ['Subject', 'Predicate', 'Object']
-                data = [[str(value) for value in row] for row in result]
-
-            return {'header': header, 'data': data}
-
-        except Exception as e:
-            return {'header': [], 'data': [], 'error': str(e)}
+        if result.type == "SELECT":
+            header = [str(column) for column in result.vars]
+            data = [[str(value) for value in row] for row in result]
+        elif result.type == "ASK":
+            return {"header": [], "data": [], "boolean": bool(result)}
+        else:
+            header = ["Subject", "Predicate", "Object"]
+            data = [[str(value) for value in row] for row in result]
+        return {"header": header, "data": data}
 
 
 class RemoteRepository(RDFRepository):
-    def __init__(self, *, name, endpoint):
+    accepted_formats = (
+        "application/sparql-results+json",
+        "application/x-graphdb-table-results+json",
+    )
+
+    def __init__(self, *, name: str, endpoint: str):
         super().__init__(name=name)
         self.endpoint = endpoint
 
     def run_query(self, *, query: str):
-        accepted_formats = ['application/sparql-results+json',
-                            'application/x-graphdb-table-results+json']
-        NOT_ACCEPTABLE = 406
-        OK = 200
-        result = None
-        response = None
-        for format in accepted_formats:
-            response = requests.get(
-                f'{self.endpoint}?query={urllib.parse.quote(query, safe="")}',
-                headers={'Accept': format})
-            response.encoding = 'utf-8'
-            if response.status_code == NOT_ACCEPTABLE:
+        last_response = None
+        for accepted_format in self.accepted_formats:
+            last_response = requests.get(
+                self.endpoint,
+                params={"query": query},
+                headers={"Accept": accepted_format, "User-Agent": USER_AGENT},
+                timeout=REMOTE_TIMEOUT,
+            )
+            if last_response.status_code == 406:
                 continue
-            if response.status_code == OK:
-                result = response.json()
-                break
+            if last_response.ok:
+                try:
+                    return convert_sparql_json_result(last_response.json())
+                except (KeyError, TypeError, ValueError) as error:
+                    raise RemoteRepositoryError(
+                        "Remote SPARQL endpoint returned invalid JSON results"
+                    ) from error
+            raise RemoteRepositoryError(
+                f"Remote SPARQL endpoint returned HTTP {last_response.status_code}"
+            )
 
-        if not result:
-            return {'error': response.text, 'header': [], 'data': []}
-
-        return convert_sparql_json_result(result)
-
-
-if __name__ == '__main__':
-    graph = import_data(
-        data_url='https://www.dbis.informatik.uni-goettingen.de/Mondial'
-                 '/Mondial-RDF/mondial.n3',
-        schema_url='https://www.dbis.informatik.uni-goettingen.de/Mondial'
-                   '/Mondial-RDF/mondial-meta.n3 '
-    )
-    repo = LocalRepository(name="mondial", graph=graph)
-
-    qry = '''
-    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-    PREFIX : <http://www.semwebtech.org/mondial/10/meta#>
-    
-    SELECT ?inflation ?unemployment
-    WHERE {
-      ?c rdf:type :Country ;
-        :name "India" ;
-        :inflation ?inflation ;
-        :unemployment ?unemployment .
-    }
-    '''
-    print(repo.run_query(query=qry))
+        status = last_response.status_code if last_response is not None else "unknown"
+        raise RemoteRepositoryError(
+            f"Remote SPARQL endpoint did not provide a supported response ({status})"
+        )

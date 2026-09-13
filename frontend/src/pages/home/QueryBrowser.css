@@ -1,7 +1,19 @@
-:where(.css-dev-only-do-not-override-1km3mtt).ant-tabs-card >.ant-tabs-nav .ant-tabs-tab, :where(.css-dev-only-do-not-override-1km3mtt).ant-tabs-card >div>.ant-tabs-nav .ant-tabs-tab {
-    padding: 2px;
+:where(.css-dev-only-do-not-override-1km3mtt).ant-tabs-card
+  > .ant-tabs-nav
+  .ant-tabs-tab,
+:where(.css-dev-only-do-not-override-1km3mtt).ant-tabs-card
+  > div
+  > .ant-tabs-nav
+  .ant-tabs-tab {
+  padding: 2px;
 }
 
-:where(.css-dev-only-do-not-override-huyzdd).ant-tabs-card >.ant-tabs-nav .ant-tabs-tab, :where(.css-dev-only-do-not-override-huyzdd).ant-tabs-card >div>.ant-tabs-nav .ant-tabs-tab {
-    padding: 2px;
+:where(.css-dev-only-do-not-override-huyzdd).ant-tabs-card
+  > .ant-tabs-nav
+  .ant-tabs-tab,
+:where(.css-dev-only-do-not-override-huyzdd).ant-tabs-card
+  > div
+  > .ant-tabs-nav
+  .ant-tabs-tab {
+  padding: 2px;
 }

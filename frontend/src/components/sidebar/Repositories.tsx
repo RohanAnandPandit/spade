@@ -12,12 +12,13 @@ import {
   Popconfirm,
   Segmented,
   Spin,
+  App as AntdApp,
 } from "antd";
 import { addLocalRepository, addRemoteRepository } from "../../api/sparql";
 import { useStore } from "../../stores/store";
 import { observer } from "mobx-react-lite";
 import { SlMagnifier } from "react-icons/sl";
-import { RepositoryId, RepositoryInfo } from "../../types";
+import { RepositoryInfo } from "../../types";
 import { AiFillApi } from "react-icons/ai";
 import { MdDelete } from "react-icons/md";
 
@@ -53,50 +54,42 @@ const Repositories = observer(() => {
 const AddRepository = () => {
   const rootStore = useStore();
   const repositoryStore = rootStore.repositoryStore;
-  const authStore = rootStore.authStore;
 
   const [type, setType] = useState<string>("remote");
   const [success, setSuccess] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const { message } = AntdApp.useApp();
 
   if (success) {
     return <Alert message="The repository was added successfully!" />;
   }
 
-  const onFinish = (values: any) => {
+  const onFinish = async (values: {
+    name: string;
+    endpoint?: string;
+    description: string;
+    dataUrl?: string;
+    schemaUrl?: string;
+  }) => {
     const { name, endpoint, description, dataUrl, schemaUrl } = values;
     setLoading(true);
-    if (endpoint) {
-      addRemoteRepository(
-        name,
-        endpoint,
-        description,
-        authStore.username!
-      ).then((repositoryId: RepositoryId) => {
-        setSuccess(true);
-        setLoading(false);
-        repositoryStore.updateRepositories();
-        setTimeout(() => setSuccess(false), 1000);
-      });
-    } else {
-      addLocalRepository(
-        name,
-        dataUrl,
-        schemaUrl,
-        description,
-        authStore.username!
-      ).then((repositoryId: RepositoryId) => {
-        setSuccess(true);
-        setLoading(false);
-        repositoryStore.updateRepositories();
-        setTimeout(() => setSuccess(false), 1000);
-      });
+    try {
+      if (endpoint) {
+        await addRemoteRepository(name, endpoint, description);
+      } else {
+        await addLocalRepository(name, dataUrl!, schemaUrl!, description);
+      }
+      await repositoryStore.updateRepositories();
+      setSuccess(true);
+      window.setTimeout(() => setSuccess(false), 1000);
+    } catch {
+      message.error("Could not add the repository.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const onFinishFailed = (errorInfo: any) => {
-    console.log("Failed:", errorInfo);
-  };
+  const onFinishFailed = () => message.warning("Check the highlighted fields.");
 
   return (
     <Form
@@ -219,6 +212,16 @@ type DeleteRepositoryProps = {
 const DeleteRepository = observer(({ repository }: DeleteRepositoryProps) => {
   const rootStore = useStore();
   const repositoryStore = rootStore.repositoryStore;
+  const { message } = AntdApp.useApp();
+
+  const removeRepository = async () => {
+    try {
+      await repositoryStore.deleteRepository(repository);
+      message.success("Repository deleted.");
+    } catch {
+      message.error("Could not delete the repository.");
+    }
+  };
 
   return (
     <Popconfirm
@@ -226,7 +229,7 @@ const DeleteRepository = observer(({ repository }: DeleteRepositoryProps) => {
       description={`Are you sure?`}
       okText="Yes"
       cancelText="No"
-      onConfirm={() => repositoryStore.deleteRepository(repository)}
+      onConfirm={() => void removeRepository()}
       style={{ justifyContent: "center" }}
       placement="top"
     >

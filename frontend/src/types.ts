@@ -75,7 +75,7 @@ export enum ChartType {
   SPIDER = "Spider",
   NETWORK = "Network",
   AREA = "Area",
-  GRAPH = 'Graph',
+  GRAPH = "Graph",
 }
 
 export enum CategoryType {
@@ -113,11 +113,11 @@ export enum RelationType {
   MANY_TO_MANY = "Many-to-many",
 }
 
-export type Coordinates = [number, number][] | [number, number][][];
+export type Coordinates = [number, number] | Coordinates[];
 
 export type GeoData = {
   region: string;
   name: string;
-  coordinates: any;
+  coordinates: Coordinates | null;
   type: string;
 };

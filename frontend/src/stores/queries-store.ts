@@ -63,7 +63,7 @@ class QueriesStore {
     this.state.openQueries[id]!.sparql = sparql;
   };
 
-  setQueryRepository = (id, repositoryId: RepositoryId | null) => {
+  setQueryRepository = (id: string, repositoryId: RepositoryId | null) => {
     this.state.openQueries[id]!.repository = repositoryId;
   };
 
@@ -71,7 +71,7 @@ class QueriesStore {
     if (!Object.keys(this.state.openQueries).includes(id)) {
       return "";
     }
-    return this.state.openQueries[this.currentQueryId()]!;
+    return this.state.openQueries[id]!;
   };
 
   setCurrentQuery = (sparql: string) => {
@@ -109,6 +109,15 @@ class QueriesStore {
 
   removeQuery = (qid: string) => {
     delete this.state.openQueries[qid];
+    const remainingIds = Object.keys(this.state.openQueries);
+    if (remainingIds.length === 0) {
+      const replacementId = this.addQuery({});
+      this.setCurrentQueryId(replacementId);
+      return;
+    }
+    if (this.state.currentQueryId === qid) {
+      this.setCurrentQueryId(remainingIds.at(-1)!);
+    }
   };
 }
 
