@@ -1,0 +1,52 @@
+.sidebar-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.sidebar-content-expanded {
+  overflow: hidden;
+  padding-top: 4px;
+}
+
+.sidebar-content-expanded > .ant-divider {
+  flex: 0 0 auto;
+  margin-block: 16px;
+}
+
+.sidebar-content-collapsed {
+  align-items: center;
+  gap: 8px;
+  padding-top: 12px;
+}
+
+.query-history-panel {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0 8px 8px;
+}
+
+.query-history-panel > .ant-space-item:last-child {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.query-history-scroll {
+  width: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.query-history-panel-compact {
+  width: 320px;
+  max-width: calc(100vw - 110px);
+  max-height: min(360px, calc(100dvh - 180px));
+  padding: 0;
+}

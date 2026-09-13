@@ -22,7 +22,6 @@ type QueryHistoryProps = {
 
 const QueryHistory = observer(({ compact = false }: QueryHistoryProps) => {
   const rootStore = useStore();
-  const settings = rootStore.settingsStore;
   const queriesStore = rootStore.queriesStore;
   const repositoryStore = rootStore.repositoryStore;
 
@@ -32,6 +31,9 @@ const QueryHistory = observer(({ compact = false }: QueryHistoryProps) => {
 
   const content = (
     <Space
+      className={`query-history-panel ${
+        compact ? "query-history-panel-compact" : ""
+      }`}
       direction="vertical"
       style={{
         width: compact ? 320 : "100%",
@@ -61,15 +63,7 @@ const QueryHistory = observer(({ compact = false }: QueryHistoryProps) => {
           <Alert message="There are no saved queries for this repository" />
         </div>
       ) : (
-        <div
-          style={{
-            width: "100%",
-            height: compact
-              ? Math.min(360, Math.max(180, settings.screenHeight() - 250))
-              : settings.screenHeight() - 450,
-            overflowY: "auto",
-          }}
-        >
+        <div className="query-history-scroll">
           <Timeline
             style={{ padding: 5, paddingTop: 10, maxWidth: "100%" }}
             items={repositoryStore

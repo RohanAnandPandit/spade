@@ -15,8 +15,6 @@ type CodeEditorProps = {
     types?: string[];
   };
   darkTheme: boolean;
-  width: number;
-  height: number;
 };
 
 const languageParsers: any = {
@@ -29,7 +27,6 @@ const CodeEditor = ({
   language,
   completions,
   darkTheme,
-  width,
 }: CodeEditorProps) => {
   const myCompletions = (context: CompletionContext) => {
     const word = context.matchBefore(/(\w|[<>?])*/)!;
@@ -46,7 +43,7 @@ const CodeEditor = ({
       basicSetup={{
         autocompletion: true,
       }}
-      width={`${width}px`}
+      width="100%"
       height="auto"
       minHeight="200px"
       placeholder="Enter your SPARQl query here"
@@ -58,7 +55,8 @@ const CodeEditor = ({
         setCode(value);
       }}
       theme={darkTheme ? duotoneDark : duotoneLight}
-      style={{ margin: 5, fontSize: 15 }}
+      className="query-code-editor"
+      style={{ fontSize: 15 }}
     />
   );
 };
