@@ -63,6 +63,10 @@ pnpm dev
 The frontend runs at `http://localhost:5173` and calls the API at
 `http://localhost:5000` by default.
 
+In VS Code, run the `SPADE: Start App` task to start both development servers in
+parallel. The `SPADE: Backend` and `SPADE: Frontend` tasks are also available
+when only one service is needed.
+
 ## Environment variables
 
 | Variable | Default | Purpose |
@@ -143,4 +147,3 @@ follow-up branches are:
    smaller set of maintained visualisation libraries.
 4. `codex/security-and-deployment`: SSRF protection, quotas, rate limits,
    cleanup policies, provider-neutral containers, and end-to-end tests.
-
