@@ -1,0 +1,56 @@
+projects:
+  - name: SPADE
+    environments:
+      - name: Production
+        services:
+          - type: web
+            name: spade-api
+            runtime: python
+            plan: free
+            buildCommand: uv sync --frozen --no-dev
+            startCommand: uv run alembic upgrade head && uv run uvicorn app:app --host 0.0.0.0 --port $PORT
+            healthCheckPath: /api/v1/health
+            envVars:
+              - fromGroup: spade-backend-config
+              - key: DATABASE_URL
+                sync: false
+              - key: ALLOWED_ORIGINS
+                fromService:
+                  name: spade-frontend
+                  type: web
+                  envVarKey: RENDER_EXTERNAL_URL
+
+          - type: web
+            name: spade-frontend
+            runtime: static
+            rootDir: frontend
+            buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build
+            staticPublishPath: dist
+            envVars:
+              - fromGroup: spade-frontend-config
+              - key: VITE_API_URL
+                fromService:
+                  name: spade-api
+                  type: web
+                  envVarKey: RENDER_EXTERNAL_URL
+            routes:
+              - type: rewrite
+                source: /*
+                destination: /index.html
+
+        envVarGroups:
+          - name: spade-backend-config
+            envVars:
+              - key: PYTHON_VERSION
+                value: 3.13.7
+              - key: BUILD
+                value: production
+              - key: SESSION_DAYS
+                value: 7
+              - key: MAX_UPLOAD_BYTES
+                value: 33554432
+
+          - name: spade-frontend-config
+            envVars:
+              - key: NODE_VERSION
+                value: 22.18.0

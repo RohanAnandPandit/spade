@@ -95,7 +95,14 @@ IDs are retained and claimed when their browser creates an account.
 
 ## Production
 
-Deploy the API and frontend independently. Apply migrations and run the API:
+The root `render.yaml` Blueprint deploys the API as a free Python web service
+and the frontend as a free static site. Create a new Blueprint in Render and
+connect this repository; Render wires the service URLs automatically and asks
+for the Neon PostgreSQL connection URL as the secret `DATABASE_URL`. The
+Blueprint places both services in the `SPADE` project's `Production`
+environment and manages separate backend and frontend environment groups.
+
+The API applies migrations each time its free instance starts, then runs:
 
 ```bash
 uv run alembic upgrade head
@@ -115,3 +122,6 @@ FastAPI serves only the API and its generated documentation; it does not serve
 the frontend build or provide a client-side routing fallback. Use HTTPS in
 production so authentication cookies are transmitted. Snapshot and stop writes
 to the legacy MongoDB deployment before running the one-time import.
+
+Render's free web service sleeps when idle. Database persistence and limits are
+managed separately by the selected Neon plan.
