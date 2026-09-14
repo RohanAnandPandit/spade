@@ -134,16 +134,7 @@ const LandingPage = observer(() => {
       </section>
 
       <footer className="landing-footer">
-        <span>
-          © {new Date().getFullYear()}{" "}
-          <a
-            href="https://www.rohanpandit.com/"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Rohan Pandit
-          </a>
-        </span>
+        <span>Rapt Group</span>
       </footer>
     </main>
   );
