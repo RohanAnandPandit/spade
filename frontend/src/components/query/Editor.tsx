@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useStore } from "../../stores/store";
 import CodeEditor from "./CodeEditor";
 import { QueryAnalysis, RepositoryId, URI } from "../../types";
-import { Button, Space, Row, Col } from "antd";
+import { App as AntdApp, Button, Space } from "antd";
 import { BiCopy, BiSave } from "react-icons/bi";
 import { getAllProperties, getAllTypes } from "../../api/dataset";
 import { removePrefix } from "../../utils/queryResults";
@@ -16,47 +16,58 @@ import { addQueryToHistory } from "../../api/queries";
 type QueryEditorProps = {
   query: string;
   onChange: (text: string) => void;
-  width: number;
-  height: number;
   queryName: string;
   repository: RepositoryId | null;
   queryAnalysis: QueryAnalysis | null;
+  analysisLoading: boolean;
+  demo?: boolean;
 };
 
 const Editor = ({
   query,
   onChange,
-  width,
-  height,
   queryName,
   repository,
   queryAnalysis,
+  analysisLoading,
+  demo = false,
 }: QueryEditorProps) => {
   const rootStore = useStore();
   const settings = rootStore.settingsStore;
-  const authStore = rootStore.authStore;
-  const username = authStore.username!;
   const [properties, setProperties] = useState<URI[]>([]);
   const [types, setTypes] = useState<URI[]>([]);
 
   useEffect(() => {
-    if (repository) {
-      getAllProperties(repository, username).then((res) => {
-        setProperties(res);
-      });
-      getAllTypes(repository, username).then((res) => {
-        setTypes(res);
-      });
+    let active = true;
+    if (!repository || demo) {
+      setProperties([]);
+      setTypes([]);
+      return;
     }
-  }, [repository, username]);
-
+    Promise.allSettled([
+      getAllProperties(repository),
+      getAllTypes(repository),
+    ]).then(([nextProperties, nextTypes]) => {
+      if (active) {
+        setProperties(
+          nextProperties.status === "fulfilled" ? nextProperties.value : []
+        );
+        setTypes(nextTypes.status === "fulfilled" ? nextTypes.value : []);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [demo, repository]);
 
   return (
-    <Row>
-      <Col style={{ width: Math.floor(width / 2) }}>
-        <Space wrap>
+    <div className="query-editor-grid">
+      <section className="query-editor-panel" aria-label="SPARQL query editor">
+        <Space wrap className="query-editor-toolbar">
           <CopyToClipboard text={query} />
-          <SaveQuery repository={repository} query={query} name={queryName} />
+          {!demo && (
+            <SaveQuery repository={repository} query={query} name={queryName} />
+          )}
           <Templates templates={sparqlTemplates} />
         </Space>
         <CodeEditor
@@ -70,14 +81,20 @@ const Editor = ({
             variables: getTokens(query).filter((token) => isVariable(token)),
           }}
           darkTheme={settings.darkMode()}
-          width={Math.floor(width / 2) - 10}
-          height={height}
         />
-      </Col>
-      <Col style={{ width: Math.floor(width / 2) }}>
-        <Analysis queryAnalysis={queryAnalysis} />
-      </Col>
-    </Row>
+      </section>
+      <aside className="query-analysis-panel" aria-label="Query analysis">
+        <Analysis
+          queryAnalysis={queryAnalysis}
+          loading={analysisLoading}
+          emptyMessage={
+            demo
+              ? "Query analysis and repository exploration are available when you create an account."
+              : undefined
+          }
+        />
+      </aside>
+    </div>
   );
 };
 
@@ -111,20 +128,23 @@ const SaveQuery = observer(
     repository: RepositoryId | null;
   }) => {
     const rootStore = useStore();
-    const username = rootStore.authStore.username!;
-
     const repositoryStore = rootStore.repositoryStore;
+    const { message } = AntdApp.useApp();
     return (
       <Button
         icon={<BiSave size={20} />}
         disabled={repository === null}
-        onClick={() => {
-          addQueryToHistory(repository!, query, name, username).then(() => {
-            repositoryStore.updateQueryHistory();
-          });
+        onClick={async () => {
+          try {
+            await addQueryToHistory(repository!, query, name);
+            await repositoryStore.updateQueryHistory();
+            message.success("Added to Saved queries.");
+          } catch {
+            message.error("Could not save the query.");
+          }
         }}
       >
-        Save
+        Save query
       </Button>
     );
   }

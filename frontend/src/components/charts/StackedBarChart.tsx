@@ -28,7 +28,7 @@ type StackedBarChartProps = {
 };
 
 const StackedBarChart = observer(
-  ({ results, width, height, variables }: StackedBarChartProps) => {
+  ({ results, height, variables }: StackedBarChartProps) => {
     const rootStore = useStore();
     const settings = rootStore.settingsStore;
 
@@ -50,7 +50,7 @@ const StackedBarChart = observer(
       const data = Object.keys(stacks).map((stackLabel: string) => {
         const values = { [header[stackKeyIdx]]: removePrefix(stackLabel) };
 
-        for (let row of stacks[stackLabel]) {
+        for (const row of stacks[stackLabel]) {
           values[row[barKeyIdx]] = row[valueIdx];
         }
         return values;

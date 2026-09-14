@@ -15,16 +15,20 @@ export async function getRecommendedCharts(
   results: QueryResults
 ) {
   const { header } = results;
-
-  if (variables.geographical.length === 0) {
-    variables.geographical = await geographicVariables(results, variables.lexical);
-  }
-  if (variables.key.length === 0) {
-    variables.key = keyVariables(results, variables.lexical);
-  }
+  const normalizedVariables: VariableCategories = {
+    ...variables,
+    geographical:
+      variables.geographical.length > 0
+        ? variables.geographical
+        : await geographicVariables(results, variables.lexical),
+    key:
+      variables.key.length > 0
+        ? variables.key
+        : keyVariables(results, variables.lexical),
+  };
 
   const { scalar, key, temporal, geographical, lexical, date, numeric } =
-    variables;
+    normalizedVariables;
 
   const charts = new Set<ChartType>();
 
@@ -57,7 +61,7 @@ export async function getRecommendedCharts(
   }
 
   if (key.length >= 2) {
-    const isHierarchical = columnsAreHierarchical(allRelations, variables.key);
+    const isHierarchical = columnsAreHierarchical(allRelations, key);
     if (isHierarchical) {
       charts.add(ChartType.HIERARCHY_TREE);
     }
@@ -114,7 +118,7 @@ export function isCompositeKey(
 ): boolean {
   const values = new Set<string>();
   const columnIdxs = columns.map((c) => results.header.indexOf(c));
-  for (let row of results.data) {
+  for (const row of results.data) {
     const s = columnIdxs.map((i) => row[i]).join(",");
     if (values.has(s)) {
       return false;
@@ -126,14 +130,14 @@ export function isCompositeKey(
 }
 
 export function getLinks(results: QueryResults, colA: string, colB: string) {
-  const outgoingLinks = {};
-  const incomingLinks = {};
+  const outgoingLinks: LinkMap = {};
+  const incomingLinks: LinkMap = {};
   const { header, data } = results;
 
   const colAIndex = header.indexOf(colA);
   const colBIndex = header.indexOf(colB);
 
-  for (let row of data) {
+  for (const row of data) {
     const source = row[colAIndex];
     const target = row[colBIndex];
 
@@ -153,9 +157,9 @@ export function getColumnRelationship(
   let oneToOne = true;
   let oneToMany = true;
   let manyToOne = true;
-  let manyToMany = true;
+  const manyToMany = true;
 
-  for (let parent of Object.keys(outgoingLinks)) {
+  for (const parent of Object.keys(outgoingLinks)) {
     const children = outgoingLinks[parent];
     if (children.size > 1) {
       oneToOne = false;
@@ -167,7 +171,7 @@ export function getColumnRelationship(
     }
   }
 
-  for (let child of Object.keys(incomingLinks)) {
+  for (const child of Object.keys(incomingLinks)) {
     const parents = incomingLinks[child];
 
     if (parents.size > 1) {
@@ -214,7 +218,7 @@ function columnsAreHierarchical(
 }
 
 function relationsAreHierarchical(relations: RelationType[]) {
-  for (let r of relations) {
+  for (const r of relations) {
     if (r === RelationType.MANY_TO_MANY) {
       return false;
     }
@@ -224,8 +228,8 @@ function relationsAreHierarchical(relations: RelationType[]) {
 
 export function getAllRelations(results: QueryResults, columns: string[]) {
   const allRelations: RelationMap = {};
-  const allOutgoingLinks = {};
-  const allIncomingLinks = {};
+  const allOutgoingLinks: Record<string, Record<string, LinkMap>> = {};
+  const allIncomingLinks: Record<string, Record<string, LinkMap>> = {};
 
   for (let i = 0; i < columns.length - 1; i++) {
     for (let j = i + 1; j < columns.length; j++) {
@@ -261,27 +265,17 @@ function oppositeRelation(relation: RelationType) {
   }
 }
 
-async function geographicVariables(
-  results: QueryResults,
-  variables: string[]
-) {
+async function geographicVariables(results: QueryResults, variables: string[]) {
   const { header, data } = results;
   if (data.length === 0) return [];
-  const geo: string[] = [];
-
-  await Promise.all(
+  const checks = await Promise.all(
     variables.map(async (column) => {
       const index = header.indexOf(column);
       const valid = await isGeographic(data[0][index]);
-
-      if (valid) {
-        geo.push(column);
-      }
-      return valid;
+      return { column, valid };
     })
   );
-
-  return geo;
+  return checks.filter(({ valid }) => valid).map(({ column }) => column);
 }
 
 function keyVariables(results: QueryResults, variables: string[]) {
@@ -289,10 +283,10 @@ function keyVariables(results: QueryResults, variables: string[]) {
   if (data.length === 0) return [];
   const keys: string[] = [];
 
-  for (let variable of variables) {
+  for (const variable of variables) {
     const idx = header.indexOf(variable);
     const values = new Set<string>();
-    for (let row of data) {
+    for (const row of data) {
       values.add(row[idx]);
     }
     if (values.size === data.length) {

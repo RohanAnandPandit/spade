@@ -1,121 +1,55 @@
-import axios from "axios";
 import { GeoData, QueryAnalysis, QueryRecord } from "../types";
-
-const BACKEND_API = process.env.REACT_APP_BACKEND_API;
+import { api } from "./client";
 
 export async function getQueryHistory(
-  repository: string,
-  username: string
+  repository: string
 ): Promise<QueryRecord[]> {
-  try {
-    const endpoint = `${BACKEND_API}/saved-queries?repository=${repository}&username=${encodeURIComponent(
-      username
-    )}`;
-    const response = await axios.get(endpoint);
-    const queries = response.data;
-    return queries;
-  } catch (error) {
-    console.log(error);
-  }
-  return [];
+  const response = await api.get<QueryRecord[]>("/saved-queries", {
+    params: { repository },
+  });
+  return response.data;
 }
 
 export async function addQueryToHistory(
   repository: string,
   query: string,
-  name: string,
-  username: string
+  name: string
 ) {
-  try {
-    const endpoint = `${BACKEND_API}/saved-queries`;
-    const response = await axios.post(endpoint, {
-      name,
-      sparql: query,
-      repository,
-      username,
-    });
-    return response;
-  } catch (error) {
-    console.log(error);
-  }
-  return "";
+  return api.post("/saved-queries", {
+    name,
+    sparql: query,
+    repository,
+  });
 }
 
-export async function clearQueryHistory(repository: string, username: string) {
-  try {
-    const endpoint = `${BACKEND_API}/saved-queries`;
-    const response = await axios.delete(endpoint, {
-      params: {
-        repository,
-        username,
-      },
-    });
-    return response;
-  } catch (error) {
-    console.log(error);
-  }
-  return [];
+export async function clearQueryHistory(repository: string) {
+  return api.delete("/saved-queries", {
+    params: { repository },
+  });
 }
 
 export async function getQueryAnalysis(
   query: string,
   repository: string,
-  username: string
+  signal?: AbortSignal
 ): Promise<QueryAnalysis> {
-  try {
-    const endpoint = `${BACKEND_API}/analysis?repository=${encodeURIComponent(
-      repository
-    )}&query=${encodeURIComponent(query)}&username=${encodeURIComponent(
-      username
-    )}`;
-    const response = await axios.get(endpoint);
-    return response.data;
-  } catch (error) {
-    console.log(error);
-  }
-  return {
-    pattern: null,
-    visualisations: [],
-    variables: {
-      key: [],
-      scalar: [],
-      geographical: [],
-      temporal: [],
-      lexical: [],
-      date: [],
-      numeric: [],
-      object: [],
-    },
-  };
+  const response = await api.get<QueryAnalysis>("/analysis", {
+    params: { repository, query },
+    signal,
+  });
+  return response.data;
 }
 
 export async function getGeoJSON(region: string): Promise<GeoData> {
-  try {
-    const endpoint = `${BACKEND_API}/geo`;
-    const response = await axios.get(endpoint, {
-      params: {
-        region,
-      },
-    });
-    return response.data.geoData;
-  } catch (error) {
-    console.log(error);
-  }
-  return { region, coordinates: [], name: "", type: "" };
+  const response = await api.get<{ geoData: GeoData }>("/geo", {
+    params: { region },
+  });
+  return response.data.geoData;
 }
 
 export async function isGeographic(text: string): Promise<boolean> {
-  try {
-    const endpoint = `${BACKEND_API}/geo/valid`;
-    const response = await axios.get(endpoint, {
-      params: {
-        text,
-      },
-    });
-    return response.data.valid;
-  } catch (error) {
-    console.log(error);
-  }
-  return false;
+  const response = await api.get<{ valid: boolean }>("/geo/valid", {
+    params: { text },
+  });
+  return response.data.valid;
 }
-

@@ -1,31 +1,27 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { ConfigProvider, Layout, theme, App as AntdApp } from "antd";
 import Navbar from "./components/navbar/Navbar";
 import { Route, Routes } from "react-router-dom";
 import { observer } from "mobx-react-lite";
-import Settings from "./components/settings/Settings";
 import { useStore } from "./stores/store";
 import HomePage from "./pages/home/HomePage";
-import ContactPage from "./pages/contact/ContactPage";
-import "../node_modules/bootstrap/dist/css/bootstrap.min.css";
-import Login from "./pages/home/Login";
+import AuthPage from "./pages/auth/AuthPage";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+import LandingPage from "./pages/landing/LandingPage";
+import TrialPage from "./pages/trial/TrialPage";
+import "./App.css";
 
 const { Header } = Layout;
 const { darkAlgorithm, defaultAlgorithm } = theme;
 
 const App = () => {
   const rootStore = useStore();
-  const authStore = rootStore.authStore;
   const settings = rootStore.settingsStore;
 
-  if (!authStore.username) {
-    return (
-      <>
-        <Login />
-      </>
-    )
-  }
-  
+  useEffect(() => {
+    void rootStore.authStore.initialize();
+  }, [rootStore]);
+
   return (
     <ConfigProvider
       theme={{
@@ -42,13 +38,17 @@ const App = () => {
           <Header className="header">
             <Navbar />
           </Header>
-          <Layout>
+          <Layout className="app-content">
             <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/contact" element={<ContactPage />} />
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/try" element={<TrialPage />} />
+              <Route element={<ProtectedRoute />}>
+                <Route path="/workspace" element={<HomePage />} />
+              </Route>
+              <Route path="/login" element={<AuthPage mode="login" />} />
+              <Route path="/register" element={<AuthPage mode="register" />} />
             </Routes>
           </Layout>
-          <Settings />
         </Layout>
       </AntdApp>
     </ConfigProvider>

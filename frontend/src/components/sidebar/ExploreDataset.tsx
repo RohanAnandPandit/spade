@@ -1,4 +1,4 @@
-import { Button, Modal, Space, Tabs, TabsProps } from "antd";
+import { Button, Modal, Space, Tabs, TabsProps, Tooltip } from "antd";
 import { RepositoryId } from "../../types";
 import { Summary } from "../dataset/Summary";
 import ClassHierarchy from "../dataset/ClassHierarchy";
@@ -12,15 +12,19 @@ import Details from "../dataset/Details";
 
 export type ExploreDatasetProps = {
   repository: RepositoryId | null;
+  compact?: boolean;
 };
 
-const ExploreDataset = ({ repository }: ExploreDatasetProps) => {
+const ExploreDataset = ({
+  repository,
+  compact = false,
+}: ExploreDatasetProps) => {
   const rootStore = useStore();
   const repositoryStore = rootStore.repositoryStore;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const width = Math.floor(window.screen.width * 0.8);
-  const height = Math.floor(window.screen.height * 0.75);
+  const width = Math.floor(window.innerWidth * 0.8);
+  const height = Math.floor(window.innerHeight * 0.75);
 
   const infoTabs: TabsProps["items"] = [
     {
@@ -60,19 +64,33 @@ const ExploreDataset = ({ repository }: ExploreDatasetProps) => {
       children: <Details repository={repository!} />,
     },
   ];
-  return (
-    <>
-      <Button
-        type="primary"
-        disabled={repositoryStore.currentRepository() === null}
-        onClick={() => setIsModalOpen(true)}
-        style={{ width: "95%", margin: 5 }}
-      >
+  const button = (
+    <Button
+      aria-label={compact ? "Explore selected repository" : undefined}
+      type="primary"
+      disabled={repositoryStore.currentRepository() === null}
+      onClick={() => setIsModalOpen(true)}
+      shape={compact ? "circle" : undefined}
+      style={compact ? undefined : { width: "95%", margin: 5 }}
+    >
+      {compact ? (
+        <MdOutlineExplore size={20} />
+      ) : (
         <Space>
           <MdOutlineExplore size={20} />
-          Explore dataset
+          Explore selected repository
         </Space>
-      </Button>
+      )}
+    </Button>
+  );
+
+  return (
+    <>
+      {compact ? (
+        <Tooltip title="Explore selected repository">{button}</Tooltip>
+      ) : (
+        button
+      )}
       {repository && (
         <Modal
           title={`${repository}`}
@@ -82,11 +100,7 @@ const ExploreDataset = ({ repository }: ExploreDatasetProps) => {
           width={width}
           maskClosable
         >
-          <Tabs
-            defaultActiveKey="1"
-            items={infoTabs}
-            style={{ padding: 10 }}
-          />
+          <Tabs defaultActiveKey="1" items={infoTabs} style={{ padding: 10 }} />
         </Modal>
       )}
     </>

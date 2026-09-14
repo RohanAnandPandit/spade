@@ -1,7 +1,7 @@
 import { makeAutoObservable } from "mobx";
 import { makePersistable } from "mobx-persist-store";
 import RootStore from "./root-store";
-import { QueryId, QueryInfo, RepositoryId } from "../types";
+import { QueryId, QueryInfo } from "../types";
 
 type QueriesState = {
   totalQueries: number;
@@ -17,7 +17,6 @@ class QueriesStore {
       "1": {
         name: "Query 1",
         sparql: "",
-        repository: null,
       },
     },
     currentQueryId: "1",
@@ -63,15 +62,11 @@ class QueriesStore {
     this.state.openQueries[id]!.sparql = sparql;
   };
 
-  setQueryRepository = (id, repositoryId: RepositoryId | null) => {
-    this.state.openQueries[id]!.repository = repositoryId;
-  };
-
   getCurrentQuery = (id: string) => {
     if (!Object.keys(this.state.openQueries).includes(id)) {
       return "";
     }
-    return this.state.openQueries[this.currentQueryId()]!;
+    return this.state.openQueries[id]!;
   };
 
   setCurrentQuery = (sparql: string) => {
@@ -92,23 +87,40 @@ class QueriesStore {
   addQuery = ({
     sparql = "",
     name = "",
-    repository = null,
   }: {
     sparql?: string;
     name?: string;
-    repository?: RepositoryId | null;
-  }): QueryId => {
+  } = {}): QueryId => {
     const qid = `${++this.state.totalQueries}`;
     this.state.openQueries[qid] = {
       name: name || `Query ${qid}`,
       sparql,
-      repository,
     };
     return qid;
   };
 
   removeQuery = (qid: string) => {
     delete this.state.openQueries[qid];
+    const remainingIds = Object.keys(this.state.openQueries);
+    if (remainingIds.length === 0) {
+      const replacementId = this.addQuery({});
+      this.setCurrentQueryId(replacementId);
+      return;
+    }
+    if (this.state.currentQueryId === qid) {
+      this.setCurrentQueryId(remainingIds.at(-1)!);
+    }
+  };
+
+  reset = () => {
+    this.state = {
+      totalQueries: 1,
+      openQueries: {
+        "1": { name: "Query 1", sparql: "" },
+      },
+      currentQueryId: "1",
+    };
+    window.localStorage.removeItem("Queries");
   };
 }
 

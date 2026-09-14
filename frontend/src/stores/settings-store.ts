@@ -1,5 +1,4 @@
 import { makeAutoObservable } from "mobx";
-import { makePersistable } from "mobx-persist-store";
 import RootStore from "./root-store";
 
 type SettingsState = {
@@ -14,7 +13,7 @@ class SettingsStore {
   rootStore: RootStore;
   state: SettingsState = {
     darkMode: false,
-    sidebarWidth: 200,
+    sidebarWidth: 240,
     fullScreen: false,
     sidebarCollapsed: false,
     showAllCharts: false,
@@ -36,41 +35,36 @@ class SettingsStore {
     // });
   }
 
-
   darkMode = (): boolean => {
     return this.state.darkMode;
-  }
+  };
 
   sidebarWidth = (): number => {
     return this.state.sidebarWidth;
-  }
+  };
 
   fullScreen = (): boolean => {
     return this.state.fullScreen;
-  }
+  };
 
   sidebarCollapsed = (): boolean => {
     return this.state.sidebarCollapsed;
-  }
+  };
 
   showAllCharts = (): boolean => {
     return this.state.showAllCharts;
-  }
+  };
 
   screenWidth = (): number => {
-    return window.screen.availWidth;
-    // return Math.max(
-    //   document.documentElement.clientWidth || Number.MAX_SAFE_INTEGER,
-    //   window.innerWidth || Number.MAX_SAFE_INTEGER
-    // );
-  }
+    return Math.max(document.documentElement.clientWidth, window.innerWidth);
+  };
 
   screenHeight = (): number => {
     return Math.min(
       document.documentElement.clientHeight ?? Number.MAX_SAFE_INTEGER,
       window.innerHeight ?? Number.MAX_SAFE_INTEGER
     );
-  }
+  };
 
   setDarkMode(value: boolean) {
     this.state.darkMode = value;

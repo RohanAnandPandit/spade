@@ -4,6 +4,7 @@ import {
   RelationType,
   VariableCategories,
 } from "../types";
+import { expect, test } from "vitest";
 import { getRecommendedCharts } from "./charts";
 
 test("recommended charts", async () => {

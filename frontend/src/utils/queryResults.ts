@@ -32,9 +32,10 @@ export function convertToJSON(
   newColumnNames: string[] = []
 ) {
   return results.data.map((row) => {
-    const values: { [key: string]: any } = {};
-    columnIndices.forEach((i) => {
-      values[newColumnNames[i] || results.header[i]] = row[i];
+    const values: Record<string, string> = {};
+    columnIndices.forEach((columnIndex, position) => {
+      values[newColumnNames[position] || results.header[columnIndex]] =
+        row[columnIndex];
     });
     return values;
   });
@@ -62,8 +63,8 @@ export function groupByColumn(
   data: Row[],
   keyColIdx: number
 ): { [key: string]: Row[] } {
-  const keyToRows = {};
-  for (let row of data) {
+  const keyToRows: Record<string, Row[]> = {};
+  for (const row of data) {
     const key = row[keyColIdx];
     keyToRows[key] = keyToRows[key] ?? [];
     keyToRows[key].push(row);
@@ -73,7 +74,7 @@ export function groupByColumn(
 
 export function uniqueValues(data: Row[], colIdx: number): string[] {
   const values = new Set<string>();
-  for (let row of data) {
+  for (const row of data) {
     values.add(row[colIdx]);
   }
   return Array.from(values);

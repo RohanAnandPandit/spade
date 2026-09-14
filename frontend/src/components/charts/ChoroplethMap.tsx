@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   MapContainer,
   Polygon,
@@ -14,13 +14,13 @@ import {
   VariableCategories,
 } from "../../types";
 import { getGeoJSON } from "../../api/queries";
-import { Segmented, Space, Spin, Typography } from "antd";
+import { App as AntdApp, Segmented, Space, Spin, Typography } from "antd";
 import "./ChoroplethMap.css";
 import { removePrefix } from "../../utils/queryResults";
 import iconMarker from "leaflet/dist/images/marker-icon.png";
 import iconRetina from "leaflet/dist/images/marker-icon-2x.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
-import L from "leaflet";
+import L, { LatLngExpression } from "leaflet";
 
 const icon = L.icon({
   iconRetinaUrl: iconRetina,
@@ -48,14 +48,16 @@ const ChoroplethMap = ({
   const [loading, setLoading] = useState<boolean>(false);
   const [data, setData] = useState<GeoData[]>([]);
   const [scalarColumn, setScalarColumn] = useState<string>(variables.scalar[0]);
+  const cache = useRef(new Map<string, GeoData>());
+  const { message } = AntdApp.useApp();
   const { regionValue, minValue, maxValue } = useMemo(() => {
     const valueIndex = results.header.indexOf(scalarColumn);
-    const regionValue = {}; // Mapping from region to value
+    const regionValue: Record<string, number> = {}; // Mapping from region to value
 
     let minValue = Number.MAX_SAFE_INTEGER;
     let maxValue = Number.MIN_SAFE_INTEGER;
 
-    for (let row of results.data) {
+    for (const row of results.data) {
       // Concatenate geographical variables to identify the location
       const region = variables.geographical
         .map((column: string) => row[results.header.indexOf(column)])
@@ -71,32 +73,41 @@ const ChoroplethMap = ({
     return { regionValue, minValue, maxValue };
   }, [results.data, results.header, variables.geographical, scalarColumn]);
 
-  const cache = useMemo(() => {
-    return {};
-  }, []);
-
   useEffect(() => {
+    let active = true;
     setLoading(true);
 
     Promise.all(
       Object.keys(regionValue).map(async (name) => {
-        if (cache[name]) {
-          return cache[name];
+        const cached = cache.current.get(name);
+        if (cached) {
+          return cached;
         }
-        const data: GeoData = await getGeoJSON(name);
-        if (data.coordinates) {
-          data.coordinates = reverseCoordinates(data.coordinates);
+        const geoData = await getGeoJSON(name);
+        if (geoData.coordinates) {
+          geoData.coordinates = reverseCoordinates(geoData.coordinates);
         }
-        cache[name] = data;
-        // console.log(name, data);
-        return data;
+        cache.current.set(name, geoData);
+        return geoData;
       })
-    ).then((responses) => {
-      setData(responses.filter((location) => location !== null) as GeoData[]);
-      setLoading(false);
-    });
+    )
+      .then((responses) => {
+        if (active) setData(responses);
+      })
+      .catch(() => {
+        if (active) {
+          setData([]);
+          message.error("Could not load map boundaries.");
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [
-    cache,
+    message,
     regionValue,
     results.data,
     results.header,
@@ -109,7 +120,10 @@ const ChoroplethMap = ({
   return (
     <Space direction="vertical">
       <Segmented
-        options={variables.numeric.map((name) => ({ label: name, value: name }))}
+        options={variables.numeric.map((name) => ({
+          label: name,
+          value: name,
+        }))}
         onChange={(value) => setScalarColumn(value as string)}
       />
       <Spin spinning={loading}>
@@ -146,11 +160,7 @@ const WorldMap = ({
   valueColumn,
 }: WorldMapProps) => {
   return (
-    <MapContainer
-      style={{ width, height }}
-      zoom={1}
-      center={[20, 60]}
-    >
+    <MapContainer style={{ width, height }} zoom={1} center={[20, 60]}>
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -161,7 +171,7 @@ const WorldMap = ({
           (type === "Point" ? (
             <Marker
               key={`region-${index}`}
-              position={reversePoint(coordinates)}
+              position={coordinates as [number, number]}
               icon={icon}
             >
               <Tooltip>
@@ -181,9 +191,11 @@ const WorldMap = ({
                 color: `orange`,
                 weight: 1,
                 fillOpacity:
-                  (regionValue[region] - minValue) / (maxValue - minValue),
+                  maxValue === minValue
+                    ? 1
+                    : (regionValue[region] - minValue) / (maxValue - minValue),
               }}
-              positions={coordinates}
+              positions={coordinates as unknown as LatLngExpression[][]}
             >
               <Tooltip sticky>
                 <Space direction="vertical">
@@ -202,20 +214,15 @@ const WorldMap = ({
   );
 };
 
-function reversePoint([x, y]: [number, number]) {
-  return [y, x] as [number, number];
-}
-
 // Reverse points in GeoJSON coordinates to display regions in the correct orientation
-function reverseCoordinates(polygon: Coordinates) {
-  return polygon.map((arr) => {
-    if (arr.length > 0 && Array.isArray(arr[0])) {
-      return reverseCoordinates(arr);
-    }
-    if (arr.length === 2) {
-      return [arr[1], arr[0]];
-    }
-    return arr;
-  });
+function reverseCoordinates(coordinates: Coordinates): Coordinates {
+  if (
+    coordinates.length === 2 &&
+    typeof coordinates[0] === "number" &&
+    typeof coordinates[1] === "number"
+  ) {
+    return [coordinates[1], coordinates[0]];
+  }
+  return (coordinates as Coordinates[]).map(reverseCoordinates);
 }
 export default ChoroplethMap;

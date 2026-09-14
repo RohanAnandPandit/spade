@@ -32,16 +32,18 @@ const relationIcons: { [key: string]: JSX.Element } = {
     <TbRelationManyToMany title="Many to many" size={30} />
   ),
 };
+type LinkMap = Record<string, Set<string>>;
+type RelationMap = Record<string, Record<string, RelationType>>;
+type NestedLinkMap = Record<string, Record<string, LinkMap>>;
 type ColumnRelationsProps = {
   results: QueryResults;
   variables: VariableCategories;
-  allRelations: any;
-  allIncomingLinks: any;
-  allOutgoingLinks: any;
+  allRelations: RelationMap;
+  allIncomingLinks: NestedLinkMap;
+  allOutgoingLinks: NestedLinkMap;
 };
 export const ColumnRelations = observer(
   ({
-    results,
     variables,
     allRelations,
     allIncomingLinks,
@@ -74,7 +76,17 @@ export const ColumnRelations = observer(
     );
   }
 );
-const RelationDetails = ({ colA, colB, incomingLinks, outgoingLinks }) => {
+const RelationDetails = ({
+  colA,
+  colB,
+  incomingLinks,
+  outgoingLinks,
+}: {
+  colA: string;
+  colB: string;
+  incomingLinks: LinkMap;
+  outgoingLinks: LinkMap;
+}) => {
   const [value, setValue] = useState<string>("Outgoing");
   const links = useMemo(
     () => (value === "Outgoing" ? outgoingLinks : incomingLinks),
@@ -118,10 +130,10 @@ const RelationDetails = ({ colA, colB, incomingLinks, outgoingLinks }) => {
             title: value === "Outgoing" ? colB : colA,
             dataIndex: "children",
             key: "children",
-            render: (children) =>
+            render: (children: string[]) =>
               children && (
                 <>
-                  {children.map((child: any) => (
+                  {children.map((child) => (
                     <Tag key={child}>{child}</Tag>
                   ))}
                 </>
@@ -140,13 +152,24 @@ const RelationDetails = ({ colA, colB, incomingLinks, outgoingLinks }) => {
   );
 };
 const Relation = observer(
-  ({ colA, colB, allRelations, allIncomingLinks, allOutgoingLinks }: any) => {
+  ({
+    colA,
+    colB,
+    allRelations,
+    allIncomingLinks,
+    allOutgoingLinks,
+  }: {
+    colA: string;
+    colB: string;
+    allRelations: RelationMap;
+    allIncomingLinks: NestedLinkMap;
+    allOutgoingLinks: NestedLinkMap;
+  }) => {
     const rootStore = useStore();
     const settings = rootStore.settingsStore;
 
     const [showModal, setShowModal] = useState<boolean>(false);
     // const [loading, setLoading] = useState<boolean>(true);
-    console.log(allIncomingLinks, allOutgoingLinks);
     const { incomingLinks, outgoingLinks } = useMemo(() => {
       return {
         incomingLinks: allIncomingLinks[colB][colA],

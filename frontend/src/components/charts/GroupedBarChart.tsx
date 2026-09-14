@@ -28,7 +28,7 @@ type GroupedBarChartProps = {
 };
 
 const GroupedBarChart = observer(
-  ({ results, width, height, variables }: GroupedBarChartProps) => {
+  ({ results, height, variables }: GroupedBarChartProps) => {
     const rootStore = useStore();
     const settings = rootStore.settingsStore;
 
@@ -50,7 +50,7 @@ const GroupedBarChart = observer(
       const data = Object.keys(groups).map((groupLabel: string) => {
         const values = { [header[groupKeyIdx]]: removePrefix(groupLabel) };
 
-        for (let row of groups[groupLabel]) {
+        for (const row of groups[groupLabel]) {
           values[row[barKeyIdx]] = row[valueIdx];
         }
         return values;

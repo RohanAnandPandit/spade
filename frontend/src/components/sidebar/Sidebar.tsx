@@ -1,75 +1,50 @@
 import { useEffect } from "react";
-import { Button, Divider, Dropdown, Popover, Space } from "antd";
+import { Divider, Typography } from "antd";
 import { useStore } from "../../stores/store";
-import { RepositoryInfo } from "../../types";
 import { observer } from "mobx-react-lite";
-import { RiGitRepositoryLine } from "react-icons/ri";
 import QueryHistory from "./QueryHistory";
 import ExploreDataset from "./ExploreDataset";
 import Repositories from "./Repositories";
+import RepositorySelector from "./RepositorySelector";
+import "./Sidebar.css";
 
 const Sidebar = observer(() => {
   const rootStore = useStore();
   const settings = rootStore.settingsStore;
   const repositoryStore = rootStore.repositoryStore;
-
-  return (
-    <>
-      {!settings.sidebarCollapsed() && (
-        <div style={{ justifyContent: "center" }}>
-          <SelectRepository />
-          <ExploreDataset repository={repositoryStore.currentRepository()} />
-          <Repositories />
-          <Divider />
-          <QueryHistory />
-        </div>
-      )}
-    </>
-  );
-});
-
-const SelectRepository = observer(() => {
-  const rootStore = useStore();
-  const repositoryStore = rootStore.repositoryStore;
+  const collapsed = settings.sidebarCollapsed();
+  const repository = repositoryStore.currentRepository();
 
   useEffect(() => {
-    repositoryStore.updateRepositories();
+    void repositoryStore.updateRepositories();
   }, [repositoryStore]);
 
   return (
-    <Dropdown
-      menu={{
-        items: repositoryStore.repositories().map(
-          ({ name }: RepositoryInfo, index: number) => {
-            return {
-              key: `${index}`,
-              label: (
-                <Popover
-                  placement="right"
-                  title={name ? "Description" : "No description available"}
-                  content={name}
-                  trigger="hover"
-                >
-                  <Button
-                    onClick={() => repositoryStore.setCurrentRepository(name)}
-                    style={{ width: "100%", height: "100%" }}
-                  >
-                    {name}
-                  </Button>
-                </Popover>
-              ),
-            };
-          }
-        ),
-      }}
+    <div
+      className={`sidebar-content ${
+        collapsed ? "sidebar-content-collapsed" : "sidebar-content-expanded"
+      }`}
     >
-      <Button style={{ width: "95%", margin: 5 }} name="Choose repository">
-        <Space>
-          <RiGitRepositoryLine size={20} />
-          <b>{repositoryStore.currentRepository() || "Select repository"}</b>
-        </Space>
-      </Button>
-    </Dropdown>
+      <RepositorySelector compact={collapsed} />
+      <Repositories compact={collapsed} />
+      {repository && (
+        <>
+          {!collapsed && (
+            <>
+              <Divider />
+              <Typography.Text
+                className="sidebar-section-label"
+                type="secondary"
+              >
+                {repository}
+              </Typography.Text>
+            </>
+          )}
+          <ExploreDataset compact={collapsed} repository={repository} />
+          <QueryHistory compact={collapsed} />
+        </>
+      )}
+    </div>
   );
 });
 

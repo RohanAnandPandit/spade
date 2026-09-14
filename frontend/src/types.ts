@@ -1,5 +1,10 @@
 export type RepositoryId = string;
 
+export type User = {
+  id: string;
+  email: string;
+};
+
 export type URI = string;
 
 export interface RepositoryInfo {
@@ -25,7 +30,7 @@ export type RDFGraph = {
 };
 
 export type QueryRecord = {
-  id: number;
+  id: string;
   name: string;
   sparql: string;
   repository: string;
@@ -36,7 +41,6 @@ export type QueryId = string;
 export type QueryInfo = {
   name: string;
   sparql: string;
-  repository: RepositoryId | null;
 };
 
 export type Metadata = {
@@ -75,7 +79,7 @@ export enum ChartType {
   SPIDER = "Spider",
   NETWORK = "Network",
   AREA = "Area",
-  GRAPH = 'Graph',
+  GRAPH = "Graph",
 }
 
 export enum CategoryType {
@@ -113,11 +117,11 @@ export enum RelationType {
   MANY_TO_MANY = "Many-to-many",
 }
 
-export type Coordinates = [number, number][] | [number, number][][];
+export type Coordinates = [number, number] | Coordinates[];
 
 export type GeoData = {
   region: string;
   name: string;
-  coordinates: any;
+  coordinates: Coordinates | null;
   type: string;
 };

@@ -1,21 +1,27 @@
-SELECT DISTINCT ?subject
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+
+SELECT DISTINCT ?type
 WHERE {
-    { ?subject a owl:Class . } UNION { ?individual a ?subject . } .
-    # ?individual a ?subject .
-    OPTIONAL { ?subject rdfs:subClassOf ?supertype } .
-    FILTER (!isBlank(?supertype)) .
-    FILTER (?subject != owl:Class &&
-          ?subject != rdf:List &&
-          ?subject != rdf:Property &&
-          ?subject != rdfs:Class &&
-          ?subject != rdfs:Datatype &&
-          ?subject != rdfs:ContainerMembershipProperty &&
-          ?subject != owl:DatatypeProperty &&
-          ?subject != owl:FunctionalProperty &&
-          ?subject != owl:InverseFunctionalProperty &&
-          ?subject != owl:ObjectProperty &&
-          ?subject != owl:TransitiveProperty &&
-          ?subject != owl:SymmetricProperty &&
-          ?subject != owl:NamedIndividual &&
-          ?subject != owl:Ontology )
+    ?individual rdf:type ?type .
+    FILTER(isIRI(?type))
+    FILTER (?type NOT IN (
+        owl:Class,
+        rdf:List,
+        rdf:Property,
+        rdfs:Class,
+        rdfs:Datatype,
+        rdfs:ContainerMembershipProperty,
+        owl:DatatypeProperty,
+        owl:FunctionalProperty,
+        owl:InverseFunctionalProperty,
+        owl:ObjectProperty,
+        owl:TransitiveProperty,
+        owl:SymmetricProperty,
+        owl:NamedIndividual,
+        owl:Ontology
+    ))
 }
+ORDER BY ?type
+LIMIT 1000

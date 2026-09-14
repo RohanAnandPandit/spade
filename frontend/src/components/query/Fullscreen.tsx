@@ -2,17 +2,17 @@ import { observer } from "mobx-react-lite";
 import { FullScreen, useFullScreenHandle } from "react-full-screen";
 import { AiOutlineFullscreen, AiOutlineFullscreenExit } from "react-icons/ai";
 import "./Fullscreen.css";
-import { FloatButton } from "antd";
+import { Button, Tooltip } from "antd";
 import { useStore } from "../../stores/store";
-import { useEffect } from "react";
+import { ReactNode, useEffect } from "react";
 
-const Fullscreen = observer(({ children }: any) => {
+const Fullscreen = observer(({ children }: { children: ReactNode }) => {
   const rootStore = useStore();
   const settings = rootStore.settingsStore;
   const handle = useFullScreenHandle();
 
   useEffect(() => {
-    const exitHandler = (e: any) => {
+    const exitHandler = () => {
       if (!document.fullscreenElement) {
         settings.setFullScreen(false);
       }
@@ -32,46 +32,40 @@ const Fullscreen = observer(({ children }: any) => {
       document.removeEventListener("MSFullscreenChange", exitHandler, false);
     };
   }, [settings]);
-  
+
   return (
-    <>
-      <FullScreen
-        handle={handle}
-        className={settings.darkMode() ? "fullscreen-dark" : "fullscreen-light"}
-      >
-        {children}
-        {handle.active && (
-          <FloatButton
+    <FullScreen
+      handle={handle}
+      className={`spade-fullscreen ${
+        settings.darkMode() ? "fullscreen-dark" : "fullscreen-light"
+      }`}
+    >
+      <div className="fullscreen-control-row">
+        <Tooltip
+          title={handle.active ? "Return to workspace" : "Expand this view"}
+        >
+          <Button
+            aria-label={handle.active ? "Exit fullscreen" : "Fullscreen"}
             icon={
-              <AiOutlineFullscreenExit
-                title="Exit fullscreen"
-                size={20}
-                style={{ paddingRight: 1, paddingBottom: 2 }}
-              />
+              handle.active ? (
+                <AiOutlineFullscreenExit aria-hidden size={18} />
+              ) : (
+                <AiOutlineFullscreen aria-hidden size={18} />
+              )
             }
-            style={{ top: 10, right: 75 }}
+            size="small"
             onClick={() => {
-              settings.setFullScreen(false);
-              handle.exit();
+              settings.setFullScreen(!handle.active);
+              if (handle.active) void handle.exit();
+              else void handle.enter();
             }}
-          />
-        )}
-      </FullScreen>
-      <FloatButton
-        tooltip="Fullscreen"
-        icon={
-          <AiOutlineFullscreen
-            size={20}
-            style={{ paddingRight: 1, paddingBottom: 2 }}
-          />
-        }
-        style={{ top: 10, right: 75 }}
-        onClick={() => {
-          settings.setFullScreen(true);
-          handle.enter();
-        }}
-      />
-    </>
+          >
+            {handle.active ? "Exit fullscreen" : "Fullscreen"}
+          </Button>
+        </Tooltip>
+      </div>
+      {children}
+    </FullScreen>
   );
 });
 

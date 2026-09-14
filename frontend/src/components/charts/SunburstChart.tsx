@@ -24,7 +24,7 @@ const LABEL_STYLE = {
  * @param {Object} node - the current node being considered
  * @returns {Array} an array of strings describing the key route to the current node
  */
-function getKeyPath(node) {
+function getKeyPath(node: any): string[] {
   if (!node.parent) {
     return ["root"];
   }
@@ -41,9 +41,9 @@ function getKeyPath(node) {
  * if this is false then all nodes are marked as selected
  * @returns {Object} Updated tree structure
  */
-function updateData(data: any, keyPath: any) {
+function updateData(data: any, keyPath: Record<string, boolean> | false) {
   if (data.children) {
-    data.children.map((child) => updateData(child, keyPath));
+    data.children.forEach((child: any) => updateData(child, keyPath));
   }
   // add a fill to all the uncolored cells
   if (!data.hex) {
@@ -59,23 +59,33 @@ function updateData(data: any, keyPath: any) {
   return data;
 }
 
-const SunburstChart = ({ results, variables, width, height }: SunburstProps) => {
-  const [path, setPath] = useState<any>(null);
-  const [data, setData] = useState<any>(null);
+const SunburstChart = ({
+  results,
+  variables,
+  width,
+  height,
+}: SunburstProps) => {
+  const [path, setPath] = useState<string[] | null>(null);
   const [clicked, setClicked] = useState<boolean>(false);
 
-  const { titleSizes, decoratedData } = useMemo(() => {
-    const { data, titleSizes } = getHierarchicalData(
-      results,
-      variables.key,
-      variables.scalar[0]
-    );
-    const decoratedData = updateData(data, false);
-    setPath(null);
-    setClicked(false);
-    setData(decoratedData);
-    return { decoratedData, titleSizes };
-  }, [results, variables.key, variables.scalar]);
+  const { data: sourceData, titleSizes } = useMemo(
+    () => getHierarchicalData(results, variables.key, variables.scalar[0]),
+    [results, variables.key, variables.scalar]
+  );
+  const highlightedPath = useMemo(
+    () =>
+      path
+        ? path.reduce<Record<string, boolean>>((values, name) => {
+            values[name] = true;
+            return values;
+          }, {})
+        : false,
+    [path]
+  );
+  const data = useMemo(
+    () => updateData(structuredClone(sourceData), highlightedPath),
+    [highlightedPath, sourceData]
+  );
 
   const finalValue = useMemo(() => (path ? path[path.length - 1] : ""), [path]);
   return (
@@ -94,7 +104,7 @@ const SunburstChart = ({ results, variables, width, height }: SunburstProps) => 
           />
         )}
       </Space>
-      <Spin spinning={!data}>
+      <Spin spinning={!sourceData}>
         <Sunburst
           animation
           hideRootNode
@@ -102,30 +112,22 @@ const SunburstChart = ({ results, variables, width, height }: SunburstProps) => 
             if (clicked) {
               return;
             }
-            const path = getKeyPath(node).reverse();
-            const pathAsMap = path.reduce((res: any, row: any) => {
-              res[row] = true;
-              return res;
-            }, {});
-
-            setPath(path.slice(1));
-            setData(updateData(decoratedData, pathAsMap));
+            setPath(getKeyPath(node).reverse().slice(1));
           }}
           onValueMouseOut={() => {
             if (!clicked) {
               setPath(null);
-              setData(updateData(decoratedData, false));
             }
           }}
-          onValueClick={() => setClicked(!clicked)}
+          onValueClick={() => setClicked((value) => !value)}
           style={{
             stroke: "#ddd",
             strokeOpacity: 0.3,
             strokeWidth: "0.5",
           }}
           colorType="literal"
-          getSize={(d) => d.value}
-          getColor={(d) => d.hex}
+          getSize={(d: any) => d.value}
+          getColor={(d: any) => d.hex}
           data={data}
           height={height - 75}
           width={width}
@@ -153,11 +155,11 @@ export function getHierarchicalData(
   keyColumns: string[],
   sizeColumn: string
 ): any {
-  const titleSizes = {};
+  const titleSizes: Record<string, number> = {};
   const sizeIndex = results.header.indexOf(sizeColumn);
   let dataFromTitle: any = {};
 
-  for (let row of results.data) {
+  for (const row of results.data) {
     const column = keyColumns.at(-1)!;
     const titleIndex = results.header.indexOf(column);
     const title = row[titleIndex];
@@ -182,17 +184,17 @@ export function getHierarchicalData(
     const childTitle = keyColumns[i];
     const childTitleIndex = results.header.indexOf(childTitle);
 
-    const newDataFromTitle = {}; // Data with previous column as key
-    const parentChildren = {};
+    const newDataFromTitle: Record<string, any> = {}; // Data with previous column as key
+    const parentChildren: Record<string, Set<string>> = {};
     // Get all unique children for each unique parent
-    for (let row of results.data) {
+    for (const row of results.data) {
       const parentValue = row[parentTitleIndex];
       const childValue = row[childTitleIndex];
       parentChildren[parentValue] = parentChildren[parentValue] ?? new Set();
       parentChildren[parentValue].add(childValue);
     }
 
-    for (let parentValue of Object.keys(parentChildren)) {
+    for (const parentValue of Object.keys(parentChildren)) {
       newDataFromTitle[parentValue] = newDataFromTitle[parentValue] ?? {
         name: parentValue,
         children: [],
@@ -204,7 +206,7 @@ export function getHierarchicalData(
       const parentData = newDataFromTitle[parentValue];
       let groupColour = "";
 
-      for (let childValue of parentChildren[parentValue]) {
+      for (const childValue of parentChildren[parentValue]) {
         const childData = dataFromTitle[childValue];
 
         if (parentData.children.length > 0) {

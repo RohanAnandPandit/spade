@@ -7,7 +7,6 @@ import randomColor from "randomcolor";
 import { Space, Statistic } from "antd";
 import { observer } from "mobx-react-lite";
 import { shadeColor } from "../../utils/queryResults";
-import { useStore } from "../../stores/store";
 
 type ModeOption = "squarify" | "circlePack";
 
@@ -21,8 +20,6 @@ type TreeMapProps = {
 
 export const TreeMap = observer(
   ({ results, width, height, mode = "squarify", variables }: TreeMapProps) => {
-    const rootStore = useStore();
-    const settings = rootStore.settingsStore;
     const [hoveredNode, setHoveredNode] = useState<TreemapPoint | null>();
 
     const titleColumn = variables.key.at(-1)!;
@@ -33,10 +30,9 @@ export const TreeMap = observer(
         results,
         variables.key,
         variables.scalar[0],
-        "title",
-        settings.darkMode()
+        "title"
       );
-    }, [results, settings.state.darkMode, variables.key, variables.scalar]);
+    }, [results, variables.key, variables.scalar]);
 
     return (
       <Space direction="vertical" style={{ justifyContent: "center" }}>
@@ -55,13 +51,13 @@ export const TreeMap = observer(
             damping: 9,
             stiffness: 300,
           }}
-          onLeafMouseOver={(x) => setHoveredNode(x)}
+          onLeafMouseOver={(x: TreemapPoint) => setHoveredNode(x)}
           onLeafMouseOut={() => setHoveredNode(null)}
           width={width}
           height={height - 25}
           mode={mode}
           colorType="literal"
-          getLabel={(x) => x.title}
+          getLabel={(x: TreemapPoint) => x.title}
         />
       </Space>
     );
@@ -72,14 +68,13 @@ export function getHierarchicalData(
   results: QueryResults,
   keyColumns: string[],
   sizeColumn: string,
-  idField: "name" | "title",
-  darkMode: boolean
+  idField: "name" | "title"
 ): any {
   const sizeIndex = results.header.indexOf(sizeColumn);
-  const titleSizes = {};
+  const titleSizes: Record<string, number> = {};
   let dataFromTitle: any = {};
 
-  for (let row of results.data) {
+  for (const row of results.data) {
     const column = keyColumns.at(-1)!;
     const titleIndex = results.header.indexOf(column);
     const title = row[titleIndex];
@@ -105,17 +100,17 @@ export function getHierarchicalData(
     const childTitle = keyColumns[i];
     const childTitleIndex = results.header.indexOf(childTitle);
 
-    const newDataFromTitle = {}; // Data with previous column as key
-    const parentChildren = {};
+    const newDataFromTitle: Record<string, any> = {}; // Data with previous column as key
+    const parentChildren: Record<string, Set<string>> = {};
 
-    for (let row of results.data) {
+    for (const row of results.data) {
       const parentValue = row[parentTitleIndex];
       const childValue = row[childTitleIndex];
       parentChildren[parentValue] = parentChildren[parentValue] ?? new Set();
       parentChildren[parentValue].add(childValue);
     }
 
-    for (let parentValue of Object.keys(parentChildren)) {
+    for (const parentValue of Object.keys(parentChildren)) {
       newDataFromTitle[parentValue] = newDataFromTitle[parentValue] ?? {
         [idField]: parentValue,
         children: [],
@@ -128,7 +123,7 @@ export function getHierarchicalData(
       const parentData = newDataFromTitle[parentValue];
       let groupColour = "";
 
-      for (let childValue of parentChildren[parentValue]) {
+      for (const childValue of parentChildren[parentValue]) {
         const childData = dataFromTitle[childValue];
 
         if (parentData.children.length > 0) {

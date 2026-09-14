@@ -1,0 +1,54 @@
+.trial-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 18px 12px 58px;
+}
+
+.trial-sidebar .sidebar-section-label {
+  padding: 8px 0 0;
+}
+
+.trial-sidebar .ant-divider {
+  margin-block: 4px;
+}
+
+.trial-repository-button {
+  text-align: left;
+}
+
+.trial-sidebar-cta {
+  margin-top: auto;
+}
+
+.trial-sidebar-compact {
+  align-items: center;
+  padding-inline: 8px;
+}
+
+.trial-sidebar-compact .ant-tag {
+  margin-inline-end: 0;
+}
+
+.trial-sidebar-compact .ant-divider {
+  width: 100%;
+}
+
+.trial-workspace-banner {
+  margin-bottom: 12px;
+}
+
+@media (max-width: 767px) {
+  .trial-workspace-banner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .trial-workspace-banner .ant-alert-action {
+    align-self: flex-start;
+    margin-inline-start: 0;
+    padding-top: 8px;
+  }
+}

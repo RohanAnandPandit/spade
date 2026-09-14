@@ -1,150 +1,117 @@
-# SPADE (SPARQL Analysis and Data Explorer)
+# SPADE
 
-SPADE is a powerful tool for visualizing semantic data using RDF/OWL schemas. It provides an intuitive interface to explore and analyze semantic web data through a modern web application.
+SPADE (SPARQL Analysis and Data Explorer) is a web application for querying,
+analysing, and visualising RDF data. It uses a FastAPI API, PostgreSQL-backed
+accounts and persistence, and a React 18 single-page application built with
+Vite.
 
-## Features
+## Stack
 
-- Interactive visualization of RDF/OWL schemas
-- SPARQL query interface
-- Real-time data exploration
-- Support for multiple data sources including GraphDB
-- Geographic data visualization
+- Python 3.13, FastAPI, SQLAlchemy 2.0, Alembic, psycopg 3, RDFLib, and pytest
+- PostgreSQL for users, sessions, workspaces, repositories, saved queries, and
+  geographic fallback data
+- Argon2 password hashing and revocable database-backed browser sessions
+- React 18, TypeScript, Vite, pnpm, Vitest, MobX, and Ant Design
 
-## Tech Stack
+An account is required for a persistent workspace. Browser sessions use secure,
+HTTP-only cookies and CSRF protection. The public API is versioned under
+`/api/v1`; interactive OpenAPI documentation is available at `/docs`.
 
-### Frontend
-- React with TypeScript
-- Modern UI components
-- Interactive data visualization
+Visitors can use the read-only Mondial trial at `/try` without an account. The
+trial is fixed to a public Mondial SPARQL endpoint, accepts only `SELECT` and
+`ASK`, and bounds query length, result size, and request rate.
 
-### Backend
-- Python with Flask
-- MongoDB for data storage
-- SPARQL endpoint integration
-- RESTful API
+## Development
 
-## Getting Started
+Prerequisites are Python 3.13, uv, PostgreSQL, Node.js 22.12 or newer, and pnpm
+12.4.1.
 
-### Prerequisites
-
-- Node.js (v14 or later)
-- Python 3.8+
-- MongoDB
-- Yarn package manager
-- GraphDB (optional, for specific datasets)
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone [repository-url]
-   cd schema-and-data-visualiser
-   ```
-
-2. **Set up the backend**
-   ```bash
-   # Create and activate a virtual environment
-   python -m venv venv
-   source venv/bin/activate  # On Windows: .\venv\Scripts\activate
-   
-   # Install Python dependencies
-   pip install -r requirements.txt
-   ```
-
-3. **Set up the frontend**
-   ```bash
-   cd frontend
-   yarn install
-   ```
-
-### Configuration
-
-1. **Backend Configuration**
-   Create a `.env` file in the root directory with the following variables:
-   ```env
-   BUILD=development  # or 'production'
-   MONGODB_USERNAME=your_username
-   MONGODB_PASSWORD=your_password
-   MONGODB_URL=your_mongodb_connection_string
-   TEST_ENDPOINT=  # Optional: leave empty if not using Mondial database locally
-   FLASK_SECRET_KEY=your_secret_key
-   ```
-
-2. **Frontend Configuration**
-   Create a `.env` file in the `frontend` directory:
-   ```env
-   REACT_APP_BACKEND_API=http://localhost:5000
-   ```
-
-### Database Setup
-
-The application uses MongoDB with the following collections:
-- `queries`: Stores saved SPARQL queries
-- `repositories`: Manages data repositories
-- `geoData`: Contains GeoJSON data for countries and cities
-
-For GraphDB integration (optional):
-1. Download and install GraphDB
-2. Create a new repository
-3. Import `mondial.n3` and `mondial-meta.n3` files (available at [Mondial Database](https://www.dbis.informatik.uni-goettingen.de/Mondial/))
-
-## Running the Application
-
-### Development Mode
-
-1. **Start the backend**
-   ```bash
-   # In the root directory
-   python app.py
-   ```
-
-2. **Start the frontend**
-   ```bash
-   # In the frontend directory
-   yarn start
-   ```
-   The application will be available at `http://localhost:3000`
-
-### Production Build
-
-1. Build the frontend:
-   ```bash
-   cd frontend
-   rm -rf build  # Remove existing build if any
-   yarn build
-   ```
-
-2. The Flask server will serve the frontend build when running `app.py`
-
-## Project Structure
-
-```
-schema-and-data-visualiser/
-├── backend/               # Backend Python code
-│   ├── queries/          # SPARQL query templates
-│   ├── tests/            # Backend tests
-│   ├── __init__.py
-│   ├── analysis.py       # Data analysis logic
-│   ├── db.py            # Database operations
-│   └── ...
-├── frontend/             # Frontend React application
-│   ├── public/           # Static files
-│   └── src/              # Source code
-├── .env                  # Environment variables
-├── app.py               # Main Flask application
-└── requirements.txt     # Python dependencies
+```bash
+uv sync --locked
+cp .env.example .env
+uv run alembic upgrade head
+uv run python -m backend.seed
+uv run uvicorn app:app --reload --port 5000
 ```
 
-## Deployment
+The seed command creates an idempotent local test account, its workspace, and a
+Mondial remote repository. It refuses to run when `BUILD=production`; optional
+`--email` and `--password` arguments can override the development defaults.
 
-The application can be deployed to Heroku or similar platforms. A Heroku configuration is already set up in the repository.
+In another terminal:
 
+```bash
+cd frontend
+pnpm install --frozen-lockfile
+pnpm dev
+```
 
-## Contributing
+The frontend runs at `http://localhost:5173` and proxies `/api` to the FastAPI
+server at `http://localhost:5000`.
 
-Contributions are welcome! Please feel free to submit issues or pull requests.
+## Configuration
 
-## Contact
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `BUILD` | `development` | Enables secure production cookies when set to `production`. |
+| `DATABASE_URL` | local PostgreSQL | SQLAlchemy psycopg connection URL. |
+| `ALLOWED_ORIGINS` | `http://localhost:5173` | Exact comma-separated credentialed CORS origins. |
+| `SESSION_DAYS` | `7` | Fixed browser-session lifetime. |
+| `MAX_UPLOAD_BYTES` | `33554432` | Combined RDF data and schema upload limit. |
+| `VITE_API_URL` | empty | API origin for the independently deployed frontend; leave empty only when a development proxy fronts the API. |
 
-For any questions or suggestions, please contact the project maintainer.
+## Quality checks
 
+```bash
+uv run ruff format --check backend app.py alembic
+uv run ruff check backend app.py alembic
+uv run pytest --cov=backend --cov-report=term-missing
+```
+
+```bash
+cd frontend
+pnpm format:check
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+```
+
+## Legacy MongoDB migration
+
+The application has no MongoDB runtime dependency. To import trusted data from
+the previous deployment, install the migration dependency group and configure
+both `MONGODB_URL` and `DATABASE_URL`:
+
+```bash
+uv sync --group migration
+uv run --group migration python -m backend.migrate_mongodb --dry-run
+uv run --group migration python -m backend.migrate_mongodb
+```
+
+The importer never writes to MongoDB and is safe to rerun. Legacy local graphs
+are Python pickles, so only migrate a database you control. Anonymous workspace
+IDs are retained and claimed when their browser creates an account.
+
+## Production
+
+Deploy the API and frontend independently. Apply migrations and run the API:
+
+```bash
+uv run alembic upgrade head
+BUILD=production uv run uvicorn app:app --host 0.0.0.0 --port 8000
+```
+
+Set `ALLOWED_ORIGINS` to the frontend's exact HTTPS origin. Build the frontend
+with the public API origin and publish `frontend/dist` to a static host:
+
+```bash
+cd frontend
+pnpm install --frozen-lockfile
+VITE_API_URL=https://api.example.com pnpm build
+```
+
+FastAPI serves only the API and its generated documentation; it does not serve
+the frontend build or provide a client-side routing fallback. Use HTTPS in
+production so authentication cookies are transmitted. Snapshot and stop writes
+to the legacy MongoDB deployment before running the one-time import.
