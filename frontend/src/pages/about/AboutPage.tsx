@@ -18,14 +18,14 @@ const AboutPage = () => {
   return (
     <main className="about-page" style={pageStyle}>
       <div className="about-content">
-        <p className="about-eyebrow">About SPADE</p>
-        <h1>
-          SPADE started as my final-year project at Imperial College London.
-        </h1>
+        <p className="about-eyebrow">SPADE</p>
+        <h1>About</h1>
         <p className="about-intro">
-          Professor Peter McBrien supervised the project. I wanted to explore a
-          question: how can we find the most useful way to represent data, so
-          its patterns and relationships are easier to understand?
+          I&apos;m Rohan Pandit. I started SPADE as my final-year project at
+          Imperial College London, with Professor Peter McBrien as my
+          supervisor. The project asked how we can find the most useful way to
+          represent data so its patterns and relationships are easier to
+          understand.
         </p>
 
         <section
