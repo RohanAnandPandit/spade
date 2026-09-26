@@ -28,8 +28,10 @@ const LandingPage = observer(() => {
     <main className="landing-page" style={landingStyle}>
       <section className="landing-hero">
         <div className="hero-copy">
-          <p className="eyebrow">Explore connected data</p>
-          <h1>Find answers in complex data, then see the connections.</h1>
+          <p className="eyebrow">Semantic Web Schema and Data Visualiser</p>
+          <h1>
+            Explore RDF schemas, inspect linked data, and visualise connections.
+          </h1>
           <p className="hero-summary">
             SPADE stands for SPARQL Analysis and Data Explorer. It helps you
             understand what a dataset contains, ask precise questions, and turn
@@ -152,7 +154,6 @@ const LandingPage = observer(() => {
 
       <footer className="landing-footer">
         <span>© {new Date().getFullYear()} Rohan Pandit</span>
-        <Link to="/about">About SPADE</Link>
       </footer>
     </main>
   );

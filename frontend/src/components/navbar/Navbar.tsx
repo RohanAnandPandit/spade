@@ -9,6 +9,7 @@ import {
   CheckOutlined,
   DatabaseOutlined,
   DesktopOutlined,
+  GithubOutlined,
   LogoutOutlined,
   MoonOutlined,
   SunOutlined,
@@ -80,6 +81,16 @@ const Navbar = () => {
         <Link className="navbar-about-link" to="/about">
           About
         </Link>
+        <a
+          className="navbar-github-link"
+          href="https://github.com/RohanAnandPandit/spade"
+          target="_blank"
+          rel="noreferrer"
+          aria-label="View SPADE on GitHub"
+          title="View SPADE on GitHub"
+        >
+          <GithubOutlined aria-hidden />
+        </a>
         {authStore.user ? (
           <>
             {location.pathname === "/" && (

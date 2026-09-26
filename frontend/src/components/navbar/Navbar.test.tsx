@@ -58,6 +58,9 @@ test("keeps account details and actions inside the user menu", async () => {
     "href",
     "/about"
   );
+  expect(
+    screen.getByRole("link", { name: "View SPADE on GitHub" })
+  ).toHaveAttribute("href", "https://github.com/RohanAnandPandit/spade");
   expect(screen.getByRole("link", { name: "Workspace" })).toHaveAttribute(
     "href",
     "/workspace"

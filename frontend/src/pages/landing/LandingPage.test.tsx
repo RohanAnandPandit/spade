@@ -37,6 +37,11 @@ test("shows visitors the sample dataset and account actions", () => {
   renderLandingPage(false);
 
   expect(
+    screen.getByRole("heading", {
+      name: "Explore RDF schemas, inspect linked data, and visualise connections.",
+    })
+  ).toBeVisible();
+  expect(
     screen.getByText(/SPADE stands for SPARQL Analysis and Data Explorer/)
   ).toBeVisible();
   expect(
@@ -48,10 +53,12 @@ test("shows visitors the sample dataset and account actions", () => {
   expect(
     screen.getByText(`© ${new Date().getFullYear()} Rohan Pandit`)
   ).toBeVisible();
-  expect(screen.getByRole("link", { name: "About SPADE" })).toHaveAttribute(
-    "href",
-    "/about"
-  );
+  expect(
+    screen.queryByRole("link", { name: "About SPADE" })
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("link", { name: "View on GitHub" })
+  ).not.toBeInTheDocument();
 });
 
 test("keeps the visitor sample action visible when signed in", () => {

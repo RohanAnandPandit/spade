@@ -37,6 +37,23 @@
   color: var(--navbar-hover);
 }
 
+.navbar-github-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  color: var(--navbar-muted);
+  font-size: 1.15rem;
+}
+
+.navbar-github-link:hover,
+.navbar-github-link:focus-visible {
+  background: var(--navbar-hover-bg);
+  color: var(--navbar-hover);
+}
+
 .navbar-create-account-short {
   display: none;
 }
@@ -96,6 +113,10 @@
 
   .navbar-actions .ant-btn-primary {
     padding-inline: 10px;
+  }
+
+  .navbar-about-link {
+    display: none;
   }
 }
 
