@@ -37,19 +37,36 @@ const LandingPage = observer(() => {
             it with our sample world dataset. No setup required.
           </p>
           <div className="hero-actions">
-            <Link to="/try">
-              <Button type="primary" size="large" icon={<PlayCircleOutlined />}>
-                Try sample dataset
-              </Button>
-            </Link>
             {authStore.user ? (
-              <Link className="secondary-action" to="/workspace">
-                Open workspace
-              </Link>
+              <>
+                <Link to="/workspace">
+                  <Button
+                    type="primary"
+                    size="large"
+                    icon={<DatabaseOutlined aria-hidden />}
+                  >
+                    Open workspace
+                  </Button>
+                </Link>
+                <Link className="secondary-action" to="/try">
+                  Try sample dataset
+                </Link>
+              </>
             ) : (
-              <Link className="secondary-action" to="/register">
-                Or create an account
-              </Link>
+              <>
+                <Link to="/try">
+                  <Button
+                    type="primary"
+                    size="large"
+                    icon={<PlayCircleOutlined />}
+                  >
+                    Try sample dataset
+                  </Button>
+                </Link>
+                <Link className="secondary-action" to="/register">
+                  Or create an account
+                </Link>
+              </>
             )}
           </div>
         </div>
@@ -134,7 +151,7 @@ const LandingPage = observer(() => {
       </section>
 
       <footer className="landing-footer">
-        <span>Rapt Group</span>
+        <span>© {new Date().getFullYear()} Rohan Pandit</span>
       </footer>
     </main>
   );

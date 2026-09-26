@@ -54,6 +54,10 @@ test("keeps account details and actions inside the user menu", async () => {
 
   expect(screen.queryByRole("link", { name: "Home" })).not.toBeInTheDocument();
   expect(screen.queryByText("person@example.com")).not.toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Workspace" })).toHaveAttribute(
+    "href",
+    "/workspace"
+  );
 
   await user.click(screen.getByRole("button", { name: "Open user menu" }));
 

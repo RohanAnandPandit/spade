@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Avatar, Button, Dropdown, Space, Typography } from "antd";
 import type { MenuProps } from "antd";
 import { TbSpade } from "react-icons/tb";
@@ -7,6 +7,7 @@ import { useStore } from "../../stores/store";
 import {
   BgColorsOutlined,
   CheckOutlined,
+  DatabaseOutlined,
   DesktopOutlined,
   LogoutOutlined,
   MoonOutlined,
@@ -18,6 +19,7 @@ import "./Navbar.css";
 const Navbar = () => {
   const { authStore, settingsStore } = useStore();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const accountItems: MenuProps["items"] = authStore.user
     ? [
@@ -77,6 +79,12 @@ const Navbar = () => {
       <div className="navbar-actions">
         {authStore.user ? (
           <>
+            {location.pathname === "/" && (
+              <Link className="navbar-workspace-link" to="/workspace">
+                <DatabaseOutlined aria-hidden />
+                Workspace
+              </Link>
+            )}
             <Dropdown
               menu={{ items: accountItems, triggerSubMenuAction: "click" }}
               trigger={["click"]}
