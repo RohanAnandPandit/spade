@@ -13,19 +13,15 @@ test("explains SPADE's origin and links to the sample workspace", () => {
 
   expect(
     screen.getByRole("heading", {
-      name: "What is the best way to represent data?",
+      name: "SPADE started as my final-year project at Imperial College London.",
     })
-  ).toBeVisible();
-  expect(
-    screen.getByText(
-      /I started SPADE as my final-year project at Imperial College London/
-    )
   ).toBeVisible();
   expect(screen.getByText(/Professor Peter McBrien/)).toBeVisible();
   expect(
-    screen.getByText(
-      /which representation makes its patterns and connections clearest/
-    )
+    screen.getByText(/how can we find the most useful way to represent data/)
+  ).toBeVisible();
+  expect(
+    screen.getByRole("heading", { name: "Finding the right view for the data" })
   ).toBeVisible();
   expect(
     screen.getByRole("link", { name: "Try the sample workspace" })

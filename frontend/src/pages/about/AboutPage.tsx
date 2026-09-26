@@ -19,26 +19,30 @@ const AboutPage = () => {
     <main className="about-page" style={pageStyle}>
       <div className="about-content">
         <p className="about-eyebrow">About SPADE</p>
-        <h1>What is the best way to represent data?</h1>
+        <h1>
+          SPADE started as my final-year project at Imperial College London.
+        </h1>
         <p className="about-intro">
-          A table can give a precise answer, but it does not always reveal a
-          pattern. A chart, map, hierarchy, or network can each show something
-          different about the same data. SPADE explores how to choose a view
-          that fits the data and the question being asked.
+          Professor Peter McBrien supervised the project. I wanted to explore a
+          question: how can we find the most useful way to represent data, so
+          its patterns and relationships are easier to understand?
         </p>
 
-        <section className="about-origin" aria-labelledby="about-origin-title">
-          <p className="about-section-label">The story</p>
-          <h2 id="about-origin-title">Where it started</h2>
+        <section
+          className="about-question"
+          aria-labelledby="about-question-title"
+        >
+          <p className="about-section-label">The idea</p>
+          <h2 id="about-question-title">Finding the right view for the data</h2>
           <p>
-            I started SPADE as my final-year project at Imperial College London,
-            with Professor Peter McBrien as my supervisor.
+            Different views reveal different things. A table provides detail; a
+            chart can highlight a trend; a map, hierarchy, or network can show
+            location, structure, or connections.
           </p>
           <p>
-            The project investigates how the structure and relationships in RDF
-            data can guide the way query results are presented. SPARQL helps
-            uncover the data; the larger question is which representation makes
-            its patterns and connections clearest.
+            SPADE investigates how the shape of RDF data and the results of a
+            SPARQL query can inform which representation is most useful for the
+            question being asked.
           </p>
         </section>
 

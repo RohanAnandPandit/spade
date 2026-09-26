@@ -37,21 +37,21 @@
   line-height: 1.7;
 }
 
-.about-origin {
+.about-question {
   max-width: 710px;
   margin-top: clamp(70px, 10vw, 110px);
   padding-top: 30px;
   border-top: 1px solid var(--about-border);
 }
 
-.about-origin h2,
+.about-question h2,
 .about-action h2 {
   margin: 0 0 20px;
   font-size: clamp(1.65rem, 3vw, 2.25rem);
   letter-spacing: -0.035em;
 }
 
-.about-origin p:not(.about-section-label) {
+.about-question p:not(.about-section-label) {
   margin: 0 0 18px;
   color: var(--about-muted);
   font-size: 1.05rem;
