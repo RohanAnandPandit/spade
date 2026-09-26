@@ -1,3 +1,4 @@
+import { ReactNode } from "react";
 import { Button, Divider, Space, Tag, Tooltip, Typography } from "antd";
 import {
   DatabaseOutlined,
@@ -8,11 +9,13 @@ import { Link } from "react-router-dom";
 
 type TrialSidebarProps = {
   compact?: boolean;
+  queryList?: ReactNode;
 };
 
-const TrialSidebar = ({ compact = false }: TrialSidebarProps) =>
+const TrialSidebar = ({ compact = false, queryList }: TrialSidebarProps) =>
   compact ? (
     <div className="trial-sidebar trial-sidebar-compact">
+      {queryList}
       <Tooltip title="Free sample workspace">
         <Tag color="blue">Try</Tag>
       </Tooltip>
@@ -21,7 +24,6 @@ const TrialSidebar = ({ compact = false }: TrialSidebarProps) =>
           aria-label="Mondial"
           icon={<DatabaseOutlined aria-hidden />}
           shape="circle"
-          type="primary"
         />
       </Tooltip>
       <Divider />
@@ -44,6 +46,7 @@ const TrialSidebar = ({ compact = false }: TrialSidebarProps) =>
     </div>
   ) : (
     <div className="trial-sidebar">
+      {queryList}
       <Space size="small" wrap>
         <Tag color="blue">Free trial</Tag>
         <Typography.Text type="secondary">No account required</Typography.Text>
@@ -52,12 +55,7 @@ const TrialSidebar = ({ compact = false }: TrialSidebarProps) =>
       <Typography.Text className="sidebar-section-label" type="secondary">
         Sample repository
       </Typography.Text>
-      <Button
-        aria-label="Mondial"
-        className="trial-repository-button"
-        type="primary"
-        block
-      >
+      <Button aria-label="Mondial" className="trial-repository-button" block>
         <DatabaseOutlined aria-hidden />
         Mondial
       </Button>

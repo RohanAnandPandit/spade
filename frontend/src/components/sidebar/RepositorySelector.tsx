@@ -1,5 +1,5 @@
 import { DatabaseOutlined } from "@ant-design/icons";
-import { Button, Dropdown, Space, Tooltip } from "antd";
+import { Button, Dropdown, Tooltip } from "antd";
 import { observer } from "mobx-react-lite";
 
 import { useStore } from "../../stores/store";
@@ -23,17 +23,11 @@ const RepositorySelector = observer(
             : "Choose repository"
         }
         shape={compact ? "circle" : undefined}
-        type={repository ? "default" : "primary"}
+        className="sidebar-action-button"
+        icon={<DatabaseOutlined />}
         style={compact ? undefined : { width: "100%" }}
       >
-        {compact ? (
-          <DatabaseOutlined />
-        ) : (
-          <Space className="repository-selector-label">
-            <DatabaseOutlined />
-            <span>{label}</span>
-          </Space>
-        )}
+        {!compact && <span className="repository-selector-label">{label}</span>}
       </Button>
     );
 
@@ -51,7 +45,7 @@ const RepositorySelector = observer(
               : [
                   {
                     key: "empty",
-                    label: "Add a repository below first",
+                    label: "Use Manage repositories to add one",
                     disabled: true,
                   },
                 ],

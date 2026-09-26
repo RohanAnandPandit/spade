@@ -16,6 +16,10 @@
 }
 
 .trial-repository-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
   text-align: left;
 }
 
@@ -36,19 +40,51 @@
   width: 100%;
 }
 
+.trial-sidebar-compact .query-list {
+  width: auto;
+  padding: 0;
+}
+
 .trial-workspace-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 9px 12px;
+  border: 1px solid;
+  border-radius: 8px;
   margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+
+.trial-workspace-banner-copy {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  min-width: 0;
+}
+
+.trial-workspace-banner-action {
+  flex: 0 0 auto;
+  margin-left: auto;
+  white-space: nowrap;
 }
 
 @media (max-width: 767px) {
   .trial-workspace-banner {
-    align-items: flex-start;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr);
+    align-items: start;
+    gap: 5px 8px;
   }
 
-  .trial-workspace-banner .ant-alert-action {
-    align-self: flex-start;
-    margin-inline-start: 0;
-    padding-top: 8px;
+  .trial-workspace-banner-copy {
+    grid-column: 2;
+  }
+
+  .trial-workspace-banner-action {
+    grid-column: 2;
+    margin-left: 0;
+    white-space: normal;
   }
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Button, Space, Tabs, TabsProps, Tooltip, App as AntdApp } from "antd";
+import { Button, Tabs, TabsProps, Tooltip, App as AntdApp } from "antd";
 import { observer } from "mobx-react-lite";
 import { BiNetworkChart } from "react-icons/bi";
 import { BsBarChartSteps, BsTable } from "react-icons/bs";
@@ -33,7 +33,7 @@ const Query = observer(
       header: [],
       data: [],
     });
-    const { name, sparql: query } = demoQuery ?? queriesStore.getQuery(qid);
+    const { sparql: query } = demoQuery ?? queriesStore.getQuery(qid);
 
     const setQueryText = (text: string) => {
       if (demo) onDemoQueryChange?.(text);
@@ -81,7 +81,6 @@ const Query = observer(
           : await runSparqlQuery(repository, query);
         setResults(nextResults);
         setGraphKey((key) => key + 1);
-        if (!demo) await repositoryStore.updateQueryHistory();
         setActiveTab("results");
         showNotification(Math.round(performance.now() - start));
       } catch (error) {
@@ -95,15 +94,16 @@ const Query = observer(
       {
         key: "editor",
         label: (
-          <Space.Compact>
-            <MdOutlineEditNote size={25} />
-            <span className="query-tab-label-text">Query</span>
-          </Space.Compact>
+          <Tooltip title="Query" placement="right">
+            <span className="query-view-tab-icon">
+              <MdOutlineEditNote size={20} />
+              <span className="query-view-tab-text">Query</span>
+            </span>
+          </Tooltip>
         ),
         children: (
           <Editor
             query={query}
-            queryName={name}
             onChange={setQueryText}
             repository={repository}
             queryAnalysis={queryAnalysis}
@@ -117,10 +117,12 @@ const Query = observer(
             {
               key: "results",
               label: (
-                <Space.Compact>
-                  <BsTable size={15} style={{ margin: 5 }} />
-                  <span className="query-tab-label-text">Results</span>
-                </Space.Compact>
+                <Tooltip title="Results" placement="right">
+                  <span className="query-view-tab-icon">
+                    <BsTable size={17} />
+                    <span className="query-view-tab-text">Results</span>
+                  </span>
+                </Tooltip>
               ),
               children: <Results results={results} loading={queryLoading} />,
             },
@@ -129,10 +131,12 @@ const Query = observer(
                   {
                     key: "graph",
                     label: (
-                      <Space.Compact title="Use CONSTRUCT for a graph">
-                        <BiNetworkChart size={20} style={{ margin: 5 }} />
-                        <span className="query-tab-label-text">Graph</span>
-                      </Space.Compact>
+                      <Tooltip title="Graph (use CONSTRUCT)" placement="right">
+                        <span className="query-view-tab-icon">
+                          <BiNetworkChart size={19} />
+                          <span className="query-view-tab-text">Graph</span>
+                        </span>
+                      </Tooltip>
                     ),
                     disabled:
                       isEmpty(results) ||
@@ -150,11 +154,11 @@ const Query = observer(
             {
               key: "charts",
               label: (
-                <Tooltip title="View recommended charts">
-                  <Space.Compact>
-                    <BsBarChartSteps size={15} style={{ margin: 5 }} />
-                    <span className="query-tab-label-text">Charts</span>
-                  </Space.Compact>
+                <Tooltip title="Charts" placement="right">
+                  <span className="query-view-tab-icon">
+                    <BsBarChartSteps size={18} />
+                    <span className="query-view-tab-text">Charts</span>
+                  </span>
                 </Tooltip>
               ),
               disabled:
@@ -169,29 +173,33 @@ const Query = observer(
     ];
 
     return (
-      <Tabs
-        className="query-view"
-        activeKey={repository ? activeTab : "editor"}
-        items={items}
-        onChange={(activeKey) => setActiveTab(activeKey)}
-        tabBarExtraContent={
-          repository
-            ? {
-                left: (
-                  <Button
-                    style={{ marginRight: 20 }}
-                    icon={<FiPlay size={20} />}
-                    title="Run query"
-                    loading={queryLoading}
-                    onClick={() => void executeQuery()}
-                  >
-                    <span className="run-button-label">Run</span>
-                  </Button>
-                ),
-              }
-            : undefined
-        }
-      />
+      <div>
+        <Tabs
+          className="query-view"
+          tabPosition="left"
+          activeKey={repository ? activeTab : "editor"}
+          items={items}
+          onChange={(activeKey) => setActiveTab(activeKey)}
+          tabBarExtraContent={
+            repository
+              ? {
+                  left: (
+                    <Tooltip title="Run query" placement="right">
+                      <Button
+                        className="query-view-run"
+                        type="text"
+                        aria-label="Run query"
+                        icon={<FiPlay size={18} />}
+                        loading={queryLoading}
+                        onClick={() => void executeQuery()}
+                      />
+                    </Tooltip>
+                  ),
+                }
+              : undefined
+          }
+        />
+      </div>
     );
   }
 );

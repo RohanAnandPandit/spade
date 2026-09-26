@@ -17,6 +17,8 @@ class QueriesStore {
       "1": {
         name: "Query 1",
         sparql: "",
+        updatedAt: new Date().toISOString(),
+        saved: { name: "Query 1", sparql: "" },
       },
     },
     currentQueryId: "1",
@@ -59,7 +61,10 @@ class QueriesStore {
   };
 
   setQueryText = (id: string, sparql: string) => {
-    this.state.openQueries[id]!.sparql = sparql;
+    const query = this.state.openQueries[id]!;
+    query.saved ??= { name: query.name, sparql: query.sparql };
+    query.sparql = sparql;
+    query.updatedAt = new Date().toISOString();
   };
 
   getCurrentQuery = (id: string) => {
@@ -70,7 +75,7 @@ class QueriesStore {
   };
 
   setCurrentQuery = (sparql: string) => {
-    this.state.openQueries[this.currentQueryId()]!.sparql = sparql;
+    this.setQueryText(this.currentQueryId(), sparql);
   };
 
   getQueryName = (id: string) => {
@@ -81,7 +86,31 @@ class QueriesStore {
   };
 
   setQueryTitle = (id: string, title: string) => {
-    this.state.openQueries[id]!.name = title;
+    const query = this.state.openQueries[id]!;
+    query.saved ??= { name: query.name, sparql: query.sparql };
+    query.name = title;
+    query.updatedAt = new Date().toISOString();
+  };
+
+  isQueryDirty = (id: string) => {
+    const query = this.state.openQueries[id];
+    return (
+      !!query?.saved &&
+      (query.name !== query.saved.name || query.sparql !== query.saved.sparql)
+    );
+  };
+
+  saveQuery = (id: string) => {
+    const query = this.state.openQueries[id]!;
+    query.saved = { name: query.name, sparql: query.sparql };
+  };
+
+  discardQueryChanges = (id: string) => {
+    const query = this.state.openQueries[id]!;
+    if (!query.saved) return;
+    query.name = query.saved.name;
+    query.sparql = query.saved.sparql;
+    query.updatedAt = new Date().toISOString();
   };
 
   addQuery = ({
@@ -95,6 +124,8 @@ class QueriesStore {
     this.state.openQueries[qid] = {
       name: name || `Query ${qid}`,
       sparql,
+      updatedAt: new Date().toISOString(),
+      saved: { name: name || `Query ${qid}`, sparql },
     };
     return qid;
   };
@@ -116,7 +147,12 @@ class QueriesStore {
     this.state = {
       totalQueries: 1,
       openQueries: {
-        "1": { name: "Query 1", sparql: "" },
+        "1": {
+          name: "Query 1",
+          sparql: "",
+          updatedAt: new Date().toISOString(),
+          saved: { name: "Query 1", sparql: "" },
+        },
       },
       currentQueryId: "1",
     };

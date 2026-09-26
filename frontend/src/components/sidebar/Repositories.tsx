@@ -5,18 +5,18 @@ import {
   Descriptions,
   Input,
   Modal,
-  Space,
   Tabs,
   Form,
   Popconfirm,
   Segmented,
+  Space,
   Spin,
   Tooltip,
   App as AntdApp,
   Empty,
   Table,
 } from "antd";
-import { EditOutlined, EyeOutlined, PlusOutlined } from "@ant-design/icons";
+import { EditOutlined, EyeOutlined, SettingOutlined } from "@ant-design/icons";
 import type { TableColumnsType } from "antd";
 import { addLocalRepository, addRemoteRepository } from "../../api/sparql";
 import { useStore } from "../../stores/store";
@@ -46,7 +46,9 @@ const Repositories = observer(({ compact = false }: RepositoriesProps) => {
   ];
   const button = (
     <Button
-      aria-label="Add or manage repositories"
+      aria-label="Manage repositories"
+      className="sidebar-action-button"
+      icon={<SettingOutlined />}
       onClick={() => {
         setActiveTab(
           repositoryStore.repositories().length
@@ -58,21 +60,14 @@ const Repositories = observer(({ compact = false }: RepositoriesProps) => {
       shape={compact ? "circle" : undefined}
       style={compact ? undefined : { width: "100%" }}
     >
-      {compact ? (
-        <PlusOutlined />
-      ) : (
-        <Space>
-          <PlusOutlined />
-          Add or manage repositories
-        </Space>
-      )}
+      {!compact && "Manage repositories"}
     </Button>
   );
 
   return (
     <div style={compact ? undefined : { margin: 5 }}>
       {compact ? (
-        <Tooltip title="Add or manage repositories">{button}</Tooltip>
+        <Tooltip title="Manage repositories">{button}</Tooltip>
       ) : (
         button
       )}

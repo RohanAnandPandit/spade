@@ -1,5 +1,7 @@
+import { LeftOutlined } from "@ant-design/icons";
 import {
   Alert,
+  Button,
   Card,
   Divider,
   List,
@@ -82,15 +84,31 @@ type AnalysisProps = {
   queryAnalysis: QueryAnalysis | null;
   loading: boolean;
   emptyMessage?: string;
+  onCollapse: () => void;
 };
 
-const Analysis = ({ queryAnalysis, loading, emptyMessage }: AnalysisProps) => {
+const Analysis = ({
+  queryAnalysis,
+  loading,
+  emptyMessage,
+  onCollapse,
+}: AnalysisProps) => {
   return (
     <Card
       title={
-        <>
-          <BiSolidAnalyse size={20} /> Analysis
-        </>
+        <span className="analysis-card-title">
+          <BiSolidAnalyse size={20} />
+          Analysis
+        </span>
+      }
+      extra={
+        <Button
+          type="text"
+          aria-label="Collapse analysis"
+          aria-expanded={true}
+          icon={<LeftOutlined />}
+          onClick={onCollapse}
+        />
       }
       style={{ width: "100%" }}
     >
@@ -115,7 +133,7 @@ const Analysis = ({ queryAnalysis, loading, emptyMessage }: AnalysisProps) => {
         <Alert
           message={
             emptyMessage ??
-            "Select a repository and enter a query to see its analysis."
+            "Write a SPARQL query to see its variables and suggested charts here."
           }
         />
       )}

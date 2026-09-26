@@ -1,14 +1,13 @@
-import { useEffect } from "react";
-import { Divider, Typography } from "antd";
+import { ReactNode, useEffect } from "react";
+import { Typography } from "antd";
 import { useStore } from "../../stores/store";
 import { observer } from "mobx-react-lite";
-import QueryHistory from "./QueryHistory";
 import ExploreDataset from "./ExploreDataset";
 import Repositories from "./Repositories";
 import RepositorySelector from "./RepositorySelector";
 import "./Sidebar.css";
 
-const Sidebar = observer(() => {
+const Sidebar = observer(({ queryList }: { queryList?: ReactNode }) => {
   const rootStore = useStore();
   const settings = rootStore.settingsStore;
   const repositoryStore = rootStore.repositoryStore;
@@ -25,25 +24,19 @@ const Sidebar = observer(() => {
         collapsed ? "sidebar-content-collapsed" : "sidebar-content-expanded"
       }`}
     >
-      <RepositorySelector compact={collapsed} />
-      <Repositories compact={collapsed} />
-      {repository && (
-        <>
-          {!collapsed && (
-            <>
-              <Divider />
-              <Typography.Text
-                className="sidebar-section-label"
-                type="secondary"
-              >
-                {repository}
-              </Typography.Text>
-            </>
-          )}
+      <div className="sidebar-repository-controls">
+        {!collapsed && (
+          <Typography.Text className="sidebar-section-label" type="secondary">
+            Repository
+          </Typography.Text>
+        )}
+        <RepositorySelector compact={collapsed} />
+        <Repositories compact={collapsed} />
+        {repository && (
           <ExploreDataset compact={collapsed} repository={repository} />
-          <QueryHistory compact={collapsed} />
-        </>
-      )}
+        )}
+      </div>
+      {queryList}
     </div>
   );
 });

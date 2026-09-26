@@ -1,4 +1,4 @@
-import { Button, Modal, Space, Tabs, TabsProps, Tooltip } from "antd";
+import { Button, Modal, Tabs, TabsProps, Tooltip } from "antd";
 import { RepositoryId } from "../../types";
 import { Summary } from "../dataset/Summary";
 import ClassHierarchy from "../dataset/ClassHierarchy";
@@ -66,28 +66,22 @@ const ExploreDataset = ({
   ];
   const button = (
     <Button
-      aria-label={compact ? "Explore selected repository" : undefined}
-      type="primary"
+      aria-label="Explore repository"
+      className="sidebar-action-button"
+      icon={<MdOutlineExplore size={20} />}
       disabled={repositoryStore.currentRepository() === null}
       onClick={() => setIsModalOpen(true)}
       shape={compact ? "circle" : undefined}
-      style={compact ? undefined : { width: "95%", margin: 5 }}
+      style={compact ? undefined : { width: "calc(100% - 10px)", margin: 5 }}
     >
-      {compact ? (
-        <MdOutlineExplore size={20} />
-      ) : (
-        <Space>
-          <MdOutlineExplore size={20} />
-          Explore selected repository
-        </Space>
-      )}
+      {!compact && "Explore repository"}
     </Button>
   );
 
   return (
     <>
       {compact ? (
-        <Tooltip title="Explore selected repository">{button}</Tooltip>
+        <Tooltip title="Explore repository">{button}</Tooltip>
       ) : (
         button
       )}

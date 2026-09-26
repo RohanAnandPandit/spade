@@ -1,6 +1,7 @@
-import { Alert, Button, Layout, theme, Tooltip } from "antd";
+import { Button, Layout, theme, Tooltip } from "antd";
+import { InfoCircleOutlined } from "@ant-design/icons";
 import { LuPanelLeftClose, LuPanelLeftOpen } from "react-icons/lu";
-import QueryBrowser from "./QueryBrowser";
+import QueryBrowser, { QueryList, useQueryBrowser } from "./QueryBrowser";
 import Sidebar from "../../components/sidebar/Sidebar";
 import { useStore } from "../../stores/store";
 import { observer } from "mobx-react-lite";
@@ -17,9 +18,10 @@ const HomePage = observer(({ demo = false }: HomePageProps) => {
   const rootStore = useStore();
   const settings = rootStore.settingsStore;
   const collapsed = settings.sidebarCollapsed();
+  const queryBrowser = useQueryBrowser(demo);
 
   const {
-    token: { colorBgContainer },
+    token: { colorBgContainer, colorBorderSecondary, colorTextSecondary },
   } = theme.useToken();
 
   return (
@@ -35,7 +37,16 @@ const HomePage = observer(({ demo = false }: HomePageProps) => {
         trigger={null}
         style={{ background: colorBgContainer }}
       >
-        {demo ? <TrialSidebar compact={collapsed} /> : <Sidebar />}
+        {demo ? (
+          <TrialSidebar
+            compact={collapsed}
+            queryList={<QueryList model={queryBrowser} compact={collapsed} />}
+          />
+        ) : (
+          <Sidebar
+            queryList={<QueryList model={queryBrowser} compact={collapsed} />}
+          />
+        )}
         <div className="sidebar-collapse-control">
           <Tooltip title={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
             <Button
@@ -57,20 +68,26 @@ const HomePage = observer(({ demo = false }: HomePageProps) => {
           }}
         >
           {demo && (
-            <Alert
+            <div
               className="trial-workspace-banner"
-              type="info"
-              showIcon
-              message="Sample workspace"
-              description="Explore the Mondial world dataset with the same query tabs, results, and charts as the full workspace. The shared dataset is read-only and results are limited to 250 rows."
-              action={
-                <Link to="/register">
-                  <Button size="small">Create an account to save work</Button>
-                </Link>
-              }
-            />
+              style={{ borderColor: colorBorderSecondary }}
+            >
+              <InfoCircleOutlined
+                aria-hidden
+                style={{ color: colorTextSecondary }}
+              />
+              <div className="trial-workspace-banner-copy">
+                <strong>Sample workspace</strong>
+                <span>
+                  Mondial is read-only. Results are limited to 250 rows.
+                </span>
+              </div>
+              <Link to="/register" className="trial-workspace-banner-action">
+                Create an account to save work
+              </Link>
+            </div>
           )}
-          <QueryBrowser demo={demo} />
+          <QueryBrowser model={queryBrowser} />
         </Content>
       </Layout>
     </Layout>
