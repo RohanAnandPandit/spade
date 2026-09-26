@@ -26,6 +26,21 @@
   gap: 12px;
 }
 
+.navbar-about-link {
+  color: var(--navbar-muted);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.navbar-about-link:hover,
+.navbar-about-link:focus-visible {
+  color: var(--navbar-hover);
+}
+
+.navbar-create-account-short {
+  display: none;
+}
+
 .navbar-workspace-link {
   display: inline-flex;
   align-items: center;
@@ -63,4 +78,33 @@
 .account-menu-button.ant-btn:focus-visible {
   background: var(--navbar-hover-bg);
   color: inherit;
+}
+
+@media (max-width: 480px) {
+  .navbar-brand {
+    gap: 6px;
+    font-size: 0.95rem;
+  }
+
+  .navbar-actions {
+    gap: 8px;
+  }
+
+  .navbar-actions .ant-space {
+    gap: 8px !important;
+  }
+
+  .navbar-actions .ant-btn-primary {
+    padding-inline: 10px;
+  }
+}
+
+@media (max-width: 360px) {
+  .navbar-create-account-full {
+    display: none;
+  }
+
+  .navbar-create-account-short {
+    display: inline;
+  }
 }

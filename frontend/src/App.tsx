@@ -9,6 +9,7 @@ import HomePage from "./pages/home/HomePage";
 import AuthPage from "./pages/auth/AuthPage";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import LandingPage from "./pages/landing/LandingPage";
+import AboutPage from "./pages/about/AboutPage";
 import TrialPage from "./pages/trial/TrialPage";
 import "./App.css";
 
@@ -68,6 +69,7 @@ const App = () => {
           <Layout className="app-content">
             <Routes>
               <Route path="/" element={<LandingPage />} />
+              <Route path="/about" element={<AboutPage />} />
               <Route path="/try" element={<TrialPage />} />
               <Route element={<ProtectedRoute />}>
                 <Route path="/workspace" element={<HomePage />} />

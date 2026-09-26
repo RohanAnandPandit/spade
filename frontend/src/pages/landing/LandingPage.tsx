@@ -152,6 +152,7 @@ const LandingPage = observer(() => {
 
       <footer className="landing-footer">
         <span>© {new Date().getFullYear()} Rohan Pandit</span>
+        <Link to="/about">About SPADE</Link>
       </footer>
     </main>
   );

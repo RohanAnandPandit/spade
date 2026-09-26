@@ -77,6 +77,9 @@ const Navbar = () => {
       </Link>
 
       <div className="navbar-actions">
+        <Link className="navbar-about-link" to="/about">
+          About
+        </Link>
         {authStore.user ? (
           <>
             {location.pathname === "/" && (
@@ -103,8 +106,16 @@ const Navbar = () => {
             <Link className="navbar-sign-in" to="/login">
               Sign in
             </Link>
-            <Button type="primary" onClick={() => navigate("/register")}>
-              Create account
+            <Button
+              className="navbar-create-account"
+              type="primary"
+              aria-label="Create account"
+              onClick={() => navigate("/register")}
+            >
+              <span className="navbar-create-account-full">Create account</span>
+              <span className="navbar-create-account-short" aria-hidden>
+                Join
+              </span>
             </Button>
           </Space>
         )}
