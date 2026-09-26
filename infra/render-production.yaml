@@ -1,0 +1,59 @@
+projects:
+  - name: SPADE
+    environments:
+      - name: Production
+        services:
+          - type: web
+            name: spade-api
+            runtime: python
+            plan: free
+            branch: production
+            domains:
+              - api.spade.rohanpandit.com
+            buildCommand: uv sync --frozen --no-dev
+            startCommand: uv run alembic upgrade head && uv run uvicorn app:app --host 0.0.0.0 --port $PORT
+            healthCheckPath: /api/v1/health
+            envVars:
+              - fromGroup: spade-production-backend-config
+              - key: DATABASE_URL
+                sync: false
+              - key: ALLOWED_ORIGINS
+                value: https://spade.rohanpandit.com
+
+          - type: web
+            name: spade-frontend
+            runtime: static
+            branch: production
+            domains:
+              - spade.rohanpandit.com
+            rootDir: frontend
+            buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build
+            staticPublishPath: dist
+            envVars:
+              - fromGroup: spade-production-frontend-config
+            routes:
+              - type: rewrite
+                source: /api/*
+                destination: https://api.spade.rohanpandit.com/api/*
+              - type: rewrite
+                source: /*
+                destination: /index.html
+
+        envVarGroups:
+          - name: spade-production-backend-config
+            envVars:
+              - key: PYTHON_VERSION
+                value: 3.13.7
+              - key: BUILD
+                value: production
+              - key: SESSION_DAYS
+                value: 7
+              - key: MAX_UPLOAD_BYTES
+                value: 33554432
+
+          - name: spade-production-frontend-config
+            envVars:
+              - key: NODE_VERSION
+                value: 22.18.0
+              - key: VITE_API_URL
+                value: ""

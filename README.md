@@ -58,7 +58,7 @@ server at `http://localhost:5000`.
 | `ALLOWED_ORIGINS` | `http://localhost:5173` | Exact comma-separated credentialed CORS origins. |
 | `SESSION_DAYS` | `7` | Fixed browser-session lifetime. |
 | `MAX_UPLOAD_BYTES` | `33554432` | Combined RDF data and schema upload limit. |
-| `VITE_API_URL` | empty | API origin for the independently deployed frontend; leave empty only when a development proxy fronts the API. |
+| `VITE_API_URL` | empty | API origin for the independently deployed frontend; leave empty when a development or Render rewrite proxies `/api` on the frontend origin. |
 
 ## Quality checks
 
@@ -93,17 +93,71 @@ The importer never writes to MongoDB and is safe to rerun. Legacy local graphs
 are Python pickles, so only migrate a database you control. Anonymous workspace
 IDs are retained and claimed when their browser creates an account.
 
-## Production
+## Branches and Render deployment
 
-Deploy the API and frontend independently. Apply migrations and run the API:
+`main` is the integration branch. Merge feature pull requests into `main`,
+promote `main` to `staging`, test the staging deployment, then promote `staging`
+to `production`. Keep `production` behind or equal to `staging`, and `staging`
+behind or equal to `main`. Use fast-forward promotions so the deployed commit
+is exactly the commit already tested. The old `develop` branch is retired once
+its changes are incorporated into `main`; target new pull requests at `main`.
+
+Render uses two independent Blueprints in this repository:
+
+| Environment | Blueprint path | Git branch | Frontend | API |
+| --- | --- | --- | --- | --- |
+| Staging | `infra/render-staging.yaml` | `staging` | Render's `spade-frontend-staging.onrender.com` domain | Render's `spade-api-staging.onrender.com` domain |
+| Production | `infra/render-production.yaml` | `production` | `spade.rohanpandit.com` | `api.spade.rohanpandit.com` |
+
+Create or update each Render Blueprint with its listed path and branch. The
+production Blueprint keeps the existing `spade-api` and `spade-frontend`
+service names in the `SPADE` project's `Production` environment. Point the
+existing production Blueprint at `infra/render-production.yaml` before removing
+its old root `render.yaml` path. The staging Blueprint creates distinct
+services and environment groups in the `Staging` environment. Never attach the
+same Render resource to both Blueprints.
+
+Set a **different** Neon PostgreSQL `DATABASE_URL` secret on each API service.
+Render prompts for it when creating a Blueprint; for an existing Blueprint,
+set or verify it directly on the service because `sync: false` values are not
+updated by later Blueprint syncs. Keep database credentials out of Git.
+Configure DNS for both production custom domains using the records Render
+displays for those services, then wait for Render to verify the domains and
+issue certificates before promoting production traffic.
+
+The frontend rewrites `/api/*` to its environment's API before the SPA
+fallback. This keeps browser requests and authentication cookies on the same
+frontend origin. `VITE_API_URL` is deliberately empty in both builds. The
+staging rewrite assumes Render assigns
+`https://spade-api-staging.onrender.com`; check the actual service URL after
+creation and update the rewrite if Render adds a name suffix.
+
+To promote after tests and a deployment smoke check:
+
+```bash
+git fetch origin
+git switch staging
+git merge --ff-only origin/main
+git push origin staging
+# Verify the staging frontend, login, a write action, and API health.
+git switch production
+git merge --ff-only origin/staging
+git push origin production
+```
+
+The API is a free Python web service and the frontend is a free static site.
+The API applies migrations each time its free instance starts. Render uses
+separate backend and frontend environment groups for each environment.
+
+The API applies migrations each time its free instance starts, then runs:
 
 ```bash
 uv run alembic upgrade head
 BUILD=production uv run uvicorn app:app --host 0.0.0.0 --port 8000
 ```
 
-Set `ALLOWED_ORIGINS` to the frontend's exact HTTPS origin. Build the frontend
-with the public API origin and publish `frontend/dist` to a static host:
+Set `ALLOWED_ORIGINS` to the frontend's exact HTTPS origin. To build the
+frontend for a different static host, set its public API origin explicitly:
 
 ```bash
 cd frontend
@@ -115,3 +169,6 @@ FastAPI serves only the API and its generated documentation; it does not serve
 the frontend build or provide a client-side routing fallback. Use HTTPS in
 production so authentication cookies are transmitted. Snapshot and stop writes
 to the legacy MongoDB deployment before running the one-time import.
+
+Render's free web service sleeps when idle. Database persistence and limits are
+managed separately by the selected Neon plan.
