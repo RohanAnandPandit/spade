@@ -1,3 +1,57 @@
 .charts-options {
-  padding: 10px 10px 0;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  font-size: 0.85rem;
+}
+
+.charts-content,
+.charts-view {
+  min-width: 0;
+}
+
+.charts-view > .ant-tabs-nav {
+  margin-bottom: 10px;
+}
+
+.charts-view .ant-tabs-tab {
+  min-width: 38px;
+  margin-left: 0;
+  margin-right: 4px;
+  padding: 6px 10px;
+}
+
+.charts-view .ant-tabs-tab + .ant-tabs-tab {
+  margin-left: 0;
+}
+
+.charts-tab-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 0;
+}
+
+.charts-tab-label svg {
+  flex: 0 0 auto;
+}
+
+.charts-view .ant-tabs-tab-active .charts-tab-label {
+  font-size: 0.85rem;
+}
+
+.charts-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 220px;
+  padding: 24px;
+  text-align: center;
+}
+
+.charts-empty span {
+  opacity: 0.72;
 }

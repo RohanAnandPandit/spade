@@ -12,7 +12,8 @@ type LinkMap = { [key: string]: Set<string> };
 export async function getRecommendedCharts(
   variables: VariableCategories,
   allRelations: RelationMap,
-  results: QueryResults
+  results: QueryResults,
+  detectGeography = true
 ) {
   const { header } = results;
   const normalizedVariables: VariableCategories = {
@@ -20,7 +21,9 @@ export async function getRecommendedCharts(
     geographical:
       variables.geographical.length > 0
         ? variables.geographical
-        : await geographicVariables(results, variables.lexical),
+        : detectGeography
+          ? await geographicVariables(results, variables.lexical)
+          : [],
     key:
       variables.key.length > 0
         ? variables.key
@@ -110,6 +113,48 @@ export async function getRecommendedCharts(
   }
 
   return Array.from(charts);
+}
+
+export function inferVariableCategories(
+  results: QueryResults
+): VariableCategories {
+  const variables: VariableCategories = {
+    key: [],
+    scalar: [],
+    geographical: [],
+    temporal: [],
+    lexical: [],
+    date: [],
+    numeric: [],
+    object: [],
+  };
+
+  for (const [index, column] of results.header.entries()) {
+    const values = results.data
+      .map((row) => row[index])
+      .filter((value) => value?.trim());
+    if (values.length === 0) continue;
+    const isNumeric = values.every((value) =>
+      Number.isFinite(Number(value.replaceAll(",", "")))
+    );
+    if (isNumeric) {
+      variables.numeric.push(column);
+      variables.scalar.push(column);
+    } else {
+      variables.lexical.push(column);
+    }
+  }
+
+  const uniqueLabel = variables.lexical.find((column) => {
+    const index = results.header.indexOf(column);
+    const values = results.data.map((row) => row[index]);
+    return (
+      values.every((value) => value?.trim()) &&
+      new Set(values).size === values.length
+    );
+  });
+  if (uniqueLabel) variables.key.push(uniqueLabel);
+  return variables;
 }
 
 export function isCompositeKey(
