@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
-import { App as AntdApp, Spin, Tabs, TabsProps } from "antd";
+import { App as AntdApp, Space, Spin, Switch, Tabs, TabsProps } from "antd";
 import { ChartType, QueryAnalysis, QueryResults } from "../../types";
 import { observer } from "mobx-react-lite";
 import { useStore } from "../../stores/store";
@@ -61,7 +61,6 @@ const WordCloud = lazy(() => import("../charts/WordCloud"));
 
 type ChartsProps = {
   results: QueryResults;
-  showAllCharts: boolean;
   queryAnalysis: QueryAnalysis | null;
 };
 
@@ -81,9 +80,10 @@ const EMPTY_ANALYSIS: QueryAnalysis = {
 };
 
 const Charts = observer(
-  ({ results, showAllCharts, queryAnalysis }: ChartsProps) => {
+  ({ results, queryAnalysis }: ChartsProps) => {
     const rootStore = useStore();
     const settings = rootStore.settingsStore;
+    const showAllCharts = settings.showAllCharts();
     const [loading, setLoading] = useState<boolean>(false);
     const { message } = AntdApp.useApp();
     const chartWidth = Math.floor(
@@ -474,6 +474,14 @@ const Charts = observer(
       <Fullscreen>
         <Spin spinning={loading}>
           <Suspense fallback={<Spin />}>
+            <Space className="charts-options">
+              <Switch
+                aria-label="Show all charts"
+                checked={showAllCharts}
+                onChange={(checked) => settings.setShowAllCharts(checked)}
+              />
+              <span>Show all charts</span>
+            </Space>
             <Tabs
               defaultActiveKey="1"
               items={[

@@ -26,7 +26,6 @@ type QueryProps = {
 const Query = observer(
   ({ qid, demo = false, demoQuery, onDemoQueryChange }: QueryProps) => {
     const rootStore = useStore();
-    const settings = rootStore.settingsStore;
     const repositoryStore = rootStore.repositoryStore;
     const queriesStore = rootStore.queriesStore;
     const repository = demo ? "Mondial" : repositoryStore.currentRepository();
@@ -162,11 +161,7 @@ const Query = observer(
                 isEmpty(results) ||
                 queryAnalysis?.visualisations.includes(ChartType.GRAPH),
               children: (
-                <Charts
-                  results={results}
-                  showAllCharts={settings.state.showAllCharts}
-                  queryAnalysis={queryAnalysis}
-                />
+                <Charts results={results} queryAnalysis={queryAnalysis} />
               ),
             },
           ]

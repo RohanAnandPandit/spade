@@ -22,6 +22,16 @@ const App = () => {
     void rootStore.authStore.initialize();
   }, [rootStore]);
 
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    settings.setSystemDarkMode(media.matches);
+    const onChange = (event: MediaQueryListEvent) => {
+      settings.setSystemDarkMode(event.matches);
+    };
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, [settings]);
+
   return (
     <ConfigProvider
       theme={{
