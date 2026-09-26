@@ -1,8 +1,7 @@
 import { makeAutoObservable, runInAction } from "mobx";
 import { makePersistable } from "mobx-persist-store";
-import { QueryRecord, RepositoryInfo } from "../types";
+import { RepositoryInfo } from "../types";
 import RootStore from "./root-store";
-import { clearQueryHistory, getQueryHistory } from "../api/queries";
 import {
   allRepositories,
   deleteRepository,
@@ -12,14 +11,12 @@ import { message } from "antd";
 
 type RepositoryStoreState = {
   currentRepository: string | null;
-  queryHistory: QueryRecord[];
   repositories: RepositoryInfo[];
 };
 
 class RepositoryStore {
   state: RepositoryStoreState = {
     currentRepository: null,
-    queryHistory: [],
     repositories: [],
   };
 
@@ -31,7 +28,13 @@ class RepositoryStore {
         {
           key: "state",
           serialize: (value) => JSON.stringify(value),
-          deserialize: (value) => JSON.parse(value),
+          deserialize: (value) => {
+            const stored = JSON.parse(value) as RepositoryStoreState;
+            return {
+              currentRepository: stored.currentRepository ?? null,
+              repositories: stored.repositories ?? [],
+            };
+          },
         },
       ],
       storage: window.sessionStorage,
@@ -39,10 +42,6 @@ class RepositoryStore {
   }
 
   currentRepository = () => this.state.currentRepository;
-
-  queryHistory = () => {
-    return this.state.queryHistory;
-  };
 
   repositories = () => {
     return this.state.repositories;
@@ -52,38 +51,9 @@ class RepositoryStore {
     return this.state.currentRepository;
   };
 
-  getQueryHistory = () => {
-    return this.state.queryHistory;
-  };
-
   setCurrentRepository = (repositoryId: string | null) => {
     if (this.state.currentRepository === repositoryId) return;
     this.state.currentRepository = repositoryId;
-    this.state.queryHistory = [];
-    if (repositoryId) void this.updateQueryHistory();
-  };
-
-  updateQueryHistory = async () => {
-    if (this.state.currentRepository) {
-      try {
-        const queries = await getQueryHistory(this.state.currentRepository);
-        runInAction(() => {
-          this.state.queryHistory = queries;
-        });
-      } catch {
-        runInAction(() => {
-          this.state.queryHistory = [];
-        });
-        message.error("Could not load saved queries.");
-      }
-    }
-  };
-
-  clearQueryHistory = async () => {
-    if (this.state.currentRepository) {
-      await clearQueryHistory(this.state.currentRepository);
-      await this.updateQueryHistory();
-    }
   };
 
   updateRepositories = async () => {
@@ -105,7 +75,6 @@ class RepositoryStore {
     runInAction(() => {
       if (this.state.currentRepository === repository) {
         this.state.currentRepository = null;
-        this.state.queryHistory = [];
       }
     });
     await this.updateRepositories();
@@ -125,7 +94,6 @@ class RepositoryStore {
   reset = () => {
     this.state = {
       currentRepository: null,
-      queryHistory: [],
       repositories: [],
     };
     window.sessionStorage.removeItem("Repository");

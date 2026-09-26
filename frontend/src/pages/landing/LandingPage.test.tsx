@@ -48,6 +48,10 @@ test("shows visitors the sample dataset and account actions", () => {
   expect(
     screen.getByText(`© ${new Date().getFullYear()} Rohan Pandit`)
   ).toBeVisible();
+  expect(screen.getByRole("link", { name: "About SPADE" })).toHaveAttribute(
+    "href",
+    "/about"
+  );
 });
 
 test("keeps the visitor sample action visible when signed in", () => {

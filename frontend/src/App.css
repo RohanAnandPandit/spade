@@ -1,19 +1,25 @@
+:root {
+  --app-header-height: 52px;
+}
+
 .header {
   display: flex;
   align-items: center;
-  height: 64px;
+  box-sizing: border-box;
+  height: var(--app-header-height);
+  line-height: normal;
   padding-inline: clamp(16px, 4vw, 56px);
 }
 
 .app-content {
-  min-height: calc(100vh - 64px);
-  min-height: calc(100dvh - 64px);
+  min-height: calc(100vh - var(--app-header-height));
+  min-height: calc(100dvh - var(--app-header-height));
 }
 
 .workspace-shell {
   min-width: 0;
-  height: calc(100vh - 64px);
-  height: calc(100dvh - 64px);
+  height: calc(100vh - var(--app-header-height));
+  height: calc(100dvh - var(--app-header-height));
   overflow: hidden;
 }
 
@@ -64,19 +70,22 @@
 }
 
 @media (max-width: 767px) {
+  :root {
+    --app-header-height: 48px;
+  }
+
   .header {
-    height: 56px;
     padding-inline: 16px;
   }
 
   .app-content {
-    min-height: calc(100vh - 56px);
-    min-height: calc(100dvh - 56px);
+    min-height: calc(100vh - var(--app-header-height));
+    min-height: calc(100dvh - var(--app-header-height));
   }
 
   .workspace-shell {
-    height: calc(100vh - 56px);
-    height: calc(100dvh - 56px);
+    height: calc(100vh - var(--app-header-height));
+    height: calc(100dvh - var(--app-header-height));
   }
 
   .workspace-main {

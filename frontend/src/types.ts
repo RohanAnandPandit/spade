@@ -29,18 +29,12 @@ export type RDFGraph = {
   data: Triplet[];
 };
 
-export type QueryRecord = {
-  id: string;
-  name: string;
-  sparql: string;
-  repository: string;
-  date: string;
-};
-
 export type QueryId = string;
 export type QueryInfo = {
   name: string;
   sparql: string;
+  updatedAt?: string;
+  saved?: { name: string; sparql: string };
 };
 
 export type Metadata = {

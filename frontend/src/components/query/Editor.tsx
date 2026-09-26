@@ -3,20 +3,16 @@ import { useEffect, useState } from "react";
 import { useStore } from "../../stores/store";
 import CodeEditor from "./CodeEditor";
 import { QueryAnalysis, RepositoryId, URI } from "../../types";
-import { App as AntdApp, Button, Space } from "antd";
-import { BiCopy, BiSave } from "react-icons/bi";
+import { Button, Tooltip } from "antd";
+import { BiSolidAnalyse } from "react-icons/bi";
 import { getAllProperties, getAllTypes } from "../../api/dataset";
 import { removePrefix } from "../../utils/queryResults";
 import sparql from "../../utils/sparql.json";
-import { sparqlTemplates } from "../../utils/sparqlTemplates";
-import Templates from "./Templates";
 import Analysis from "../analysis/Analysis";
-import { addQueryToHistory } from "../../api/queries";
 
 type QueryEditorProps = {
   query: string;
   onChange: (text: string) => void;
-  queryName: string;
   repository: RepositoryId | null;
   queryAnalysis: QueryAnalysis | null;
   analysisLoading: boolean;
@@ -26,7 +22,6 @@ type QueryEditorProps = {
 const Editor = ({
   query,
   onChange,
-  queryName,
   repository,
   queryAnalysis,
   analysisLoading,
@@ -36,6 +31,7 @@ const Editor = ({
   const settings = rootStore.settingsStore;
   const [properties, setProperties] = useState<URI[]>([]);
   const [types, setTypes] = useState<URI[]>([]);
+  const [analysisCollapsed, setAnalysisCollapsed] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -61,15 +57,10 @@ const Editor = ({
   }, [demo, repository]);
 
   return (
-    <div className="query-editor-grid">
+    <div
+      className={`query-editor-grid ${analysisCollapsed ? "query-editor-grid-collapsed" : ""}`}
+    >
       <section className="query-editor-panel" aria-label="SPARQL query editor">
-        <Space wrap className="query-editor-toolbar">
-          <CopyToClipboard text={query} />
-          {!demo && (
-            <SaveQuery repository={repository} query={query} name={queryName} />
-          )}
-          <Templates templates={sparqlTemplates} />
-        </Space>
         <CodeEditor
           code={query}
           setCode={onChange}
@@ -84,15 +75,30 @@ const Editor = ({
         />
       </section>
       <aside className="query-analysis-panel" aria-label="Query analysis">
-        <Analysis
-          queryAnalysis={queryAnalysis}
-          loading={analysisLoading}
-          emptyMessage={
-            demo
-              ? "Query analysis and repository exploration are available when you create an account."
-              : undefined
-          }
-        />
+        {analysisCollapsed ? (
+          <Tooltip title="Expand analysis" placement="left">
+            <Button
+              className="query-analysis-expand"
+              aria-label="Expand analysis"
+              aria-expanded={false}
+              icon={<BiSolidAnalyse size={20} />}
+              onClick={() => setAnalysisCollapsed(false)}
+            />
+          </Tooltip>
+        ) : (
+          <Analysis
+            queryAnalysis={queryAnalysis}
+            loading={analysisLoading}
+            onCollapse={() => setAnalysisCollapsed(true)}
+            emptyMessage={
+              demo
+                ? "Query analysis and repository exploration are available when you create an account."
+                : repository
+                  ? undefined
+                  : "Choose a repository to enable analysis. Your query's variables and suggested charts will appear here."
+            }
+          />
+        )}
       </aside>
     </div>
   );
@@ -106,47 +112,4 @@ function isVariable(text: string): boolean {
   return text.length > 1 && text.charAt(0) === "?";
 }
 
-const CopyToClipboard = ({ text }: { text: string }) => {
-  return (
-    <Button
-      icon={<BiCopy />}
-      onClick={() => navigator.clipboard.writeText(text)}
-    >
-      Copy
-    </Button>
-  );
-};
-
-const SaveQuery = observer(
-  ({
-    name,
-    query,
-    repository,
-  }: {
-    name: string;
-    query: string;
-    repository: RepositoryId | null;
-  }) => {
-    const rootStore = useStore();
-    const repositoryStore = rootStore.repositoryStore;
-    const { message } = AntdApp.useApp();
-    return (
-      <Button
-        icon={<BiSave size={20} />}
-        disabled={repository === null}
-        onClick={async () => {
-          try {
-            await addQueryToHistory(repository!, query, name);
-            await repositoryStore.updateQueryHistory();
-            message.success("Added to Saved queries.");
-          } catch {
-            message.error("Could not save the query.");
-          }
-        }}
-      >
-        Save query
-      </Button>
-    );
-  }
-);
 export default observer(Editor);

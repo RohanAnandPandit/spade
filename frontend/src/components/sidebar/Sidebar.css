@@ -12,6 +12,29 @@
   padding-top: 10px;
 }
 
+.sidebar-repository-controls {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  width: 100%;
+}
+
+.sidebar-repository-controls .sidebar-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.sidebar-content-collapsed .sidebar-repository-controls .sidebar-action-button {
+  justify-content: center;
+}
+
+.sidebar-content-collapsed .sidebar-repository-controls {
+  align-items: center;
+  gap: 8px;
+}
+
 .sidebar-section-label {
   padding: 0 10px 4px;
   font-size: 0.8rem;
@@ -56,37 +79,8 @@
 }
 
 .repository-selector-label {
-  width: 100%;
   min-width: 0;
-}
-
-.repository-selector-label span:last-child {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.query-history-panel {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  padding-top: 4px;
-}
-
-.query-history-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-}
-
-.query-history-toolbar h4.ant-typography {
-  margin: 0 0 2px;
-}
-
-.query-history-scroll {
-  width: 100%;
-  max-height: min(560px, 60vh);
-  overflow-y: auto;
-  overscroll-behavior: contain;
 }

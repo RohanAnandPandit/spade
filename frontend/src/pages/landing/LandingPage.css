@@ -23,12 +23,21 @@
   margin-inline: auto;
 }
 
+.landing-footer a {
+  color: var(--landing-muted);
+}
+
+.landing-footer a:hover,
+.landing-footer a:focus-visible {
+  color: var(--landing-primary);
+}
+
 .landing-hero {
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(360px, 0.95fr);
   gap: clamp(48px, 8vw, 104px);
   align-items: center;
-  min-height: min(720px, calc(100vh - 64px));
+  min-height: min(720px, calc(100vh - var(--app-header-height)));
   padding-block: 80px;
 }
 

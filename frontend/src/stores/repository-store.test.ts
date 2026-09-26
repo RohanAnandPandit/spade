@@ -38,20 +38,10 @@ test("renaming a repository keeps it selected in this browser tab", async () => 
   expect(root.repositoryStore.currentRepository()).toBe("renamed");
 });
 
-test("deleting a repository clears the browser-tab selection and history", async () => {
+test("deleting a repository clears the browser-tab selection", async () => {
   const root = new RootStore();
   root.repositoryStore.state.currentRepository = "repo";
-  root.repositoryStore.state.queryHistory = [
-    {
-      id: "1",
-      name: "Saved query",
-      sparql: "SELECT * WHERE {}",
-      repository: "repo",
-      date: "today",
-    },
-  ];
   await root.repositoryStore.deleteRepository("repo");
 
   expect(root.repositoryStore.currentRepository()).toBeNull();
-  expect(root.repositoryStore.queryHistory()).toEqual([]);
 });

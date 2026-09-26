@@ -1,5 +1,6 @@
 .spade-fullscreen {
   min-width: 0;
+  background-color: inherit;
 }
 
 .spade-fullscreen.fullscreen-enabled {
@@ -14,19 +15,25 @@
   z-index: 10;
   top: 0;
   display: flex;
-  justify-content: flex-end;
-  margin-bottom: 8px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 28px;
+  margin-bottom: 6px;
   pointer-events: none;
 }
 
-.fullscreen-control-row .ant-btn {
+.fullscreen-control-row .ant-btn,
+.fullscreen-toolbar {
   pointer-events: auto;
 }
 
-.fullscreen-light {
-  background-color: white;
+.fullscreen-toolbar {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
 }
 
-.fullscreen-dark {
-  background-color: black;
+.fullscreen-control-row > .ant-btn {
+  margin-left: auto;
 }

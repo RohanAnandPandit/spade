@@ -40,7 +40,7 @@ const BarChart = ({ results, height, variables }: BarChartProps) => {
     <>
       <Constraints results={results} barColumn={barColumn} />
       <Tabs
-        defaultActiveKey="1"
+        defaultActiveKey="column-0"
         items={variables.numeric.map((column, id) => {
           const valueIndex = results.header.indexOf(column);
 

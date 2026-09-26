@@ -26,11 +26,6 @@ vi.mock("../../api/sparql", () => ({
   updateRepository: vi.fn(),
 }));
 
-vi.mock("../../api/queries", () => ({
-  clearQueryHistory: vi.fn(),
-  getQueryHistory: vi.fn().mockResolvedValue([]),
-}));
-
 beforeEach(() => {
   window.localStorage.clear();
   window.sessionStorage.clear();
@@ -50,13 +45,13 @@ test("hides repository-dependent sidebar actions until one is selected", async (
   );
 
   expect(
-    screen.getByRole("button", { name: "Add or manage repositories" })
+    screen.getByRole("button", { name: "Manage repositories" })
   ).toBeVisible();
   expect(
     screen.getByRole("button", { name: "Choose repository" })
   ).toBeVisible();
   expect(
-    screen.queryByRole("button", { name: "Explore selected repository" })
+    screen.queryByRole("button", { name: "Explore repository" })
   ).not.toBeInTheDocument();
   expect(
     screen.queryByRole("button", { name: "Saved queries" })
@@ -75,14 +70,13 @@ test("hides repository-dependent sidebar actions until one is selected", async (
 
   await waitFor(() =>
     expect(
-      screen.getByRole("button", { name: "Explore selected repository" })
+      screen.getByRole("button", { name: "Explore repository" })
     ).toBeEnabled()
   );
 
-  await user.click(screen.getByRole("button", { name: "Saved queries" }));
   expect(
-    await screen.findByRole("dialog", { name: "Saved queries" })
-  ).toBeInTheDocument();
+    screen.queryByRole("button", { name: "Saved queries" })
+  ).not.toBeInTheDocument();
 });
 
 test("shows repositories in a compact searchable table", async () => {
@@ -101,9 +95,7 @@ test("shows repositories in a compact searchable table", async () => {
     expect(rootStore.repositoryStore.repositories()).toHaveLength(2)
   );
 
-  await user.click(
-    screen.getByRole("button", { name: "Add or manage repositories" })
-  );
+  await user.click(screen.getByRole("button", { name: "Manage repositories" }));
   expect(await screen.findByText("Repositories")).toBeInTheDocument();
   expect(
     screen.getByRole("tab", { name: "Your repositories" })
@@ -136,4 +128,32 @@ test("shows repositories in a compact searchable table", async () => {
     screen.queryByRole("cell", { name: "example" })
   ).not.toBeInTheDocument();
   expect(screen.getByRole("cell", { name: "world-data" })).toBeInTheDocument();
+});
+
+test("keeps repository controls ahead of the query list", () => {
+  const rootStore = new RootStore();
+  rootStore.repositoryStore.setCurrentRepository("example");
+  render(
+    <StoreContext.Provider value={rootStore}>
+      <AntdApp>
+        <Sidebar queryList={<div>Open query list</div>} />
+      </AntdApp>
+    </StoreContext.Provider>
+  );
+
+  const selector = screen.getByRole("button", {
+    name: "Change repository for this browser tab. Currently example",
+  });
+  const manager = screen.getByRole("button", { name: "Manage repositories" });
+  const explorer = screen.getByRole("button", { name: "Explore repository" });
+  const queryList = screen.getByText("Open query list");
+  expect(selector.compareDocumentPosition(manager)).toBe(
+    Node.DOCUMENT_POSITION_FOLLOWING
+  );
+  expect(manager.compareDocumentPosition(queryList)).toBe(
+    Node.DOCUMENT_POSITION_FOLLOWING
+  );
+  expect(explorer.compareDocumentPosition(queryList)).toBe(
+    Node.DOCUMENT_POSITION_FOLLOWING
+  );
 });

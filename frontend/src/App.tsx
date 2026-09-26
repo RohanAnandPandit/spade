@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import type { CSSProperties } from "react";
 import { ConfigProvider, Layout, theme, App as AntdApp } from "antd";
 import Navbar from "./components/navbar/Navbar";
 import { Route, Routes } from "react-router-dom";
@@ -8,11 +9,30 @@ import HomePage from "./pages/home/HomePage";
 import AuthPage from "./pages/auth/AuthPage";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import LandingPage from "./pages/landing/LandingPage";
+import AboutPage from "./pages/about/AboutPage";
 import TrialPage from "./pages/trial/TrialPage";
 import "./App.css";
 
 const { Header } = Layout;
 const { darkAlgorithm, defaultAlgorithm } = theme;
+
+const ThemedHeader = () => {
+  const { token } = theme.useToken();
+  const headerStyle = {
+    background: token.colorBgContainer,
+    color: token.colorText,
+    borderBottom: `1px solid ${token.colorBorderSecondary}`,
+    "--navbar-muted": token.colorTextSecondary,
+    "--navbar-hover": token.colorPrimary,
+    "--navbar-hover-bg": token.colorFillTertiary,
+  } as CSSProperties;
+
+  return (
+    <Header className="header" style={headerStyle}>
+      <Navbar />
+    </Header>
+  );
+};
 
 const App = () => {
   const rootStore = useStore();
@@ -45,12 +65,11 @@ const App = () => {
             backgroundColor: settings.darkMode() ? "black" : "white",
           }}
         >
-          <Header className="header">
-            <Navbar />
-          </Header>
+          <ThemedHeader />
           <Layout className="app-content">
             <Routes>
               <Route path="/" element={<LandingPage />} />
+              <Route path="/about" element={<AboutPage />} />
               <Route path="/try" element={<TrialPage />} />
               <Route element={<ProtectedRoute />}>
                 <Route path="/workspace" element={<HomePage />} />

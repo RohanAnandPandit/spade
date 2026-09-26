@@ -1,7 +1,8 @@
 import CodeMirror from "@uiw/react-codemirror";
+import type { CSSProperties } from "react";
+import { theme } from "antd";
 import { StreamLanguage } from "@codemirror/language";
 import { sparql } from "@codemirror/legacy-modes/mode/sparql";
-import { duotoneLight, duotoneDark } from "@uiw/codemirror-theme-duotone";
 import { autocompletion, CompletionContext } from "@codemirror/autocomplete";
 
 type CodeEditorProps = {
@@ -28,6 +29,18 @@ const CodeEditor = ({
   completions,
   darkTheme,
 }: CodeEditorProps) => {
+  const { token } = theme.useToken();
+  const editorStyle = {
+    fontSize: 14,
+    "--editor-bg": token.colorBgContainer,
+    "--editor-gutter": token.colorFillQuaternary,
+    "--editor-text": token.colorText,
+    "--editor-muted": token.colorTextTertiary,
+    "--editor-border": token.colorBorderSecondary,
+    "--editor-active": token.colorFillQuaternary,
+    "--editor-focus": token.colorPrimary,
+    "--editor-focus-ring": token.colorPrimaryBg,
+  } as CSSProperties;
   const myCompletions = (context: CompletionContext) => {
     const word = context.matchBefore(/(\w|[<>?])*/)!;
     if (word.from === word.to && !context.explicit) return null;
@@ -46,7 +59,7 @@ const CodeEditor = ({
       width="100%"
       height="auto"
       minHeight="200px"
-      placeholder="Enter your SPARQl query here"
+      placeholder="Enter your SPARQL query here"
       extensions={[
         StreamLanguage.define(languageParsers[language]),
         autocompletion({ override: [myCompletions] }),
@@ -54,9 +67,9 @@ const CodeEditor = ({
       onChange={(value: string) => {
         setCode(value);
       }}
-      theme={darkTheme ? duotoneDark : duotoneLight}
+      theme={darkTheme ? "dark" : "light"}
       className="query-code-editor"
-      style={{ fontSize: 15 }}
+      style={editorStyle}
     />
   );
 };

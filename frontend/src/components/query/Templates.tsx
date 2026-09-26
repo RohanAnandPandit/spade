@@ -1,16 +1,22 @@
-import React, { useState } from "react";
-import { useStore } from "../../stores/store";
-import { Button, Modal, Space, Tabs, TabsProps, Typography } from "antd";
+import { useState } from "react";
+import {
+  Button,
+  Modal,
+  Space,
+  Tabs,
+  TabsProps,
+  Tooltip,
+  Typography,
+} from "antd";
 import { AiOutlineFileSearch } from "react-icons/ai";
 import { SPARQLTemplate } from "../../utils/sparqlTemplates";
 
 type TemplatesProps = {
   templates: SPARQLTemplate[];
+  onApply: (query: string) => void;
 };
 
-const Templates = ({ templates }: TemplatesProps) => {
-  const rootStore = useStore();
-  const queriesStore = rootStore.queriesStore;
+const Templates = ({ templates, onApply }: TemplatesProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const items: TabsProps["items"] = templates.map(({ title, query }) => {
@@ -21,7 +27,7 @@ const Templates = ({ templates }: TemplatesProps) => {
         <QueryTemplate
           query={query}
           onApply={() => {
-            queriesStore.setCurrentQuery(query);
+            onApply(query);
             setIsModalOpen(false);
           }}
         />
@@ -30,16 +36,14 @@ const Templates = ({ templates }: TemplatesProps) => {
   });
   return (
     <>
-      <Button
-        type="primary"
-        onClick={() => setIsModalOpen(true)}
-        style={{ width: "95%", margin: 5 }}
-      >
-        <Space>
-          <AiOutlineFileSearch size={20} />
-          Templates
-        </Space>
-      </Button>
+      <Tooltip title="Query templates">
+        <Button
+          type="text"
+          aria-label="Query templates"
+          icon={<AiOutlineFileSearch size={20} />}
+          onClick={() => setIsModalOpen(true)}
+        />
+      </Tooltip>
 
       <Modal
         title={`SPARQL templates`}
@@ -51,7 +55,7 @@ const Templates = ({ templates }: TemplatesProps) => {
       >
         <Tabs
           tabPosition="left"
-          defaultActiveKey="1"
+          defaultActiveKey={templates[0]?.title}
           items={items}
           style={{ padding: 10 }}
         />
