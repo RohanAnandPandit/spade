@@ -23,6 +23,23 @@
 .navbar-actions {
   display: flex;
   align-items: center;
+  gap: 12px;
+}
+
+.navbar-workspace-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.88);
+  font-weight: 600;
+}
+
+.navbar-workspace-link:hover,
+.navbar-workspace-link:focus-visible {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
 }
 
 .navbar-sign-in {

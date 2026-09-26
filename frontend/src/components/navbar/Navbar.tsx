@@ -1,22 +1,25 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Avatar, Button, Dropdown, Space, Typography } from "antd";
 import type { MenuProps } from "antd";
 import { TbSpade } from "react-icons/tb";
 import { observer } from "mobx-react-lite";
 import { useStore } from "../../stores/store";
 import {
+  BgColorsOutlined,
+  CheckOutlined,
+  DatabaseOutlined,
+  DesktopOutlined,
   LogoutOutlined,
-  SettingOutlined,
+  MoonOutlined,
+  SunOutlined,
   UserOutlined,
 } from "@ant-design/icons";
-import { useState } from "react";
-import Settings from "../settings/Settings";
 import "./Navbar.css";
 
 const Navbar = () => {
-  const { authStore } = useStore();
+  const { authStore, settingsStore } = useStore();
   const navigate = useNavigate();
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const location = useLocation();
 
   const accountItems: MenuProps["items"] = authStore.user
     ? [
@@ -27,10 +30,34 @@ const Navbar = () => {
         },
         { type: "divider" },
         {
-          key: "settings",
-          icon: <SettingOutlined />,
-          label: "Settings",
-          onClick: () => setSettingsOpen(true),
+          key: "theme",
+          icon: <BgColorsOutlined />,
+          label: "Theme",
+          children: [
+            {
+              key: "theme-system",
+              icon: <DesktopOutlined />,
+              label: "System",
+              extra: settingsStore.themeMode() === "system" && (
+                <CheckOutlined />
+              ),
+              onClick: () => settingsStore.setThemeMode("system"),
+            },
+            {
+              key: "theme-light",
+              icon: <SunOutlined />,
+              label: "Light",
+              extra: settingsStore.themeMode() === "light" && <CheckOutlined />,
+              onClick: () => settingsStore.setThemeMode("light"),
+            },
+            {
+              key: "theme-dark",
+              icon: <MoonOutlined />,
+              label: "Dark",
+              extra: settingsStore.themeMode() === "dark" && <CheckOutlined />,
+              onClick: () => settingsStore.setThemeMode("dark"),
+            },
+          ],
         },
         {
           key: "logout",
@@ -43,16 +70,25 @@ const Navbar = () => {
     : [];
 
   return (
-    <>
-      <nav className="navbar" aria-label="Main navigation">
-        <Link className="navbar-brand" to="/" aria-label="SPADE landing page">
-          <TbSpade aria-hidden size={24} />
-          <span>SPADE</span>
-        </Link>
+    <nav className="navbar" aria-label="Main navigation">
+      <Link className="navbar-brand" to="/" aria-label="SPADE landing page">
+        <TbSpade aria-hidden size={24} />
+        <span>SPADE</span>
+      </Link>
 
-        <div className="navbar-actions">
-          {authStore.user ? (
-            <Dropdown menu={{ items: accountItems }} trigger={["click"]}>
+      <div className="navbar-actions">
+        {authStore.user ? (
+          <>
+            {location.pathname === "/" && (
+              <Link className="navbar-workspace-link" to="/workspace">
+                <DatabaseOutlined aria-hidden />
+                Workspace
+              </Link>
+            )}
+            <Dropdown
+              menu={{ items: accountItems, triggerSubMenuAction: "click" }}
+              trigger={["click"]}
+            >
               <Button
                 type="text"
                 shape="circle"
@@ -61,20 +97,19 @@ const Navbar = () => {
                 icon={<Avatar size={32} icon={<UserOutlined />} />}
               />
             </Dropdown>
-          ) : (
-            <Space size="middle">
-              <Link className="navbar-sign-in" to="/login">
-                Sign in
-              </Link>
-              <Button type="primary" onClick={() => navigate("/register")}>
-                Create account
-              </Button>
-            </Space>
-          )}
-        </div>
-      </nav>
-      <Settings open={settingsOpen} onClose={() => setSettingsOpen(false)} />
-    </>
+          </>
+        ) : (
+          <Space size="middle">
+            <Link className="navbar-sign-in" to="/login">
+              Sign in
+            </Link>
+            <Button type="primary" onClick={() => navigate("/register")}>
+              Create account
+            </Button>
+          </Space>
+        )}
+      </div>
+    </nav>
   );
 };
 

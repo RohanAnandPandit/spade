@@ -1,8 +1,27 @@
 import { makeAutoObservable } from "mobx";
 import RootStore from "./root-store";
 
+export type ThemeMode = "system" | "light" | "dark";
+
+const THEME_STORAGE_KEY = "spade-theme";
+
+const savedThemeMode = (): ThemeMode => {
+  if (typeof window === "undefined") return "system";
+  try {
+    const saved = window.localStorage.getItem(THEME_STORAGE_KEY);
+    return saved === "light" || saved === "dark" ? saved : "system";
+  } catch {
+    return "system";
+  }
+};
+
+const systemPrefersDark = (): boolean =>
+  typeof window !== "undefined" &&
+  window.matchMedia?.("(prefers-color-scheme: dark)").matches === true;
+
 type SettingsState = {
-  darkMode: boolean;
+  themeMode: ThemeMode;
+  systemDarkMode: boolean;
   sidebarWidth: number;
   fullScreen: boolean;
   sidebarCollapsed: boolean;
@@ -12,7 +31,8 @@ type SettingsState = {
 class SettingsStore {
   rootStore: RootStore;
   state: SettingsState = {
-    darkMode: false,
+    themeMode: savedThemeMode(),
+    systemDarkMode: systemPrefersDark(),
     sidebarWidth: 240,
     fullScreen: false,
     sidebarCollapsed: false,
@@ -36,7 +56,14 @@ class SettingsStore {
   }
 
   darkMode = (): boolean => {
-    return this.state.darkMode;
+    return (
+      this.state.themeMode === "dark" ||
+      (this.state.themeMode === "system" && this.state.systemDarkMode)
+    );
+  };
+
+  themeMode = (): ThemeMode => {
+    return this.state.themeMode;
   };
 
   sidebarWidth = (): number => {
@@ -66,8 +93,17 @@ class SettingsStore {
     );
   };
 
-  setDarkMode(value: boolean) {
-    this.state.darkMode = value;
+  setThemeMode(value: ThemeMode) {
+    this.state.themeMode = value;
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, value);
+    } catch {
+      // The selected theme still applies when storage is unavailable.
+    }
+  }
+
+  setSystemDarkMode(value: boolean) {
+    this.state.systemDarkMode = value;
   }
 
   setFullScreen(value: boolean) {

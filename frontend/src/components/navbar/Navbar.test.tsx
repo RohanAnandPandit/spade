@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, expect, test, vi } from "vitest";
@@ -13,8 +13,8 @@ const { signOut, store } = vi.hoisted(() => ({
       signOut: vi.fn(),
     },
     settingsStore: {
-      darkMode: vi.fn(() => false),
-      setDarkMode: vi.fn(),
+      themeMode: vi.fn(() => "system"),
+      setThemeMode: vi.fn(),
       showAllCharts: vi.fn(() => false),
       setShowAllCharts: vi.fn(),
     },
@@ -27,6 +27,7 @@ vi.mock("../../stores/store", () => ({
 
 beforeEach(() => {
   signOut.mockClear();
+  store.settingsStore.setThemeMode.mockClear();
   store.authStore.signOut = signOut;
   Object.defineProperty(window, "matchMedia", {
     writable: true,
@@ -53,15 +54,28 @@ test("keeps account details and actions inside the user menu", async () => {
 
   expect(screen.queryByRole("link", { name: "Home" })).not.toBeInTheDocument();
   expect(screen.queryByText("person@example.com")).not.toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Workspace" })).toHaveAttribute(
+    "href",
+    "/workspace"
+  );
 
   await user.click(screen.getByRole("button", { name: "Open user menu" }));
 
   expect(
     await screen.findByRole("menuitem", { name: "person@example.com" })
   ).toBeInTheDocument();
+  await user.click(screen.getByRole("menuitem", { name: /Theme/ }));
   expect(
-    screen.getByRole("menuitem", { name: /Settings/ })
+    await screen.findByRole("menuitem", { name: /System/ })
   ).toBeInTheDocument();
-  fireEvent.click(screen.getByRole("menuitem", { name: /Log out/ }));
+  expect(screen.getByRole("menuitem", { name: /Light/ })).toBeInTheDocument();
+  await user.click(screen.getByRole("menuitem", { name: /Dark/ }));
+  expect(store.settingsStore.setThemeMode).toHaveBeenCalledWith("dark");
+  expect(
+    screen.queryByRole("dialog", { name: "Settings" })
+  ).not.toBeInTheDocument();
+
+  await user.click(screen.getByRole("button", { name: "Open user menu" }));
+  await user.click(screen.getByRole("menuitem", { name: /Log out/ }));
   expect(signOut).toHaveBeenCalledOnce();
 });

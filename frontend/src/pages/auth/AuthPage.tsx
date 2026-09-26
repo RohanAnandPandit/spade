@@ -16,6 +16,12 @@ import { useStore } from "../../stores/store";
 
 type Fields = { email: string; password: string };
 
+// Match the default local account created by backend.seed.
+const LOCAL_TEST_ACCOUNT: Fields = {
+  email: "tester@example.com",
+  password: "SpadeTest123!",
+};
+
 const AuthPage = observer(({ mode }: { mode: "login" | "register" }) => {
   const { authStore } = useStore();
   const navigate = useNavigate();
@@ -64,6 +70,9 @@ const AuthPage = observer(({ mode }: { mode: "login" | "register" }) => {
         )}
         <Form
           layout="vertical"
+          initialValues={
+            import.meta.env.DEV && !registering ? LOCAL_TEST_ACCOUNT : undefined
+          }
           onFinish={(values: Fields) => void submit(values)}
         >
           <Form.Item

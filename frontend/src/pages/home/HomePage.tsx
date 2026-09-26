@@ -1,4 +1,5 @@
-import { Alert, Button, Layout, theme } from "antd";
+import { Alert, Button, Layout, theme, Tooltip } from "antd";
+import { LuPanelLeftClose, LuPanelLeftOpen } from "react-icons/lu";
 import QueryBrowser from "./QueryBrowser";
 import Sidebar from "../../components/sidebar/Sidebar";
 import { useStore } from "../../stores/store";
@@ -15,6 +16,7 @@ type HomePageProps = {
 const HomePage = observer(({ demo = false }: HomePageProps) => {
   const rootStore = useStore();
   const settings = rootStore.settingsStore;
+  const collapsed = settings.sidebarCollapsed();
 
   const {
     token: { colorBgContainer },
@@ -25,18 +27,27 @@ const HomePage = observer(({ demo = false }: HomePageProps) => {
       <Sider
         className="workspace-sidebar"
         collapsible
-        collapsed={settings.sidebarCollapsed()}
+        collapsed={collapsed}
         onCollapse={(value: boolean) => settings.setSidebarCollapsed(value)}
         breakpoint="lg"
         collapsedWidth={64}
         width={settings.sidebarWidth()}
+        trigger={null}
         style={{ background: colorBgContainer }}
       >
-        {demo ? (
-          <TrialSidebar compact={settings.sidebarCollapsed()} />
-        ) : (
-          <Sidebar />
-        )}
+        {demo ? <TrialSidebar compact={collapsed} /> : <Sidebar />}
+        <div className="sidebar-collapse-control">
+          <Tooltip title={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
+            <Button
+              className="sidebar-collapse-button"
+              type="text"
+              shape="circle"
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              icon={collapsed ? <LuPanelLeftOpen /> : <LuPanelLeftClose />}
+              onClick={() => settings.setSidebarCollapsed(!collapsed)}
+            />
+          </Tooltip>
+        </div>
       </Sider>
       <Layout className="workspace-main">
         <Content

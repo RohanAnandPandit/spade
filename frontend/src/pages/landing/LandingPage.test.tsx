@@ -45,6 +45,9 @@ test("shows visitors the sample dataset and account actions", () => {
   expect(
     screen.getByRole("link", { name: "Or create an account" })
   ).toHaveAttribute("href", "/register");
+  expect(
+    screen.getByText(`© ${new Date().getFullYear()} Rohan Pandit`)
+  ).toBeVisible();
 });
 
 test("keeps the visitor sample action visible when signed in", () => {
@@ -56,5 +59,8 @@ test("keeps the visitor sample action visible when signed in", () => {
   expect(screen.getByRole("link", { name: "Open workspace" })).toHaveAttribute(
     "href",
     "/workspace"
+  );
+  expect(screen.getByRole("button", { name: "Open workspace" })).toHaveClass(
+    "ant-btn-primary"
   );
 });
