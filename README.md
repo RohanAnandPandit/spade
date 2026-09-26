@@ -5,6 +5,13 @@ analysing, and visualising RDF data. It uses a FastAPI API, PostgreSQL-backed
 accounts and persistence, and a React 18 single-page application built with
 Vite.
 
+## Source code
+
+© 2026 Rohan Anand Pandit. All rights reserved. This repository is publicly
+available for viewing. Except for rights provided by GitHub's Terms of Service
+or applicable law, permission to use, modify, distribute, or deploy this code
+requires prior written consent.
+
 ## Stack
 
 - Python 3.13, FastAPI, SQLAlchemy 2.0, Alembic, psycopg 3, RDFLib, and pytest
