@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import type { CSSProperties } from "react";
 import { ConfigProvider, Layout, theme, App as AntdApp } from "antd";
 import Navbar from "./components/navbar/Navbar";
 import { Route, Routes } from "react-router-dom";
@@ -13,6 +14,24 @@ import "./App.css";
 
 const { Header } = Layout;
 const { darkAlgorithm, defaultAlgorithm } = theme;
+
+const ThemedHeader = () => {
+  const { token } = theme.useToken();
+  const headerStyle = {
+    background: token.colorBgContainer,
+    color: token.colorText,
+    borderBottom: `1px solid ${token.colorBorderSecondary}`,
+    "--navbar-muted": token.colorTextSecondary,
+    "--navbar-hover": token.colorPrimary,
+    "--navbar-hover-bg": token.colorFillTertiary,
+  } as CSSProperties;
+
+  return (
+    <Header className="header" style={headerStyle}>
+      <Navbar />
+    </Header>
+  );
+};
 
 const App = () => {
   const rootStore = useStore();
@@ -45,9 +64,7 @@ const App = () => {
             backgroundColor: settings.darkMode() ? "black" : "white",
           }}
         >
-          <Header className="header">
-            <Navbar />
-          </Header>
+          <ThemedHeader />
           <Layout className="app-content">
             <Routes>
               <Route path="/" element={<LandingPage />} />

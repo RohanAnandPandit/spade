@@ -9,7 +9,7 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  color: #fff;
+  color: inherit;
   font-size: 1.05rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -17,7 +17,7 @@
 
 .navbar-brand:hover,
 .navbar-sign-in:hover {
-  color: #91caff;
+  color: var(--navbar-hover);
 }
 
 .navbar-actions {
@@ -32,18 +32,18 @@
   gap: 8px;
   padding: 8px 12px;
   border-radius: 8px;
-  color: rgba(255, 255, 255, 0.88);
+  color: var(--navbar-muted);
   font-weight: 600;
 }
 
 .navbar-workspace-link:hover,
 .navbar-workspace-link:focus-visible {
-  background: rgba(255, 255, 255, 0.14);
-  color: #fff;
+  background: var(--navbar-hover-bg);
+  color: inherit;
 }
 
 .navbar-sign-in {
-  color: rgba(255, 255, 255, 0.88);
+  color: var(--navbar-muted);
   font-size: 0.95rem;
 }
 
@@ -56,11 +56,11 @@
   padding: 0;
   border: 0;
   background: transparent;
-  color: #fff;
+  color: inherit;
 }
 
 .account-menu-button.ant-btn:hover,
 .account-menu-button.ant-btn:focus-visible {
-  background: rgba(255, 255, 255, 0.14);
-  color: #fff;
+  background: var(--navbar-hover-bg);
+  color: inherit;
 }
