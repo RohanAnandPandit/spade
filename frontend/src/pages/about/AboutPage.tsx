@@ -19,10 +19,12 @@ const AboutPage = () => {
     <main className="about-page" style={pageStyle}>
       <div className="about-content">
         <p className="about-eyebrow">About SPADE</p>
-        <h1>Built to make connected data easier to explore.</h1>
+        <h1>What is the best way to represent data?</h1>
         <p className="about-intro">
-          SPADE stands for SPARQL Analysis and Data Explorer. It brings
-          querying, analysis, and visualisation together in one workspace.
+          A table can give a precise answer, but it does not always reveal a
+          pattern. A chart, map, hierarchy, or network can each show something
+          different about the same data. SPADE explores how to choose a view
+          that fits the data and the question being asked.
         </p>
 
         <section className="about-origin" aria-labelledby="about-origin-title">
@@ -33,8 +35,10 @@ const AboutPage = () => {
             with Professor Peter McBrien as my supervisor.
           </p>
           <p>
-            The project is now a place to explore a dataset, write SPARQL
-            queries, and see the results in tables and charts.
+            The project investigates how the structure and relationships in RDF
+            data can guide the way query results are presented. SPARQL helps
+            uncover the data; the larger question is which representation makes
+            its patterns and connections clearest.
           </p>
         </section>
 
