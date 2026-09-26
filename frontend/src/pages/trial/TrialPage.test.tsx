@@ -51,6 +51,12 @@ test("runs a live sample-dataset example without requiring an account", async ()
   expect(
     screen.getByRole("link", { name: "Create an account" })
   ).toHaveAttribute("href", "/register");
+  await user.click(screen.getByRole("button", { name: "Collapse sidebar" }));
+  expect(screen.getByRole("button", { name: "Expand sidebar" })).toBeVisible();
+  await user.click(screen.getByRole("button", { name: "Expand sidebar" }));
+  expect(
+    screen.getByRole("button", { name: "Collapse sidebar" })
+  ).toBeVisible();
 
   await user.click(screen.getByRole("button", { name: "Add tab" }));
   expect(screen.getByRole("tab", { name: /Query 2/ })).toBeVisible();
