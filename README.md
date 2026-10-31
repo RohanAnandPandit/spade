@@ -84,6 +84,11 @@ pnpm test
 pnpm build
 ```
 
+The frontend overrides `minimatch` to the patched 11.x release line. The
+`@redocly/openapi-core` patch adapts its import to minimatch's named export so
+OpenAPI schema generation remains compatible. Remove the patch and override
+once the upstream dependency chain uses a secure minimatch release.
+
 ## Legacy MongoDB migration
 
 The application has no MongoDB runtime dependency. To import trusted data from
