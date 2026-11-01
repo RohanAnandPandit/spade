@@ -14,9 +14,6 @@ class UserResponse(BaseModel):
 class RegisterRequest(BaseModel):
     email: EmailStr
     password: str = Field(min_length=12, max_length=128)
-    legacy_workspace_id: uuid.UUID | None = Field(
-        default=None, alias="legacyWorkspaceId"
-    )
 
     @field_validator("email")
     @classmethod

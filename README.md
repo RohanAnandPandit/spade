@@ -89,22 +89,6 @@ The frontend overrides `minimatch` to the patched 11.x release line. The
 OpenAPI schema generation remains compatible. Remove the patch and override
 once the upstream dependency chain uses a secure minimatch release.
 
-## Legacy MongoDB migration
-
-The application has no MongoDB runtime dependency. To import trusted data from
-the previous deployment, install the migration dependency group and configure
-both `MONGODB_URL` and `DATABASE_URL`:
-
-```bash
-uv sync --group migration
-uv run --group migration python -m backend.migrate_mongodb --dry-run
-uv run --group migration python -m backend.migrate_mongodb
-```
-
-The importer never writes to MongoDB and is safe to rerun. Legacy local graphs
-are Python pickles, so only migrate a database you control. Anonymous workspace
-IDs are retained and claimed when their browser creates an account.
-
 ## Branches and Render deployment
 
 `main` is the integration branch. Merge feature pull requests into `main`,
@@ -179,8 +163,7 @@ VITE_API_URL=https://api.example.com pnpm build
 
 FastAPI serves only the API and its generated documentation; it does not serve
 the frontend build or provide a client-side routing fallback. Use HTTPS in
-production so authentication cookies are transmitted. Snapshot and stop writes
-to the legacy MongoDB deployment before running the one-time import.
+production so authentication cookies are transmitted.
 
 Render's free web service sleeps when idle. Database persistence and limits are
 managed separately by the selected Neon plan.

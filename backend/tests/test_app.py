@@ -1,4 +1,3 @@
-import uuid
 from collections.abc import Generator
 
 import pytest
@@ -118,27 +117,23 @@ def test_register_restore_and_logout(client: TestClient) -> None:
     assert client.get("/api/v1/auth/me").status_code == 401
 
 
-def test_registration_claims_anonymous_workspace(
+def test_registration_creates_owned_workspace(
     client: TestClient, session_factory
 ) -> None:
-    legacy_id = uuid.uuid4()
-    with session_factory() as db:
-        db.add(Workspace(id=legacy_id, owner_id=None, claimed_at=None))
-        db.commit()
-
     response = client.post(
         "/api/v1/auth/register",
         json={
-            "email": "claim@example.com",
+            "email": "workspace@example.com",
             "password": "a secure password",
-            "legacyWorkspaceId": str(legacy_id),
         },
     )
     assert response.status_code == 201
     with session_factory() as db:
-        user = db.scalar(select(User).where(User.email == "claim@example.com"))
+        user = db.scalar(select(User).where(User.email == "workspace@example.com"))
         assert user is not None
-        assert db.get(Workspace, legacy_id).owner_id == user.id
+        workspace = db.scalar(select(Workspace).where(Workspace.owner_id == user.id))
+        assert workspace is not None
+        assert workspace.claimed_at is not None
 
 
 def test_login_is_generic_and_throttled(client: TestClient) -> None:
