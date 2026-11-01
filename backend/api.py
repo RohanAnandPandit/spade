@@ -140,16 +140,7 @@ def register(
     )
     db.add(user)
     db.flush()
-    workspace = None
-    if payload.legacy_workspace_id:
-        workspace = db.get(Workspace, payload.legacy_workspace_id, with_for_update=True)
-        if workspace is not None and workspace.owner_id is None:
-            workspace.owner_id = user.id
-            workspace.claimed_at = utcnow()
-        else:
-            workspace = None
-    if workspace is None:
-        db.add(Workspace(owner_id=user.id, claimed_at=utcnow()))
+    db.add(Workspace(owner_id=user.id, claimed_at=utcnow()))
     try:
         db.commit()
     except IntegrityError as error:

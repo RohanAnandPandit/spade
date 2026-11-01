@@ -1,14 +1,11 @@
 import { User } from "../types";
 import { api } from "./client";
-import { clearWorkspaceId, getWorkspaceId } from "./workspace";
 
 export async function register(email: string, password: string): Promise<User> {
   const response = await api.post<User>("/auth/register", {
     email,
     password,
-    legacyWorkspaceId: getWorkspaceId(),
   });
-  clearWorkspaceId();
   return response.data;
 }
 

@@ -506,8 +506,6 @@ export interface components {
        * Format: email
        */
       email: string;
-      /** Legacyworkspaceid */
-      legacyWorkspaceId?: string | null;
       /** Password */
       password: string;
     };
