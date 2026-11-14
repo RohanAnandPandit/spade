@@ -89,6 +89,14 @@ The frontend overrides `minimatch` to the patched 11.x release line. The
 OpenAPI schema generation remains compatible. Remove the patch and override
 once the upstream dependency chain uses a secure minimatch release.
 
+The Python resolver constrains pandas to `<3.1` because country-converter
+1.3.2 fails during initialization with pandas 3.1. Keep this constraint until
+country-converter supports the newer pandas string-column behavior.
+
+OpenAPI tooling declares a TypeScript 5 peer dependency; this project uses
+TypeScript 6. Type checking and `pnpm api:check` verify compatibility despite
+the existing peer warning.
+
 ## Branches and Render deployment
 
 `main` is the integration branch. Merge feature pull requests into `main`,
